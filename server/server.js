@@ -10,6 +10,7 @@ import doctorRoutes from "./routes/doctor.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import { protect } from "./middleware/auth.middleware.js";
 import { authorizeRoles } from "./middleware/role.middleware.js";
+import errorMiddleware from "./middleware/error.middleware.js";
 
 dotenv.config();
 connectDB();
@@ -32,6 +33,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/patient", protect, authorizeRoles("patient"), patientRoutes);
 app.use("/api/doctor", protect, authorizeRoles("doctor"), doctorRoutes);
 app.use("/api/admin", protect, authorizeRoles("admin"), adminRoutes);
+
+// Error Middleware
+app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;
 
