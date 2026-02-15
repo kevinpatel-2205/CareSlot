@@ -1,4 +1,6 @@
 import User from "../models/user.model.js";
+import Patient from "../models/patient.model.js";
+import Doctor from "../models/doctor.model.js";
 import generateToken from "../utils/generateToken.js";
 
 export const registerUser = async (req, res, next) => {
@@ -101,24 +103,50 @@ export const loginUser = async (req, res, next) => {
   }
 };
 
+export const getMe = async (req, res, next) => {
+  try {
+    const user = req.user;
 
-export const getMe = async (req, res) => {
-  res.status(200).json({
-    success: true,
-    user: req.user,
-  });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized",
+      });
+    }
+
+    let data = { user };
+
+    if (user.role === "patient") {
+      const patientProfile = await Patient.findOne({ userId: user._id }).lean();
+      data = { ...data, profile: patientProfile || null };
+    } else if (user.role === "doctor") {
+      const doctorProfile = await Doctor.findOne({ userId: user._id }).lean();
+      data = { ...data, profile: doctorProfile || null };
+    }
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("getMe error:", error);
+    next(error);
+  }
 };
 
-export const logoutUser = async (req, res) => {
-  res.cookie("token", "", {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-    expires: new Date(0),
-  });
+export const logoutUser = async (req, res, next) => {
+  try {
+    res.cookie("token", "", {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      expires: new Date(0),
+    });
 
-  res.status(200).json({
-    success: true,
-    message: "Logged out successfully",
-  });
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
 };
