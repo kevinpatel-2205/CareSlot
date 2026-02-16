@@ -181,3 +181,71 @@ export const getDoctorDetails = async (req, res, next) => {
     next(error);
   }
 };
+
+export const bookAppointment = async (req, res, next) => {
+  try {
+    const { doctorId, appointmentDate, timeSlot, paymentMethod, notes } =
+      req.body;
+
+    if (!doctorId || !appointmentDate || !timeSlot || !paymentMethod) {
+      res.status(400);
+      throw new Error("All required fields must be provided");
+    }
+
+    const patient = await Patient.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!patient) {
+      res.status(404);
+      throw new Error("Patient profile not found");
+    }
+
+    const doctor = await Doctor.findOne({
+      _id: doctorId,
+      isDeleted: false,
+      isApproved: true,
+    });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    const slot = doctor.availableSlots.find(
+      (s) =>
+        new Date(s.date).toDateString() ===
+        new Date(appointmentDate).toDateString(),
+    );
+
+    if (!slot || !slot.times.includes(timeSlot)) {
+      res.status(400);
+      throw new Error("Selected slot is not available");
+    }
+
+    const appointment = await Appointment.create({
+      doctorId,
+      patientId: patient._id,
+      appointmentDate,
+      timeSlot,
+      consultationFee: doctor.consultationFee,
+      paymentMethod,
+      notes,
+      status: "pending",
+      paymentStatus: paymentMethod === "cash" ? "pending" : "pending",
+    });
+
+    slot.times = slot.times.filter((t) => t !== timeSlot);
+    await doctor.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Appointment created successfully",
+      data: appointment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
