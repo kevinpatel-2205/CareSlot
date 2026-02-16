@@ -125,3 +125,35 @@ export const getDoctorDashboard = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getUpcomingAppointments = async (req, res, next) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+    const doctorId = doctor._id;
+
+    const appointments = await Appointment.find({
+      doctorId,
+      appointmentDate: { $gte: new Date() },
+      status: { $ne: "cancelled" },
+      isDeleted: false,
+    })
+      .select("appointmentDate timeSlot paymentMethod patientId")
+      .populate({
+        path: "patientId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          select: "name email",
+        },
+      })
+      .sort({ appointmentDate: 1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: appointments,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
