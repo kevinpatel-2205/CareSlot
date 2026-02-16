@@ -2,6 +2,8 @@ import Appointment from "../models/appointment.model.js";
 import Payment from "../models/payment.model.js";
 import Doctor from "../models/doctor.model.js";
 import Patient from "../models/patient.model.js";
+import User from "../models/user.model.js";
+import cloudinary from "../utils/cloudinary.js";
 import mongoose from "mongoose";
 
 export const getDoctorDashboard = async (req, res, next) => {
@@ -495,6 +497,115 @@ export const addAvailableSlots = async (req, res, next) => {
       success: true,
       message: "Available slots added successfully",
       data: doctor.availableSlots,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getDoctorProfile = async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      _id: req.user._id,
+      isDeleted: false,
+    }).select("name email phone role image isActive");
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    const doctor = await Doctor.findOne({
+      userId: user._id,
+      isDeleted: false,
+    }).select("specialization experience about consultationFee isApproved");
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor profile not found");
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        userId: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        image: user.image,
+        isActive: user.isActive,
+        specialization: doctor.specialization,
+        experience: doctor.experience,
+        about: doctor.about,
+        consultationFee: doctor.consultationFee,
+        isApproved: doctor.isApproved,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateDoctorProfile = async (req, res, next) => {
+  try {
+    const {
+      name,
+      phone,
+      specialization,
+      experience,
+      about,
+      consultationFee,
+      isActive,
+    } = req.body;
+
+    const imageFile = req.file;
+
+    const user = await User.findOne({
+      _id: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (isActive !== undefined) user.isActive = isActive;
+
+    if (imageFile) {
+      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: "image",
+        folder: "doctor-app/doctors",
+      });
+
+      user.image = imageUpload.secure_url;
+    }
+
+    await user.save();
+
+    const doctor = await Doctor.findOne({
+      userId: user._id,
+      isDeleted: false,
+    });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor profile not found");
+    }
+
+    if (specialization) doctor.specialization = specialization;
+    if (experience !== undefined) doctor.experience = experience;
+    if (about) doctor.about = about;
+    if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
+
+    await doctor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Doctor profile updated successfully",
     });
   } catch (error) {
     next(error);
