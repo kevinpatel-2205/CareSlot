@@ -47,11 +47,6 @@ const doctorSchema = new mongoose.Schema(
       },
     ],
 
-    totalEarnings: {
-      type: Number,
-      default: 0,
-    },
-
     isApproved: {
       type: Boolean,
       default: false,
