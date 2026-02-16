@@ -27,6 +27,7 @@ export const registerUser = async (req, res, next) => {
       role: "patient",
     });
 
+    await Patient.create({ userId: user._id });
     const token = generateToken(user._id);
 
     res.cookie("token", token, {

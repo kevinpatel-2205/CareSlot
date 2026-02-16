@@ -1,9 +1,8 @@
 import express from "express";
-import { getAdminDashboard } from "../controllers/admin.controller.js";
+import { createDoctor } from "../controllers/admin.controller.js";
 
 const router = express.Router();
 
-// Admin Dashboard
-router.get("/dashboard", getAdminDashboard);
+router.post("/createDoctor", createDoctor);
 
 export default router;

@@ -1,94 +1,77 @@
 import User from "../models/user.model.js";
-import Appointment from "../models/appointment.model.js";
-import Payment from "../models/payment.model.js";
+import Doctor from "../models/doctor.model.js";
 
-export const getAdminDashboard = async (req, res) => {
+export const createDoctor = async (req, res, next) => {
   try {
+    const {
+      name,
+      email,
+      password,
+      phone,
+      specialization,
+      experience,
+      about,
+      consultationFee,
+      availableSlots,
+    } = req.body;
 
-    // =====================================
-    // 1️⃣ Basic Counts
-    // =====================================
-    const totalDoctors = await User.countDocuments({ role: "doctor" });
-    const totalPatients = await User.countDocuments({ role: "patient" });
-    const totalAppointments = await Appointment.countDocuments();
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !specialization ||
+      experience === undefined ||
+      !about ||
+      consultationFee === undefined ||
+      !availableSlots
+    ) {
+      res.status(400);
+      throw new Error("All fields are required");
+    }
 
-    // =====================================
-    // 2️⃣ Top 5 Highest Earning Doctors
-    // =====================================
-    const topEarningDoctors = await Payment.aggregate([
-      {
-        $match: { status: "success" }
-      },
-      {
-        $group: {
-          _id: "$doctor",
-          totalEarnings: { $sum: "$amount" }
-        }
-      },
-      { $sort: { totalEarnings: -1 } },
-      { $limit: 5 },
-      {
-        $lookup: {
-          from: "user",
-          localField: "_id",
-          foreignField: "_id",
-          as: "doctor"
-        }
-      },
-      { $unwind: "$doctor" },
-      {
-        $project: {
-          _id: 0,
-          doctorId: "$doctor._id",
-          doctorName: "$doctor.name",
-          totalEarnings: 1
-        }
-      }
-    ]);
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      res.status(400);
+      throw new Error("Doctor with this email already exists");
+    }
 
-    const topPatientDoctors = await Appointment.aggregate([
-      {
-        $group: {
-          _id: "$doctor",
-          totalAppointments: { $sum: 1 }
-        }
-      },
-      { $sort: { totalAppointments: -1 } },
-      { $limit: 5 },
-      {
-        $lookup: {
-          from: "users",
-          localField: "_id",
-          foreignField: "_id",
-          as: "doctor"
-        }
-      },
-      { $unwind: "$doctor" },
-      {
-        $project: {
-          _id: 0,
-          doctorId: "$doctor._id",
-          doctorName: "$doctor.name",
-          totalAppointments: 1
-        }
-      }
-    ]);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        totalDoctors,
-        totalPatients,
-        totalAppointments,
-        topEarningDoctors,
-        topPatientDoctors
-      }
+    const user = await User.create({
+      name,
+      email,
+      password,
+      phone,
+      role: "doctor",
     });
 
+    try {
+      const doctor = await Doctor.create({
+        userId: user._id,
+        specialization,
+        experience,
+        about,
+        consultationFee,
+        availableSlots,
+        isApproved: true,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Doctor created successfully",
+        data: {
+          doctorId: doctor._id,
+          name: user.name,
+          email: user.email,
+          specialization: doctor.specialization,
+          experience: doctor.experience,
+          consultationFee: doctor.consultationFee,
+          isApproved: doctor.isApproved,
+        },
+      });
+    } catch (err) {
+      await User.findByIdAndDelete(user._id);
+      throw err;
+    }
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    next(error);
   }
 };

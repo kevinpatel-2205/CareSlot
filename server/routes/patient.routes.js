@@ -1,7 +1,7 @@
 import express from "express";
 import {
   getPatientDashboard,
-  // getAllDoctors,
+  getAllDoctors,
   // bookAppointment,
   // getMyAppointments,
   // cancelAppointment,
@@ -12,7 +12,7 @@ import {
 const router = express.Router();
 
 router.get("/dashboard", getPatientDashboard);
-// router.get("/doctors", getAllDoctors);
+router.get("/doctors", getAllDoctors);
 // router.post("/book", bookAppointment);
 // router.get("/appointments", getMyAppointments);
 // router.patch("/cancel/:id", cancelAppointment);
