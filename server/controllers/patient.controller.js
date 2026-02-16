@@ -2,6 +2,7 @@ import Patient from "../models/patient.model.js";
 import Appointment from "../models/appointment.model.js";
 import Doctor from "../models/doctor.model.js";
 import User from "../models/user.model.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const getPatientDashboard = async (req, res, next) => {
   try {
@@ -249,3 +250,151 @@ export const bookAppointment = async (req, res, next) => {
   }
 };
 
+export const getAppointments = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+
+    const patient = await Patient.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!patient) {
+      res.status(404);
+      throw new Error("Patient profile not found");
+    }
+
+    const filter = {
+      patientId: patient._id,
+      isDeleted: false,
+    };
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const appointments = await Appointment.find(filter)
+      .populate({
+        path: "doctorId",
+        select: "specialization",
+        populate: {
+          path: "userId",
+          select: "name email",
+        },
+      })
+      .sort({ appointmentDate: -1 })
+      .lean();
+
+    const formattedAppointments = appointments.map((apt) => ({
+      appointmentId: apt._id,
+      doctorName: apt.doctorId?.userId?.name,
+      doctorEmail: apt.doctorId?.userId?.email,
+      specialization: apt.doctorId?.specialization,
+      appointmentDate: apt.appointmentDate,
+      timeSlot: apt.timeSlot,
+      status: apt.status,
+      paymentStatus: apt.paymentStatus,
+      paymentMethod: apt.paymentMethod,
+      consultationFee: apt.consultationFee,
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: formattedAppointments.length,
+      data: formattedAppointments,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProfile = async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      _id: req.user._id,
+      isDeleted: false,
+    }).select("name email phone role image");
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    const patient = await Patient.findOne({
+      userId: user._id,
+      isDeleted: false,
+    }).select("dateOfBirth gender address medicalHistory");
+
+    res.status(200).json({
+      success: true,
+      data: {
+        userId: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        image: user.image,
+        dateOfBirth: patient?.dateOfBirth || null,
+        gender: patient?.gender || null,
+        address: patient?.address || null,
+        medicalHistory: patient?.medicalHistory || null,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const { name, phone, dateOfBirth, gender, address, medicalHistory } =
+      req.body;
+
+    const imageFile = req.file;
+
+    const user = await User.findOne({
+      _id: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+
+    if (imageFile) {
+      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: "image",
+        folder: "doctor-app/patients",
+      });
+
+      user.image = imageUpload.secure_url;
+    }
+
+    await user.save();
+
+    const patient = await Patient.findOne({
+      userId: user._id,
+      isDeleted: false,
+    });
+
+    if (patient) {
+      if (dateOfBirth) patient.dateOfBirth = dateOfBirth;
+      if (gender) patient.gender = gender;
+      if (address) patient.address = address;
+      if (medicalHistory) patient.medicalHistory = medicalHistory;
+
+      await patient.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
