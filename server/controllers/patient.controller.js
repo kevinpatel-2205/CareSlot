@@ -214,17 +214,26 @@ export const bookAppointment = async (req, res, next) => {
       throw new Error("Doctor not found");
     }
 
+    const isActiveDoctor = await User.findOne({
+      _id: doctor.userId,
+      isDeleted: false,
+    });
+
+    if (!isActiveDoctor) {
+      res.status(404);
+      throw new Error("Doctor is not active");
+    }
     const slot = doctor.availableSlots.find(
       (s) =>
         new Date(s.date).toDateString() ===
-        new Date(appointmentDate).toDateString(),
+      new Date(appointmentDate).toDateString(),
     );
-
+    
     if (!slot || !slot.times.includes(timeSlot)) {
       res.status(400);
       throw new Error("Selected slot is not available");
     }
-
+    
     const appointment = await Appointment.create({
       doctorId,
       patientId: patient._id,

@@ -20,7 +20,7 @@ router.get("/dashboard", getDoctorDashboard);
 router.get("/upcomingAppointments", getUpcomingAppointments);
 router.get("/allAppointments", getAllAppointments);
 router.put("/changeStatus/:appointmentId", changeAppointmentStatus);
-router.delete("/cancel/:appointmentId", cancelAppointment);
+router.put("/cancel/:appointmentId", cancelAppointment);
 router.get("/patients", getDoctorPatients);
 router.get("/patients/:patientId", getDoctorPatientDetails);
 router.get("/availableSlots", getAvailableSlots);
