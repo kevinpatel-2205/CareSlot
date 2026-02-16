@@ -144,3 +144,40 @@ export const getAllDoctors = async (req, res, next) => {
   }
 };
 
+export const getDoctorDetails = async (req, res, next) => {
+  try {
+    const { doctorId } = req.params;
+
+    const doctor = await Doctor.findOne({
+      _id: doctorId,
+      isDeleted: false,
+      isApproved: true,
+    })
+      .populate({
+        path: "userId",
+        select: "name email",
+      })
+      .lean();
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        doctorId: doctor._id,
+        name: doctor.userId.name,
+        email: doctor.userId.email,
+        specialization: doctor.specialization,
+        experience: doctor.experience,
+        about: doctor.about,
+        consultationFee: doctor.consultationFee,
+        availableSlots: doctor.availableSlots,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
