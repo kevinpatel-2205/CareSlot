@@ -2,6 +2,7 @@ import Patient from "../models/patient.model.js";
 import Appointment from "../models/appointment.model.js";
 import Doctor from "../models/doctor.model.js";
 import User from "../models/user.model.js";
+import Payment from "../models/payment.model.js";
 import cloudinary from "../utils/cloudinary.js";
 
 export const getPatientDashboard = async (req, res, next) => {
@@ -185,10 +186,9 @@ export const getDoctorDetails = async (req, res, next) => {
 
 export const bookAppointment = async (req, res, next) => {
   try {
-    const { doctorId, appointmentDate, timeSlot, paymentMethod, notes } =
-      req.body;
+    const { doctorId, appointmentDate, timeSlot, notes } = req.body;
 
-    if (!doctorId || !appointmentDate || !timeSlot || !paymentMethod) {
+    if (!doctorId || !appointmentDate || !timeSlot) {
       res.status(400);
       throw new Error("All required fields must be provided");
     }
@@ -231,10 +231,19 @@ export const bookAppointment = async (req, res, next) => {
       appointmentDate,
       timeSlot,
       consultationFee: doctor.consultationFee,
-      paymentMethod,
+      paymentMethod: "cash",
       notes,
       status: "pending",
-      paymentStatus: paymentMethod === "cash" ? "pending" : "pending",
+      paymentStatus: "pending",
+    });
+
+    await Payment.create({
+      appointmentId: appointment._id,
+      doctorId,
+      patientId: patient._id,
+      amount: doctor.consultationFee,
+      paymentMethod: "cash",
+      status: "created",
     });
 
     slot.times = slot.times.filter((t) => t !== timeSlot);
