@@ -2,6 +2,8 @@ import User from "../models/user.model.js";
 import Patient from "../models/patient.model.js";
 import Doctor from "../models/doctor.model.js";
 import generateToken from "../utils/generateToken.js";
+import cloudinary from "../utils/cloudinary.js";
+import { NODE_ENV } from "../utils/env.js";
 
 export const registerUser = async (req, res, next) => {
   try {
@@ -33,7 +35,7 @@ export const registerUser = async (req, res, next) => {
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
+      secure: NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     });
 
@@ -68,9 +70,9 @@ export const loginUser = async (req, res, next) => {
       throw new Error("Invalid email or password");
     }
 
-    if (!user.isActive || user.isDeleted) {
+    if (user.isDeleted) {
       res.status(403);
-      throw new Error("Account is inactive");
+      throw new Error("Account is Deleted");
     }
 
     const isMatch = await user.comparePassword(password);
@@ -85,7 +87,7 @@ export const loginUser = async (req, res, next) => {
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
+      secure: NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     });
 
@@ -139,13 +141,51 @@ export const logoutUser = async (req, res, next) => {
     res.cookie("token", "", {
       httpOnly: true,
       sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
+      secure: NODE_ENV === "production",
       expires: new Date(0),
     });
 
     res.status(200).json({
       success: true,
       message: "Logged out successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfileImage = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    if (!req.file) {
+      res.status(400);
+      throw new Error("Image file is required");
+    }
+
+    const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "image",
+      folder: "doctor-app/users",
+    });
+
+    user.image = uploadResult.secure_url;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile image updated successfully",
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        image: user.image,
+      },
     });
   } catch (error) {
     next(error);

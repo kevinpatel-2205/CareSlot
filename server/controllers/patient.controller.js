@@ -3,7 +3,6 @@ import Appointment from "../models/appointment.model.js";
 import Doctor from "../models/doctor.model.js";
 import User from "../models/user.model.js";
 import Payment from "../models/payment.model.js";
-import cloudinary from "../utils/cloudinary.js";
 
 export const getPatientDashboard = async (req, res, next) => {
   try {
@@ -119,7 +118,7 @@ export const getAllDoctors = async (req, res, next) => {
             name: { $regex: search, $options: "i" },
           }),
         },
-        select: "name email",
+        select: "name email isActive",
       })
       .lean();
 
@@ -129,6 +128,7 @@ export const getAllDoctors = async (req, res, next) => {
       doctorId: doc._id,
       name: doc.userId.name,
       email: doc.userId.email,
+      isActive: doc.userId.isActive,
       specialization: doc.specialization,
       availabilityStatus:
         doc.availableSlots && doc.availableSlots.length > 0
@@ -157,7 +157,7 @@ export const getDoctorDetails = async (req, res, next) => {
     })
       .populate({
         path: "userId",
-        select: "name email",
+        select: "name email isActive",
       })
       .lean();
 
@@ -172,6 +172,7 @@ export const getDoctorDetails = async (req, res, next) => {
         doctorId: doctor._id,
         name: doctor.userId.name,
         email: doctor.userId.email,
+        isActive: doctor.userId.isActive,
         specialization: doctor.specialization,
         experience: doctor.experience,
         about: doctor.about,
@@ -216,6 +217,7 @@ export const bookAppointment = async (req, res, next) => {
 
     const isActiveDoctor = await User.findOne({
       _id: doctor.userId,
+      isActive: true,
       isDeleted: false,
     });
 
@@ -368,8 +370,6 @@ export const updateProfile = async (req, res, next) => {
     const { name, phone, dateOfBirth, gender, address, medicalHistory } =
       req.body;
 
-    const imageFile = req.file;
-
     const user = await User.findOne({
       _id: req.user._id,
       isDeleted: false,
@@ -382,15 +382,6 @@ export const updateProfile = async (req, res, next) => {
 
     if (name) user.name = name;
     if (phone) user.phone = phone;
-
-    if (imageFile) {
-      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-        resource_type: "image",
-        folder: "doctor-app/patients",
-      });
-
-      user.image = imageUpload.secure_url;
-    }
 
     await user.save();
 

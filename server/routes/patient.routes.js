@@ -8,7 +8,6 @@ import {
   getProfile,
   updateProfile,
 } from "../controllers/patient.controller.js";
-import upload from "../middleware/multer.middleware.js";
 
 const router = express.Router();
 
@@ -18,6 +17,6 @@ router.get("/doctorDetails/:doctorId", getDoctorDetails);
 router.post("/bookAppointment", bookAppointment);
 router.get("/myAppointments", getAppointments);
 router.get("/profile", getProfile);
-router.put("/updateProfile", upload.single("image"), updateProfile);
+router.put("/updateProfile", updateProfile);
 
 export default router;

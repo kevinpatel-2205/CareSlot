@@ -1,5 +1,4 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
@@ -11,14 +10,18 @@ import adminRoutes from "./routes/admin.routes.js";
 import { protect } from "./middleware/auth.middleware.js";
 import { authorizeRoles } from "./middleware/role.middleware.js";
 import errorMiddleware from "./middleware/error.middleware.js";
+import { CLIENT_URL, PORT } from "./utils/env.js";
 
-dotenv.config();
 connectDB();
 
 const app = express();
 
-// Middlewares
-app.use(cors());
+app.use(
+  cors({
+    origin: CLIENT_URL,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
@@ -36,8 +39,6 @@ app.use("/api/admin", protect, authorizeRoles("admin"), adminRoutes);
 
 // Error Middleware
 app.use(errorMiddleware);
-
-const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

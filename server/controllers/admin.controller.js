@@ -435,15 +435,15 @@ export const getAllAppointments = async (req, res, next) => {
           select: "name",
         },
       })
-      .select("date time status")
-      .sort({ date: -1 });
+      .select("appointmentDate timeSlot status")
+      .sort({ appointmentDate: -1, timeSlot: 1 });
 
     const formattedAppointments = appointments.map((appt) => ({
       appointmentId: appt._id,
       patientName: appt.patientId?.userId?.name,
       doctorName: appt.doctorId?.userId?.name,
-      date: appt.date,
-      time: appt.time,
+      appointmentDate: appt.appointmentDate,
+      timeSlot: appt.timeSlot,
       status: appt.status,
     }));
 

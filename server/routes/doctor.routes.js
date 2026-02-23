@@ -12,7 +12,6 @@ import {
   getDoctorProfile,
   updateDoctorProfile,
 } from "../controllers/doctor.controller.js";
-import upload from "../middleware/multer.middleware.js";
 
 const router = express.Router();
 
@@ -26,6 +25,6 @@ router.get("/patients/:patientId", getDoctorPatientDetails);
 router.get("/availableSlots", getAvailableSlots);
 router.post("/addAvailableSlots", addAvailableSlots);
 router.get("/profile", getDoctorProfile);
-router.put("/updateProfile", upload.single("image"), updateDoctorProfile);
+router.put("/updateProfile", updateDoctorProfile);
 
 export default router;

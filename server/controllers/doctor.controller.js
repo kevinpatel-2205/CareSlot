@@ -3,7 +3,6 @@ import Payment from "../models/payment.model.js";
 import Doctor from "../models/doctor.model.js";
 import Patient from "../models/patient.model.js";
 import User from "../models/user.model.js";
-import cloudinary from "../utils/cloudinary.js";
 import mongoose from "mongoose";
 
 export const getDoctorDashboard = async (req, res, next) => {
@@ -559,8 +558,6 @@ export const updateDoctorProfile = async (req, res, next) => {
       isActive,
     } = req.body;
 
-    const imageFile = req.file;
-
     const user = await User.findOne({
       _id: req.user._id,
       isDeleted: false,
@@ -574,15 +571,6 @@ export const updateDoctorProfile = async (req, res, next) => {
     if (name) user.name = name;
     if (phone) user.phone = phone;
     if (isActive !== undefined) user.isActive = isActive;
-
-    if (imageFile) {
-      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-        resource_type: "image",
-        folder: "doctor-app/doctors",
-      });
-
-      user.image = imageUpload.secure_url;
-    }
 
     await user.save();
 
