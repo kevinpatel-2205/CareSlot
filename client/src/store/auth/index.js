@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "../../lib/axios";
+import { toast } from "react-toastify";
 
 const initialState = {
   isAuthenticated: false,
@@ -92,12 +93,15 @@ const authSlice = createSlice({
         state.user = action.payload.success ? action.payload.user : null;
         state.isAuthenticated = action.payload.success;
         state.message = action.payload.message;
+        toast.success(action.payload.message);
+        
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
         state.message = action.payload?.message;
+        toast.error(action.payload.message);
       })
 
       .addCase(loginUser.pending, (state) => {
@@ -109,12 +113,14 @@ const authSlice = createSlice({
         state.user = action.payload.success ? action.payload.user : null;
         state.isAuthenticated = action.payload.success;
         state.message = action.payload.message;
+        toast.success(action.payload.message);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
         state.message = action.payload?.message;
+        toast.error(action.payload.message);
       })
 
       .addCase(getMe.pending, (state) => {
@@ -142,6 +148,7 @@ const authSlice = createSlice({
         state.profile = null;
         state.isAuthenticated = false;
         state.message = action.payload.message;
+        toast.success(action.payload.message);
       })
       .addCase(logoutUser.rejected, (state) => {
         state.isLoading = false;
