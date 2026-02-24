@@ -1,1 +1,50 @@
+@import url("https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@300;400;700&family=Geist+Mono:wght@100..900&display=swap");
 @import "tailwindcss";
+
+:root {
+  --bg-1: #f2f6ff;
+  --bg-2: #e3ecff;
+  --card: #f7faff;
+  --line: #d7e2fb;
+  --text: #173368;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Averia Serif Libre", serif;
+  color: var(--text);
+  background: radial-gradient(
+    circle at 15% 20%,
+    #f8fbff 0%,
+    var(--bg-1) 45%,
+    var(--bg-2) 100%
+  );
+}
+
+button,
+input,
+select,
+textarea,
+table,
+th,
+td,
+label {
+  font-family: "Geist Mono", monospace;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.glass-card {
+  @apply rounded-2xl border border-[#d8e2fb] bg-white/65 backdrop-blur-sm;
+}
+
+.soft-input {
+  @apply h-12 w-full rounded-xl border border-[#cfdbf8] bg-white/80 px-4 text-[#1d3f80] placeholder:text-[#7a94c6] focus:border-[#4d88ff] focus:outline-none;
+}

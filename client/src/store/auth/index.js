@@ -3,7 +3,7 @@ import axiosInstance from "../../lib/axios";
 
 const initialState = {
   isAuthenticated: false,
-  isLoading: false, //add this (better default false instead of true)
+  isLoading: false,
   user: null,
   profile: null,
   message: null,
