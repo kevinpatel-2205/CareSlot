@@ -3,6 +3,7 @@ import Doctor from "../models/doctor.model.js";
 import Patient from "../models/patient.model.js";
 import Appointment from "../models/appointment.model.js";
 import Payment from "../models/payment.model.js";
+import { sendDoctorEmail } from "../utils/sendEmail.js";
 
 export const getAdminDashboard = async (req, res, next) => {
   try {
@@ -180,6 +181,12 @@ export const createDoctor = async (req, res, next) => {
         consultationFee,
         availableSlots,
         isApproved: true,
+      });
+
+      await sendDoctorEmail({
+        doctorName: name,
+        email,
+        password,
       });
 
       res.status(201).json({

@@ -157,7 +157,7 @@ export const getDoctorDetails = async (req, res, next) => {
     })
       .populate({
         path: "userId",
-        select: "name email isActive",
+        select: "name email image isActive",
       })
       .lean();
 
@@ -172,6 +172,7 @@ export const getDoctorDetails = async (req, res, next) => {
         doctorId: doctor._id,
         name: doctor.userId.name,
         email: doctor.userId.email,
+        image: doctor.userId.image,
         isActive: doctor.userId.isActive,
         specialization: doctor.specialization,
         experience: doctor.experience,
