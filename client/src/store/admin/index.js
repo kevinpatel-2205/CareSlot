@@ -94,8 +94,8 @@ export const deletePatient = createAsyncThunk(
   "admin/deletePatient",
   async (patientId, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`/admin/deletePatient/${patientId}`);
-      return patientId;
+      const res = await axiosInstance.delete(`/admin/deletePatient/${patientId}`);
+      return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
     }
@@ -175,7 +175,9 @@ const adminSlice = createSlice({
 
       .addCase(deleteDoctor.fulfilled, (state, action) => {
         state.loading = false;
-        state.doctors = state.doctors.filter((d) => d.doctorId !== action.payload.doctorId);
+        state.doctors = state.doctors.filter(
+          (d) => d.doctorId !== action.payload.doctorId,
+        );
         toast.success(action.payload.message);
       })
       .addCase(deleteDoctor.rejected, (state, action) => {
@@ -197,9 +199,7 @@ const adminSlice = createSlice({
 
       .addCase(deletePatient.fulfilled, (state, action) => {
         state.loading = false;
-
-        state.patients = state.patients.filter((p) => p._id !== action.payload);
-
+        state.patients = state.patients.filter((p) => p.patientId !== action.payload.patientId);
         toast.success(action.payload.message);
       })
       .addCase(deletePatient.rejected, (state, action) => {
