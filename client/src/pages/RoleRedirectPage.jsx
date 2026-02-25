@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import PageLoader from "../components/PageLoader.jsx"
+import PageLoader from "../components/PageLoader.jsx";
 
 function RoleRedirectPage() {
   const navigate = useNavigate();

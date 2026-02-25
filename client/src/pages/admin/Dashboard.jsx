@@ -75,6 +75,15 @@ function Dashboard() {
               })}
             />
           </div>
+          <div className="mt-3 space-y-1 text-sm text-[#4d6da3]">
+            <span className="font-semibold">
+              Total Appointments :{" "}
+              {(dashboard?.monthlyAppointments || []).reduce(
+                (sum, item) => sum + (item.totalAppointments || 0),
+                0,
+              )}
+            </span>{" "}
+          </div>
         </section>
 
         <section className="glass-card p-4 sm:p-5">

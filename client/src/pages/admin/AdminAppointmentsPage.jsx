@@ -5,7 +5,7 @@ import { formatDate, statusTone } from "../../lib/format.js";
 
 function AdminAppointmentsPage() {
   const dispatch = useDispatch();
-  const {appointments} = useSelector((state) => state.admin);
+  const { appointments } = useSelector((state) => state.admin);
 
   const [statusFilter, setStatusFilter] = useState("");
 

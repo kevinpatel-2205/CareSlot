@@ -8,7 +8,13 @@ import {
 } from "chart.js";
 import { PolarArea } from "react-chartjs-2";
 
-ChartJS.register(PolarAreaController, RadialLinearScale, ArcElement, Tooltip, Legend);
+ChartJS.register(
+  PolarAreaController,
+  RadialLinearScale,
+  ArcElement,
+  Tooltip,
+  Legend,
+);
 
 function TopBookedPolarChart({ labels = [], values = [] }) {
   return (

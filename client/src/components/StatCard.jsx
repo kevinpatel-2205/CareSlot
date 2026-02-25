@@ -11,8 +11,12 @@ function StatCard({ icon: Icon, title, value, note, tone = "blue" }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-[#6e89bc]">{title}</p>
-          <h3 className="mt-1 text-4xl font-extrabold tracking-tight text-[#17386e]">{value}</h3>
-          {note ? <p className="mt-1 text-sm font-semibold text-[#5f7db2]">{note}</p> : null}
+          <h3 className="mt-1 text-4xl font-extrabold tracking-tight text-[#17386e]">
+            {value}
+          </h3>
+          {note ? (
+            <p className="mt-1 text-sm font-semibold text-[#5f7db2]">{note}</p>
+          ) : null}
         </div>
         {Icon ? (
           <div

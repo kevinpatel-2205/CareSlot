@@ -45,9 +45,7 @@ function RegisterPage() {
             <h1 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a4a97]">
               CareSlot
             </h1>
-            <p className="text-xs text-[#6f8bc0]">
-              Create patient account
-            </p>
+            <p className="text-xs text-[#6f8bc0]">Create patient account</p>
           </div>
         </div>
 
@@ -89,11 +87,7 @@ function RegisterPage() {
             required
           />
 
-          {error && (
-            <p className="text-sm text-red-500 text-center">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
           <button
             type="submit"

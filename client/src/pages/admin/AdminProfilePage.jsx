@@ -23,8 +23,7 @@ function AdminProfilePage() {
         <div className="flex flex-wrap items-center gap-4">
           <img
             src={
-              user?.image ||
-              "https://placehold.co/96x96/e6efff/2e5fae?text=AD"
+              user?.image || "https://placehold.co/96x96/e6efff/2e5fae?text=AD"
             }
             alt={user?.name || "Admin"}
             className="h-24 w-24 rounded-full border border-[#d7e2fb] object-cover"
@@ -38,9 +37,7 @@ function AdminProfilePage() {
 
             <p>
               <span className="font-semibold text-[#1c3f7a]">Role:</span>{" "}
-              <span className="capitalize">
-                {user?.role || "--"}
-              </span>
+              <span className="capitalize">{user?.role || "--"}</span>
             </p>
 
             <p>

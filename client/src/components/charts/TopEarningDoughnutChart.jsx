@@ -12,7 +12,13 @@ function TopEarningDoughnutChart({ labels = [], values = [] }) {
           {
             data: values,
             borderWidth: 0,
-            backgroundColor: ["#2E7DF2", "#4FA3FF", "#7DC2FF", "#9CD4FF", "#BEDFFF"],
+            backgroundColor: [
+              "#2E7DF2",
+              "#4FA3FF",
+              "#7DC2FF",
+              "#9CD4FF",
+              "#BEDFFF",
+            ],
           },
         ],
       }}

@@ -1,9 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getAllPatients,
-  deletePatient,
-} from "../../store/admin";
+import { getAllPatients, deletePatient } from "../../store/admin";
 
 function AdminPatientsPage() {
   const dispatch = useDispatch();
@@ -70,16 +67,12 @@ function AdminPatientsPage() {
                     </div>
                   </td>
 
-                  <td className="px-4 py-3">
-                    {patient.totalBookings}
-                  </td>
+                  <td className="px-4 py-3">{patient.totalBookings}</td>
 
                   <td className="px-4 py-3">
                     <button
                       onClick={() =>
-                        handleDeletePatient(
-                          patient._id || patient.patientId
-                        )
+                        handleDeletePatient(patient._id || patient.patientId)
                       }
                       className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-semibold text-rose-700"
                     >
