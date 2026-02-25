@@ -1,15 +1,21 @@
-import { Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { Navigate, Outlet } from "react-router-dom";
+import PageLoader from "./PageLoader";
 
-const RoleProtectedRoute = ({ allowedRole, children }) => {
-  const { user } = useSelector((state) => state.auth);
+const RoleProtectedRoute = ({ allowedRole }) => {
+  const { user, loading } = useSelector((state) => state.auth);
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (loading) return <PageLoader />;
 
-  if (user.role !== allowedRole)
+  if (!user) {
     return <Navigate to="/login" replace />;
+  }
 
-  return children;
+  if (user.role !== allowedRole) {
+    return <Navigate to="/redirect" replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default RoleProtectedRoute;

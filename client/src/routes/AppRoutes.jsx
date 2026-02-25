@@ -4,27 +4,34 @@ import { useSelector } from "react-redux";
 import LoginPage from "../pages/LoginPage.jsx";
 import RegisterPage from "../pages/RegisterPage.jsx";
 import RoleRedirectPage from "../pages/RoleRedirectPage.jsx";
-import AdminRoutes from "./AdminRoutes";
-import DoctorRoutes from "./DoctorRoutes";
-import PatientRoutes from "./PatientRoutes";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
+import PageLoader from "../components/PageLoader.jsx";
+import RoleProtectedRoute from "../components/RoleProtectedRoute";
+import { adminNav, doctorNav, patientNav } from "../config/navigation.js";
+
+// Admin Pages
+import AdminDashboard from "../pages/admin/Dashboard.jsx";
+
+// Doctor Pages
+import DoctorDashboard from "../pages/doctor/Dashboard.jsx";
+
+// Patient Pages
+import PatientDashboard from "../pages/patient/Dashboard.jsx";
+import DashboardLayout from "../components/DashboardLayout.jsx";
 
 const AppRoutes = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { user, loading } = useSelector((state) => state.auth);
 
-  const getDashboardPath = (role) => {
-    if (role === "admin") return "/admin/dashboard";
-    if (role === "doctor") return "/doctor/dashboard";
-    return "/patient/dashboard";
-  };
+  if (loading) return <PageLoader />;
 
   return (
     <Routes>
+      {/* Root */}
       <Route
         path="/"
         element={
           user ? (
-            <Navigate to={getDashboardPath(user.role)} replace />
+            <Navigate to="/redirect" replace />
           ) : (
             <Navigate to="/login" replace />
           )
@@ -33,60 +40,43 @@ const AppRoutes = () => {
 
       <Route
         path="/login"
-        element={
-          user ? (
-            <Navigate to={getDashboardPath(user.role)} replace />
-          ) : (
-            <LoginPage />
-          )
-        }
+        element={user ? <Navigate to="/redirect" replace /> : <LoginPage />}
       />
-
       <Route
         path="/register"
-        element={
-          user ? (
-            <Navigate to={getDashboardPath(user.role)} replace />
-          ) : (
-            <RegisterPage />
-          )
-        }
+        element={user ? <Navigate to="/redirect" replace /> : <RegisterPage />}
       />
 
       <Route path="/redirect" element={<RoleRedirectPage />} />
 
-      <Route
-        path="/admin/*"
-        element={
-          user?.role === "admin" ? (
-            <AdminRoutes />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
+      <Route element={<RoleProtectedRoute allowedRole="admin" />}>
+        <Route
+          path="/admin"
+          element={<DashboardLayout navItems={adminNav} roleLabel="Admin" />}
+        >
+          <Route path="dashboard" element={<AdminDashboard />} />
+        </Route>
+      </Route>
 
-      <Route
-        path="/doctor/*"
-        element={
-          user?.role === "doctor" ? (
-            <DoctorRoutes />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
+      <Route element={<RoleProtectedRoute allowedRole="doctor" />}>
+        <Route
+          path="/doctor"
+          element={<DashboardLayout navItems={doctorNav} roleLabel="Doctor" />}
+        >
+          <Route path="dashboard" element={<DoctorDashboard />} />
+        </Route>
+      </Route>
 
-      <Route
-        path="/patient/*"
-        element={
-          user?.role === "patient" ? (
-            <PatientRoutes />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
+      <Route element={<RoleProtectedRoute allowedRole="patient" />}>
+        <Route
+          path="/patient"
+          element={
+            <DashboardLayout navItems={patientNav} roleLabel="Patient" />
+          }
+        >
+          <Route path="dashboard" element={<PatientDashboard />} />
+        </Route>
+      </Route>
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

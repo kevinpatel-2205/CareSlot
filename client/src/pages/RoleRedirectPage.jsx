@@ -31,9 +31,9 @@ function RoleRedirectPage() {
 
   return (
     <div className="grid min-h-screen place-items-center">
-      <p className="text-lg font-semibold text-[#1a3f7b]">
+      <div className="text-lg font-semibold text-[#1a3f7b]">
         <PageLoader fullScreen label="Loading app..." />
-      </p>
+      </div>
     </div>
   );
 }
