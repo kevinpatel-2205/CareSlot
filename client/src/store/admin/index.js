@@ -211,7 +211,7 @@ const adminSlice = createSlice({
         state.loading = true;
       })
       .addCase(getAllAppointments.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loading = false;        
         state.appointments = action.payload.data;
         state.totalAppointments = action.payload.total;
       })
