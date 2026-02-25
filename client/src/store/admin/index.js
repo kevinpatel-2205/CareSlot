@@ -59,7 +59,7 @@ export const toggleDoctorStatus = createAsyncThunk(
           isActive,
         },
       );
-      return { doctorId, isActive };
+      return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
     }
@@ -71,7 +71,7 @@ export const deleteDoctor = createAsyncThunk(
   async (doctorId, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.delete(`/admin/deleteDoctor/${doctorId}`);
-      return doctorId;
+      return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
     }
@@ -138,11 +138,12 @@ const adminSlice = createSlice({
       })
       .addCase(getAllDoctors.fulfilled, (state, action) => {
         state.loading = false;
-        state.doctors = action.payload.total;
-        state.totalDoctors = action.payload.data;
+        state.doctors = action.payload.data;
+        state.totalDoctors = action.payload.total;
       })
       .addCase(getAllDoctors.rejected, (state, action) => {
         state.loading = false;
+        toast.error(action.payload);
       })
 
       .addCase(createDoctor.pending, (state) => {
@@ -159,16 +160,13 @@ const adminSlice = createSlice({
 
       .addCase(toggleDoctorStatus.fulfilled, (state, action) => {
         state.actionLoading = false;
-
         const doctor = state.doctors.find(
-          (d) => d._id === action.payload.doctorId,
+          (d) => d.doctorId === action.payload.doctorId,
         );
-
         if (doctor) {
           doctor.isActive = action.payload.isActive;
         }
-
-        toast.success(action.payload?.message);
+        toast.success(action.payload.message);
       })
       .addCase(toggleDoctorStatus.rejected, (state, action) => {
         state.loading = false;
@@ -177,9 +175,7 @@ const adminSlice = createSlice({
 
       .addCase(deleteDoctor.fulfilled, (state, action) => {
         state.loading = false;
-
-        state.doctors = state.doctors.filter((d) => d._id !== action.payload);
-
+        state.doctors = state.doctors.filter((d) => d.doctorId !== action.payload.doctorId);
         toast.success(action.payload.message);
       })
       .addCase(deleteDoctor.rejected, (state, action) => {

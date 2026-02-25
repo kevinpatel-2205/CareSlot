@@ -269,6 +269,8 @@ export const toggleDoctorStatus = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: `Doctor ${isActive ? "activated" : "deactivated"} successfully`,
+      isActive,
+      doctorId
     });
   } catch (error) {
     next(error);
@@ -313,6 +315,7 @@ export const deleteDoctor = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Doctor and related data deleted successfully",
+      doctorId
     });
   } catch (error) {
     next(error);
