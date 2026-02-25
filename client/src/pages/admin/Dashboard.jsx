@@ -14,22 +14,13 @@ import { formatMoney } from "../../lib/format";
 function Dashboard() {
   const dispatch = useDispatch();
 
-  const { dashboard, loading, message } = useSelector(
-    (state) => state.admin
-  );
+  const { dashboard, loading } = useSelector((state) => state.admin);
 
   useEffect(() => {
     dispatch(getAdminDashboard());
   }, [dispatch]);
 
   if (loading) return <PageLoader />;
-
-  if (message)
-    return (
-      <div className="text-red-500 font-semibold">
-        {message}
-      </div>
-    );
 
   return (
     <div className="space-y-6">
@@ -63,12 +54,22 @@ function Dashboard() {
           <div className="mt-4 h-80">
             <AppointmentsBarChart
               labels={[
-                "Jan","Feb","Mar","Apr","May","Jun",
-                "Jul","Aug","Sep","Oct","Nov","Dec"
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec",
               ]}
-              values={[1,2,3,4,5,6,7,8,9,10,11,12].map((month) => {
+              values={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => {
                 const item = (dashboard?.monthlyAppointments || []).find(
-                  (m) => m._id === month
+                  (m) => m._id === month,
                 );
                 return item?.totalAppointments || 0;
               })}
@@ -84,10 +85,10 @@ function Dashboard() {
           <div className="mt-4 h-80">
             <TopEarningDoughnutChart
               labels={(dashboard?.topEarningDoctors || []).map(
-                (item) => item.name
+                (item) => item.name,
               )}
               values={(dashboard?.topEarningDoctors || []).map(
-                (item) => item.totalEarning
+                (item) => item.totalEarning,
               )}
             />
           </div>
@@ -115,10 +116,10 @@ function Dashboard() {
           <div className="h-80">
             <TopBookedPolarChart
               labels={(dashboard?.topBookedDoctors || []).map(
-                (item) => item.name
+                (item) => item.name,
               )}
               values={(dashboard?.topBookedDoctors || []).map(
-                (item) => item.totalAppointments
+                (item) => item.totalAppointments,
               )}
             />
           </div>
@@ -132,16 +133,12 @@ function Dashboard() {
                 <span className="font-semibold text-[#30579f]">
                   {idx + 1}. {item.name}
                 </span>
-                <span className="font-bold">
-                  {item.totalAppointments}
-                </span>
+                <span className="font-bold">{item.totalAppointments}</span>
               </div>
             ))}
 
             {!dashboard?.topBookedDoctors?.length && (
-              <p className="text-[#6b87b8]">
-                No booking data available.
-              </p>
+              <p className="text-[#6b87b8]">No booking data available.</p>
             )}
           </div>
         </div>

@@ -7,7 +7,6 @@ const initialState = {
   isLoading: false,
   user: null,
   profile: null,
-  message: null,
 };
 
 export const registerUser = createAsyncThunk(
@@ -39,7 +38,7 @@ export const loginUser = createAsyncThunk(
           success: false,
           message: "Something went wrong",
         },
-      ); //add this
+      );
     }
   },
 );
@@ -55,6 +54,35 @@ export const getMe = createAsyncThunk(
         error.response?.data || {
           success: false,
           message: "Unauthorized",
+        },
+      );
+    }
+  },
+);
+
+export const updateProfileImage = createAsyncThunk(
+  "/auth/updateProfileImage",
+  async (imageFile, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", imageFile);
+
+      const response = await axiosInstance.put(
+        "/auth/profile-image",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || {
+          success: false,
+          message: "Image upload failed",
         },
       );
     }
@@ -86,40 +114,33 @@ const authSlice = createSlice({
     builder
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
-        state.message = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.success ? action.payload.user : null;
         state.isAuthenticated = action.payload.success;
-        state.message = action.payload.message;
         toast.success(action.payload.message);
-        
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
-        state.message = action.payload?.message;
         toast.error(action.payload.message);
       })
 
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
-        state.message = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.success ? action.payload.user : null;
         state.isAuthenticated = action.payload.success;
-        state.message = action.payload.message;
         toast.success(action.payload.message);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
-        state.message = action.payload?.message;
         toast.error(action.payload.message);
       })
 
@@ -139,6 +160,21 @@ const authSlice = createSlice({
         state.profile = null;
       })
 
+      .addCase(updateProfileImage.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(updateProfileImage.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload.success) {
+          state.user.image = action.payload?.data?.user?.image;
+          toast.success(action.payload.message);
+        }
+      })
+      .addCase(updateProfileImage.rejected, (state, action) => {
+        state.isLoading = false;
+        toast.error(action.payload?.message);
+      })
+
       .addCase(logoutUser.pending, (state) => {
         state.isLoading = true;
       })
@@ -147,7 +183,6 @@ const authSlice = createSlice({
         state.user = null;
         state.profile = null;
         state.isAuthenticated = false;
-        state.message = action.payload.message;
         toast.success(action.payload.message);
       })
       .addCase(logoutUser.rejected, (state) => {

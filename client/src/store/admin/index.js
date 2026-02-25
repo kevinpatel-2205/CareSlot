@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "../../lib/axios";
+import { toast } from "react-toastify";
 
 const initialState = {
   dashboard: null,
@@ -9,7 +10,6 @@ const initialState = {
   totalDoctors: 0,
   totalPatients: 0,
   totalAppointments: 0,
-  message: null,
   loading: false,
 };
 
@@ -131,7 +131,6 @@ const adminSlice = createSlice({
       })
       .addCase(getAdminDashboard.rejected, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message;
       })
 
       .addCase(getAllDoctors.pending, (state) => {
@@ -144,7 +143,6 @@ const adminSlice = createSlice({
       })
       .addCase(getAllDoctors.rejected, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message;
       })
 
       .addCase(createDoctor.pending, (state) => {
@@ -152,11 +150,11 @@ const adminSlice = createSlice({
       })
       .addCase(createDoctor.fulfilled, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message;
+        toast.success(action.payload.message);
       })
       .addCase(createDoctor.rejected, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message;
+        toast.error(action.payload.message);
       })
 
       .addCase(toggleDoctorStatus.fulfilled, (state, action) => {
@@ -170,11 +168,11 @@ const adminSlice = createSlice({
           doctor.isActive = action.payload.isActive;
         }
 
-        state.message = "Doctor status updated successfully";
+        toast.success(action.payload?.message);
       })
       .addCase(toggleDoctorStatus.rejected, (state, action) => {
         state.loading = false;
-        state.message = "Doctor Status Change Doesn't work";
+        toast.error(action.payload.message);
       })
 
       .addCase(deleteDoctor.fulfilled, (state, action) => {
@@ -182,11 +180,11 @@ const adminSlice = createSlice({
 
         state.doctors = state.doctors.filter((d) => d._id !== action.payload);
 
-        state.message = "Doctor deleted successfully";
+        toast.success(action.payload.message);
       })
       .addCase(deleteDoctor.rejected, (state, action) => {
         state.loading = false;
-        state.message = "Doctor Delete Doesn't Work";
+        toast.error(action.payload.message);
       })
 
       .addCase(getAllPatients.pending, (state) => {
@@ -199,7 +197,6 @@ const adminSlice = createSlice({
       })
       .addCase(getAllPatients.rejected, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message;
       })
 
       .addCase(deletePatient.fulfilled, (state, action) => {
@@ -207,11 +204,11 @@ const adminSlice = createSlice({
 
         state.patients = state.patients.filter((p) => p._id !== action.payload);
 
-        state.message = "Patient deleted successfully";
+        toast.success(action.payload.message);
       })
       .addCase(deletePatient.rejected, (state, action) => {
         state.loading = false;
-        state.message = "Patient Delete Doesn't Work";
+        toast.error(action.payload.message);
       })
 
       .addCase(getAllAppointments.pending, (state) => {
@@ -224,7 +221,6 @@ const adminSlice = createSlice({
       })
       .addCase(getAllAppointments.rejected, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message;
       });
   },
 });
