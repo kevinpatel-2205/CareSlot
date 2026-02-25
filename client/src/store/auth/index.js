@@ -166,7 +166,7 @@ const authSlice = createSlice({
       .addCase(updateProfileImage.fulfilled, (state, action) => {
         state.isLoading = false;
         if (action.payload.success) {
-          state.user.image = action.payload?.data?.user?.image;
+          state.user = action.payload?.data;
           toast.success(action.payload.message);
         }
       })

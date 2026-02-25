@@ -18,6 +18,7 @@ import DoctorDashboard from "../pages/doctor/Dashboard.jsx";
 // Patient Pages
 import PatientDashboard from "../pages/patient/Dashboard.jsx";
 import DashboardLayout from "../components/DashboardLayout.jsx";
+import AdminProfilePage from "../pages/admin/AdminProfilePage.jsx";
 
 const AppRoutes = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -55,6 +56,7 @@ const AppRoutes = () => {
           element={<DashboardLayout navItems={adminNav} roleLabel="Admin" />}
         >
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="profile" element={<AdminProfilePage />} />
         </Route>
       </Route>
 
