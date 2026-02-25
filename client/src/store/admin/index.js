@@ -154,7 +154,7 @@ const adminSlice = createSlice({
       })
       .addCase(createDoctor.rejected, (state, action) => {
         state.loading = false;
-        toast.error(action.payload.message);
+        toast.error(action.payload);
       })
 
       .addCase(toggleDoctorStatus.fulfilled, (state, action) => {
