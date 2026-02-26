@@ -17,3 +17,6 @@ export const CLOUDINARY_SECRET_KEY = process.env.CLOUDINARY_SECRET_KEY;
 
 export const EMAIL_USER = process.env.EMAIL_USER;
 export const EMAIL_PASS = process.env.EMAIL_PASS;
+
+export const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+export const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;

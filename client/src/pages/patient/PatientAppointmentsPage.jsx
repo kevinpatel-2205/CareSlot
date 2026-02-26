@@ -1,10 +1,14 @@
 import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPatientAppointments } from "../../store/patient";
+import {
+  fetchPatientAppointments,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+} from "../../store/patient";
 import { formatDate, formatMoney, statusTone } from "../../lib/format.js";
 import { toast } from "react-toastify";
-
+import { RAZORPAY_KEY_ID } from "../../lib/env.js";
 
 function PatientAppointmentsPage() {
   const dispatch = useDispatch();
@@ -25,6 +29,48 @@ function PatientAppointmentsPage() {
       ),
     [appointments, query],
   );
+
+  const handlePayment = async (appointmentId) => {
+    try {
+      if (!RAZORPAY_KEY_ID) {
+        toast.error("Payment setup is incomplete. Missing Razorpay key.");
+        return;
+      }
+
+      const orderRes = await dispatch(
+        createRazorpayOrder(appointmentId),
+      ).unwrap();
+
+      const { order } = orderRes;
+
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Doctor Appointment",
+        description: "Consultation Fee",
+        order_id: order.id,
+
+        handler: async function (response) {
+          await dispatch(
+            verifyRazorpayPayment({
+              ...response,
+              appointmentId,
+            }),
+          ).unwrap();
+        },
+
+        theme: {
+          color: "#2d7cf2",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      toast.error(err);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -77,7 +123,7 @@ function PatientAppointmentsPage() {
           <tbody>
             {filtered.map((item) => (
               <tr
-                key={item.appointmentId}
+                key={item._id || item.appointmentId}
                 className="border-t border-[#e0e8fc] text-[#2e4f86]"
               >
                 <td className="px-4 py-3">
@@ -123,9 +169,7 @@ function PatientAppointmentsPage() {
                       item.paymentStatus === "paid" ||
                       item.status === "cancelled"
                     }
-                    onClick={() =>
-                      toast.success("Razorpay integration will be connected here.")
-                    }
+                    onClick={() => handlePayment(item.appointmentId)}
                     className="rounded-lg border border-[#2d7cf2] bg-white px-3 py-1.5 text-xs font-semibold text-[#2d7cf2] disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400"
                   >
                     Pay Online

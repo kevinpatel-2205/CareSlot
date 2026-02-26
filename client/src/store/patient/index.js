@@ -105,6 +105,35 @@ export const updatePatientProfile = createAsyncThunk(
   },
 );
 
+export const createRazorpayOrder = createAsyncThunk(
+  "patient/createRazorpayOrder",
+  async (appointmentId, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("/patient/create-order", {
+        appointmentId,
+      });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const verifyRazorpayPayment = createAsyncThunk(
+  "patient/verifyRazorpayPayment",
+  async (paymentData, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        "/patient/verify-payment",
+        paymentData,
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
 const patientSlice = createSlice({
   name: "patient",
   initialState,
@@ -195,6 +224,40 @@ const patientSlice = createSlice({
         toast.success(action.payload.message);
       })
       .addCase(updatePatientProfile.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(createRazorpayOrder.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createRazorpayOrder.fulfilled, (state) => {
+        state.loading = false;
+      })
+
+      .addCase(createRazorpayOrder.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(verifyRazorpayPayment.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(verifyRazorpayPayment.fulfilled, (state, action) => {
+        state.loading = false;
+        toast.success(action.payload.message);
+        const appointmentId = action.meta.arg.appointmentId;
+        state.appointments = state.appointments.map((item) =>
+          item.appointmentId === appointmentId
+            ? {
+                ...item,
+                paymentStatus: "paid",
+                paymentMethod: "razorpay",
+              }
+            : item,
+        );
+      })
+      .addCase(verifyRazorpayPayment.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       });

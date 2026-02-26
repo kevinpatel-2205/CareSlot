@@ -3,6 +3,9 @@ import Appointment from "../models/appointment.model.js";
 import Doctor from "../models/doctor.model.js";
 import User from "../models/user.model.js";
 import Payment from "../models/payment.model.js";
+import razorpayInstance from "../utils/RazorPay.js";
+import { CURRENCY, RAZORPAY_KEY_SECRET } from "../utils/env.js";
+import crypto from "crypto";
 
 export const getPatientDashboard = async (req, res, next) => {
   try {
@@ -229,14 +232,14 @@ export const bookAppointment = async (req, res, next) => {
     const slot = doctor.availableSlots.find(
       (s) =>
         new Date(s.date).toDateString() ===
-      new Date(appointmentDate).toDateString(),
+        new Date(appointmentDate).toDateString(),
     );
-    
+
     if (!slot || !slot.times.includes(timeSlot)) {
       res.status(400);
       throw new Error("Selected slot is not available");
     }
-    
+
     const appointment = await Appointment.create({
       doctorId,
       patientId: patient._id,
@@ -403,6 +406,98 @@ export const updateProfile = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const paymentRazorpay = async (req, res, next) => {
+  try {
+    const { appointmentId } = req.body;
+
+    const appointmentData = await Appointment.findById(appointmentId);
+
+    if (!appointmentData || appointmentData.status === "cancelled") {
+      res.status(404);
+      throw new Error("Appointment Cancelled or not found");
+    }
+
+    if (appointmentData.paymentStatus === "paid") {
+      res.status(400);
+      throw new Error("Payment already completed");
+    }
+
+    const options = {
+      amount: appointmentData.consultationFee * 100,
+      currency: CURRENCY,
+      receipt: appointmentId,
+    };
+
+    const order = await razorpayInstance.orders.create(options);
+
+    await Payment.findOneAndUpdate(
+      { appointmentId },
+      {
+        appointmentId,
+        doctorId: appointmentData.doctorId,
+        patientId: appointmentData.patientId,
+        amount: appointmentData.consultationFee,
+        paymentMethod: "razorpay",
+        razorpayOrderId: order.id,
+        status: "created",
+      },
+      { returnDocument: "after", upsert: true },
+    );
+
+    await Appointment.findByIdAndUpdate(appointmentId, {
+      paymentMethod: "razorpay",
+    });
+
+    res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyRazorpay = async (req, res, next) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
+
+    const generated_signature = crypto
+      .createHmac("sha256", RAZORPAY_KEY_SECRET)
+      .update(razorpay_order_id + "|" + razorpay_payment_id)
+      .digest("hex");
+
+    if (generated_signature !== razorpay_signature) {
+      res.status(400);
+      throw new Error("Invalid Payment Signature");
+    }
+
+    const payment = await Payment.findOne({
+      razorpayOrderId: razorpay_order_id,
+    });
+
+    if (!payment) {
+      res.status(404);
+      throw new Error("Payment record not found");
+    }
+
+    payment.razorpayPaymentId = razorpay_payment_id;
+    payment.status = "success";
+    await payment.save();
+
+    await Appointment.findByIdAndUpdate(payment.appointmentId, {
+      paymentStatus: "paid",
+    });
+
+    res.json({
+      success: true,
+      message: "Payment Successful",
     });
   } catch (error) {
     next(error);
