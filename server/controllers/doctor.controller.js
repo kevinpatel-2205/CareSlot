@@ -3,7 +3,6 @@ import Payment from "../models/payment.model.js";
 import Doctor from "../models/doctor.model.js";
 import Patient from "../models/patient.model.js";
 import User from "../models/user.model.js";
-import mongoose from "mongoose";
 
 export const getDoctorDashboard = async (req, res, next) => {
   try {
@@ -247,6 +246,8 @@ export const changeAppointmentStatus = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: `Appointment status updated to ${appointment.status}`,
+      appointmentId,
+      appointmentStatus: appointment.status,
     });
   } catch (error) {
     next(error);
@@ -311,6 +312,7 @@ export const cancelAppointment = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
+      appointmentId,
       message: "Appointment cancelled successfully",
     });
   } catch (error) {
