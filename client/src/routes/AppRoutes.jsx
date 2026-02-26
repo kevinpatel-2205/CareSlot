@@ -7,23 +7,24 @@ import RoleRedirectPage from "../pages/RoleRedirectPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import PageLoader from "../components/PageLoader.jsx";
 import RoleProtectedRoute from "../components/RoleProtectedRoute";
+import DashboardLayout from "../components/DashboardLayout.jsx";
 import { adminNav, doctorNav, patientNav } from "../config/navigation.js";
 
 // Admin Pages
 import AdminDashboard from "../pages/admin/Dashboard.jsx";
-
-// Doctor Pages
-import DoctorDashboard from "../pages/doctor/Dashboard.jsx";
-
-// Patient Pages
-import PatientDashboard from "../pages/patient/Dashboard.jsx";
-import DashboardLayout from "../components/DashboardLayout.jsx";
 import AdminProfilePage from "../pages/admin/AdminProfilePage.jsx";
 import AdminAddDoctorPage from "../pages/admin/AdminAddDoctorPage.jsx";
 import AdminDoctorsPage from "../pages/admin/AdminDoctorsPage.jsx";
 import AdminPatientsPage from "../pages/admin/AdminPatientsPage.jsx";
 import AdminAppointmentsPage from "../pages/admin/AdminAppointmentsPage.jsx";
+
+// Doctor Pages
+import DoctorDashboard from "../pages/doctor/Dashboard.jsx";
 import DoctorAppointmentsPage from "../pages/doctor/DoctorAppointmentsPage.jsx";
+import DoctorPatientsPage from "../pages/doctor/DoctorPatientsPage.jsx";
+
+// Patient Pages
+import PatientDashboard from "../pages/patient/Dashboard.jsx";
 
 const AppRoutes = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -75,6 +76,7 @@ const AppRoutes = () => {
         >
           <Route path="dashboard" element={<DoctorDashboard />} />
           <Route path="appointments" element={<DoctorAppointmentsPage />} />
+          <Route path="patients" element={<DoctorPatientsPage />} />
         </Route>
       </Route>
 
