@@ -23,6 +23,7 @@ import DoctorDashboard from "../pages/doctor/Dashboard.jsx";
 import DoctorAppointmentsPage from "../pages/doctor/DoctorAppointmentsPage.jsx";
 import DoctorPatientsPage from "../pages/doctor/DoctorPatientsPage.jsx";
 import DoctorPatientDetailPage from "../pages/doctor/DoctorPatientDetailPage.jsx";
+import DoctorSlotsPage from "../pages/doctor/DoctorSlotsPage.jsx";
 
 // Patient Pages
 import PatientDashboard from "../pages/patient/Dashboard.jsx";
@@ -82,6 +83,7 @@ const AppRoutes = () => {
             path="patients/:patientId"
             element={<DoctorPatientDetailPage />}
           />
+          <Route path="slots" element={<DoctorSlotsPage />} />
         </Route>
       </Route>
 
