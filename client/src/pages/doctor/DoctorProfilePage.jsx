@@ -9,7 +9,7 @@ import { formatMoney } from "../../lib/format.js";
 function DoctorProfilePage() {
   const dispatch = useDispatch();
   const { profile, loading } = useSelector((state) => state.doctor);
-  const {user,isLoading} = useSelector((state)=>state.auth);
+  const { user, isLoading } = useSelector((state) => state.auth);
 
   const [form, setForm] = useState({
     name: "",
