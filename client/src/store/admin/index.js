@@ -133,6 +133,7 @@ const adminSlice = createSlice({
       })
       .addCase(getAdminDashboard.rejected, (state, action) => {
         state.loading = false;
+        toast.error(action.payload);
       })
 
       .addCase(getAllDoctors.pending, (state) => {
@@ -197,6 +198,7 @@ const adminSlice = createSlice({
       })
       .addCase(getAllPatients.rejected, (state, action) => {
         state.loading = false;
+        toast.error(action.payload);
       })
 
       .addCase(deletePatient.fulfilled, (state, action) => {
@@ -221,6 +223,7 @@ const adminSlice = createSlice({
       })
       .addCase(getAllAppointments.rejected, (state, action) => {
         state.loading = false;
+        toast.error(action.payload);
       });
   },
 });

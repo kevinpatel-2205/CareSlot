@@ -16,12 +16,7 @@ export const registerUser = createAsyncThunk(
       const response = await axiosInstance.post("/auth/register", formData);
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || {
-          success: false,
-          message: "Something went wrong",
-        },
-      );
+      return rejectWithValue(error.response?.data?.message);
     }
   },
 );
@@ -33,12 +28,7 @@ export const loginUser = createAsyncThunk(
       const response = await axiosInstance.post("/auth/login", formData);
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || {
-          success: false,
-          message: "Something went wrong",
-        },
-      );
+      return rejectWithValue(error.response?.data?.message);
     }
   },
 );
@@ -50,12 +40,7 @@ export const getMe = createAsyncThunk(
       const response = await axiosInstance.get("/auth/me", {});
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || {
-          success: false,
-          message: "Unauthorized",
-        },
-      );
+      return rejectWithValue(error.response?.data?.message);
     }
   },
 );
@@ -79,12 +64,7 @@ export const updateProfileImage = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || {
-          success: false,
-          message: "Image upload failed",
-        },
-      );
+      return rejectWithValue(error.response?.data?.message);
     }
   },
 );
@@ -96,12 +76,7 @@ export const logoutUser = createAsyncThunk(
       const response = await axiosInstance.post("/auth/logout", {});
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || {
-          success: false,
-          message: "Logout failed",
-        },
-      );
+      return rejectWithValue(error.response?.data?.message);
     }
   },
 );
@@ -125,7 +100,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
-        toast.error(action.payload.message);
+        toast.error(action.payload);
       })
 
       .addCase(loginUser.pending, (state) => {
@@ -153,11 +128,12 @@ const authSlice = createSlice({
         state.user = action.payload?.data?.user || null;
         state.profile = action.payload?.data?.profile || null;
       })
-      .addCase(getMe.rejected, (state) => {
+      .addCase(getMe.rejected, (state,action) => {
         state.isLoading = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.profile = null;
+        state.profile = null;        
+        toast.error(action.payload);
       })
 
       .addCase(updateProfileImage.pending, (state) => {
@@ -172,7 +148,7 @@ const authSlice = createSlice({
       })
       .addCase(updateProfileImage.rejected, (state, action) => {
         state.isLoading = false;
-        toast.error(action.payload?.message);
+        toast.error(action.payload);
       })
 
       .addCase(logoutUser.pending, (state) => {
@@ -187,6 +163,7 @@ const authSlice = createSlice({
       })
       .addCase(logoutUser.rejected, (state) => {
         state.isLoading = false;
+        toast.error(action.payload);
       });
   },
 });

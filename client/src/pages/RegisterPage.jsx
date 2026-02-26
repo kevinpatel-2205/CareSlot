@@ -8,7 +8,7 @@ function RegisterPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { user, loading, error } = useSelector((state) => state.auth);
+  const { user, isLoading, error } = useSelector((state) => state.auth);
 
   const [form, setForm] = useState({
     name: "",
@@ -17,14 +17,11 @@ function RegisterPage() {
     phone: "",
   });
 
-  const [submitting, setSubmitting] = useState(false);
-
   const onChange = (key, value) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
     dispatch(registerUser(form));
   };
 
@@ -91,11 +88,11 @@ function RegisterPage() {
 
           <button
             type="submit"
-            disabled={loading || submitting}
+            disabled={isLoading}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] font-bold text-white disabled:opacity-70"
           >
             <UserPlus size={18} />
-            {loading ? "Creating..." : "Create Account"}
+            {isLoading ? "Creating..." : "Create Account"}
           </button>
         </form>
 
