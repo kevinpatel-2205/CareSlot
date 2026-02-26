@@ -134,6 +134,18 @@ export const verifyRazorpayPayment = createAsyncThunk(
   },
 );
 
+export const markRazorpayPaymentFailed = createAsyncThunk(
+  "patient/markRazorpayPaymentFailed",
+  async (paymentData, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("/patient/payment-failed", paymentData);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
 const patientSlice = createSlice({
   name: "patient",
   initialState,
@@ -253,11 +265,36 @@ const patientSlice = createSlice({
                 ...item,
                 paymentStatus: "paid",
                 paymentMethod: "razorpay",
+                status: "confirmed",
               }
             : item,
         );
       })
       .addCase(verifyRazorpayPayment.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      });
+
+    builder
+      .addCase(markRazorpayPaymentFailed.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(markRazorpayPaymentFailed.fulfilled, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload.message);
+        const appointmentId = action.meta.arg.appointmentId;
+        state.appointments = state.appointments.map((item) =>
+          item.appointmentId === appointmentId
+            ? {
+                ...item,
+                paymentStatus: "failed",
+                paymentMethod: "razorpay",
+                status: "pending",
+              }
+            : item,
+        );
+      })
+      .addCase(markRazorpayPaymentFailed.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       });

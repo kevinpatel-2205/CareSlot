@@ -9,6 +9,7 @@ import {
   updateProfile,
   paymentRazorpay,
   verifyRazorpay,
+  markRazorpayFailed,
 } from "../controllers/patient.controller.js";
 
 const router = express.Router();
@@ -22,5 +23,6 @@ router.get("/profile", getProfile);
 router.put("/updateProfile", updateProfile);
 router.post("/create-order", paymentRazorpay);
 router.post("/verify-payment", verifyRazorpay);
+router.post("/payment-failed", markRazorpayFailed);
 
 export default router;

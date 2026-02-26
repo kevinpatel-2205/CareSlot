@@ -452,6 +452,8 @@ export const paymentRazorpay = async (req, res, next) => {
 
     await Appointment.findByIdAndUpdate(appointmentId, {
       paymentMethod: "razorpay",
+      paymentStatus: "pending",
+      status: "pending",
     });
 
     res.status(200).json({
@@ -474,6 +476,22 @@ export const verifyRazorpay = async (req, res, next) => {
       .digest("hex");
 
     if (generated_signature !== razorpay_signature) {
+      const payment = await Payment.findOne({
+        razorpayOrderId: razorpay_order_id,
+      });
+
+      if (payment) {
+        if (payment.status !== "success") {
+          payment.status = "failed";
+          await payment.save();
+
+          await Appointment.findByIdAndUpdate(payment.appointmentId, {
+            paymentStatus: "failed",
+            status: "pending",
+          });
+        }
+      }
+
       res.status(400);
       throw new Error("Invalid Payment Signature");
     }
@@ -493,11 +511,55 @@ export const verifyRazorpay = async (req, res, next) => {
 
     await Appointment.findByIdAndUpdate(payment.appointmentId, {
       paymentStatus: "paid",
+      status: "confirmed",
     });
 
     res.json({
       success: true,
       message: "Payment Successful",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const markRazorpayFailed = async (req, res, next) => {
+  try {
+    const { appointmentId, razorpay_order_id } = req.body;
+
+    if (!appointmentId && !razorpay_order_id) {
+      res.status(400);
+      throw new Error("appointmentId or razorpay_order_id is required");
+    }
+
+    const payment = razorpay_order_id
+      ? await Payment.findOne({ razorpayOrderId: razorpay_order_id })
+      : await Payment.findOne({ appointmentId });
+
+    if (!payment) {
+      res.status(404);
+      throw new Error("Payment record not found");
+    }
+
+    if (payment.status === "success") {
+      return res.status(200).json({
+        success: true,
+        message: "Payment already marked as successful",
+      });
+    }
+
+    payment.status = "failed";
+    await payment.save();
+
+    await Appointment.findByIdAndUpdate(payment.appointmentId, {
+      paymentStatus: "failed",
+      status: "pending",
+      paymentMethod: "razorpay",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Payment marked as failed",
     });
   } catch (error) {
     next(error);

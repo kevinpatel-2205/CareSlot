@@ -5,6 +5,7 @@ import {
   fetchPatientAppointments,
   createRazorpayOrder,
   verifyRazorpayPayment,
+  markRazorpayPaymentFailed,
 } from "../../store/patient";
 import { formatDate, formatMoney, statusTone } from "../../lib/format.js";
 import { toast } from "react-toastify";
@@ -42,6 +43,20 @@ function PatientAppointmentsPage() {
       ).unwrap();
 
       const { order } = orderRes;
+      let failureSynced = false;
+      let paymentCompleted = false;
+
+      const syncFailure = async (orderId = order.id) => {
+        if (failureSynced) return;
+        failureSynced = true;
+
+        await dispatch(
+          markRazorpayPaymentFailed({
+            appointmentId,
+            razorpay_order_id: orderId,
+          }),
+        ).unwrap();
+      };
 
       const options = {
         key: RAZORPAY_KEY_ID,
@@ -58,6 +73,13 @@ function PatientAppointmentsPage() {
               appointmentId,
             }),
           ).unwrap();
+          paymentCompleted = true;
+        },
+        modal: {
+          ondismiss: async () => {
+            if (paymentCompleted) return;
+            await syncFailure(order.id);
+          },
         },
 
         theme: {
@@ -66,9 +88,12 @@ function PatientAppointmentsPage() {
       };
 
       const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", async (response) => {
+        await syncFailure(response?.error?.metadata?.order_id || order.id);
+      });
       rzp.open();
     } catch (err) {
-      toast.error(err);
+      toast.error(err || "Payment failed");
     }
   };
 
