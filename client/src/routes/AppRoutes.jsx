@@ -30,6 +30,8 @@ import DoctorSlotsPage from "../pages/doctor/DoctorSlotsPage.jsx";
 import PatientDashboard from "../pages/patient/Dashboard.jsx";
 import PatientBookDoctorsPage from "../pages/patient/PatientBookDoctorsPage.jsx";
 import PatientAppointmentsPage from "../pages/patient/PatientAppointmentsPage.jsx";
+import PatientDoctorDetailPage from "../pages/patient/PatientDoctorDetailPage.jsx";
+import PatientProfilePage from "../pages/patient/PatientProfilePage.jsx";
 
 const AppRoutes = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -101,6 +103,11 @@ const AppRoutes = () => {
           <Route path="dashboard" element={<PatientDashboard />} />
           <Route path="book-doctor" element={<PatientBookDoctorsPage />} />
           <Route path="appointments" element={<PatientAppointmentsPage />} />
+          <Route
+            path="doctors/:doctorId"
+            element={<PatientDoctorDetailPage />}
+          />
+          <Route path="profile" element={<PatientProfilePage />} />
         </Route>
       </Route>
 

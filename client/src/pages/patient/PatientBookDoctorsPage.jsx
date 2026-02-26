@@ -17,7 +17,6 @@ function PatientBookDoctorsPage() {
     dispatch(fetchAllDoctors());
   }, [dispatch]);
 
-  // filtering stays local (UI concern)
   const filtered = useMemo(() => {
     return doctors.filter((item) => {
       const okName = (item.name || "")
