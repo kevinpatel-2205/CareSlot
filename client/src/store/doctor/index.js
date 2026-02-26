@@ -55,7 +55,7 @@ export const changeAppointmentStatus = createAsyncThunk(
   "doctor/changeAppointmentStatus",
   async (appointmentId, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.patch(
+      const res = await axiosInstance.put(
         `/doctor/changeStatus/${appointmentId}`,
       );
       return res.data;
@@ -69,8 +69,8 @@ export const cancelAppointment = createAsyncThunk(
   "doctor/cancelAppointment",
   async (appointmentId, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.patch(
-        `/doctor/cancelAppointment/${appointmentId}`,
+      const res = await axiosInstance.put(
+        `/doctor/cancel/${appointmentId}`,
       );
       return res.data;
     } catch (err) {
