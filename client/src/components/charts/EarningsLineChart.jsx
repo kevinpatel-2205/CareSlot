@@ -20,21 +20,29 @@ ChartJS.register(
   Filler,
 );
 
-function EarningsLineChart({ labels = [], values = [] }) {
+function EarningsLineChart({ labels = [], cash = [], razorpay = [] }) {
   return (
     <Line
       data={{
         labels,
         datasets: [
           {
-            label: "Earnings",
-            data: values,
+            label: "Cash",
+            data: cash,
             tension: 0.35,
-            fill: true,
+            fill: false,
             pointRadius: 4,
-            pointBackgroundColor: "#2e7df2",
             borderColor: "#2e7df2",
-            backgroundColor: "rgba(46, 125, 242, 0.12)",
+            backgroundColor: "#2e7df2",
+          },
+          {
+            label: "Razorpay",
+            data: razorpay,
+            tension: 0.35,
+            fill: false,
+            pointRadius: 4,
+            borderColor: "#22c55e",
+            backgroundColor: "#22c55e",
           },
         ],
       }}
@@ -42,7 +50,7 @@ function EarningsLineChart({ labels = [], values = [] }) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: { display: true },
         },
         scales: {
           x: {

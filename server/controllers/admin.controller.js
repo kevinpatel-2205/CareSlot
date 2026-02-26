@@ -132,7 +132,7 @@ export const getAdminDashboard = async (req, res, next) => {
 
 export const createDoctor = async (req, res, next) => {
   try {
-    const {
+    let {
       name,
       email,
       password,
@@ -143,6 +143,12 @@ export const createDoctor = async (req, res, next) => {
       consultationFee,
       availableSlots,
     } = req.body;
+
+    name = name?.trim();
+    email = email?.trim();
+    password = password?.trim();
+    specialization = specialization?.trim();
+    about = about?.trim();
 
     if (
       !name ||
@@ -156,6 +162,47 @@ export const createDoctor = async (req, res, next) => {
     ) {
       res.status(400);
       throw new Error("All fields are required");
+    }
+
+    if (name.length < 2 || name.length > 20) {
+      res.status(400);
+      throw new Error("Name must be between 2 and 20 characters");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400);
+      throw new Error("Invalid email format");
+    }
+
+    if (password.length < 8) {
+      res.status(400);
+      throw new Error("Password must be at least 8 characters");
+    }
+
+    if (experience < 1 || experience > 50) {
+      res.status(400);
+      throw new Error("Experience must be between 1 and 50 years");
+    }
+
+    if (consultationFee <= 100 || consultationFee >= 2000) {
+      res.status(400);
+      throw new Error(
+        "Consultation fee must be greater than 100 and less than 2000",
+      );
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const isValidSlots = availableSlots.every((slot) => {
+      const slotDate = new Date(slot.date);
+      return slotDate > today;
+    });
+
+    if (!isValidSlots) {
+      res.status(400);
+      throw new Error("All available slot dates must be greater than today");
     }
 
     const userExists = await User.findOne({ email });

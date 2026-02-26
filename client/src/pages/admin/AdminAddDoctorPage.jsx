@@ -245,6 +245,7 @@ function AdminAddDoctorPage() {
                     type="date"
                     className="soft-input"
                     value={slot.date}
+                    min={new Date().toISOString().split("T")[0]}
                     onChange={(e) =>
                       onSlotChange(index, "date", e.target.value)
                     }

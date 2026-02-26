@@ -31,8 +31,9 @@ function DoctorDashboardPage() {
   const monthly = useMemo(() => {
     const series = dashboard?.monthlyEarnings || [];
     return {
-      labels: series.map((x) => x.month),
-      values: series.map((x) => x.total),
+      labels: series.labels,
+      cash: series.cash,
+      razorpay: series.razorpay,
     };
   }, [dashboard]);
 
@@ -84,17 +85,33 @@ function DoctorDashboardPage() {
           <div className="mt-4 h-80">
             <EarningsLineChart
               labels={monthly.labels}
-              values={monthly.values}
+              cash={monthly.cash}
+              razorpay={monthly.razorpay}
             />
           </div>
+
           <div className="mt-6 space-y-1 text-sm text-[#4d6da3]">
             <span className="font-semibold">
-              Total Monthly Earnings:{" "}
+              Total Cash:{" "}
               {formatMoney(
-                (dashboard?.monthlyEarnings || []).reduce(
-                  (sum, item) => sum + (item.total || 0),
-                  0,
-                ),
+                Array.isArray(dashboard?.monthlyEarnings?.cash)
+                  ? dashboard.monthlyEarnings.cash.reduce(
+                      (sum, value) => sum + value,
+                      0,
+                    )
+                  : 0,
+              )}
+            </span>
+            <br />
+            <span className="font-semibold">
+              Total Razorpay:{" "}
+              {formatMoney(
+                Array.isArray(dashboard?.monthlyEarnings?.razorpay)
+                  ? dashboard.monthlyEarnings.razorpay.reduce(
+                      (sum, value) => sum + value,
+                      0,
+                    )
+                  : 0,
               )}
             </span>
           </div>

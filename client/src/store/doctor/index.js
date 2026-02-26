@@ -93,9 +93,7 @@ export const fetchPatientDetails = createAsyncThunk(
   "doctor/fetchPatientDetails",
   async (patientId, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get(
-        `/doctor/patients/${patientId}`,
-      );
+      const res = await axiosInstance.get(`/doctor/patients/${patientId}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);

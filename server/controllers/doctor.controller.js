@@ -53,6 +53,67 @@ export const getDoctorDashboard = async (req, res, next) => {
     const totalEarnings =
       earningsData.length > 0 ? earningsData[0].totalEarnings : 0;
 
+    // const monthlyEarnings = await Payment.aggregate([
+    //   {
+    //     $match: {
+    //       doctorId,
+    //       status: "success",
+    //     },
+    //   },
+    //   {
+    //     $group: {
+    //       _id: { $month: "$createdAt" },
+    //       total: { $sum: "$amount" },
+    //     },
+    //   },
+    //   { $sort: { _id: 1 } },
+    // ]);
+
+    // const monthNames = [
+    //   "",
+    //   "Jan",
+    //   "Feb",
+    //   "Mar",
+    //   "Apr",
+    //   "May",
+    //   "Jun",
+    //   "Jul",
+    //   "Aug",
+    //   "Sep",
+    //   "Oct",
+    //   "Nov",
+    //   "Dec",
+    // ];
+
+    // const formattedMonthly = monthlyEarnings.map((item) => ({
+    //   month: monthNames[item._id],
+    //   total: item.total,
+    // }));
+
+    // const paymentDistribution = await Payment.aggregate([
+    //   {
+    //     $match: {
+    //       doctorId,
+    //       status: "success",
+    //     },
+    //   },
+    //   {
+    //     $group: {
+    //       _id: "$paymentMethod",
+    //       total: { $sum: "$amount" },
+    //     },
+    //   },
+    // ]);
+
+    // const formattedPayment = {
+    //   cash: 0,
+    //   razorpay: 0,
+    // };
+
+    // paymentDistribution.forEach((item) => {
+    //   formattedPayment[item._id] = item.total;
+    // });
+
     const monthlyEarnings = await Payment.aggregate([
       {
         $match: {
@@ -62,15 +123,19 @@ export const getDoctorDashboard = async (req, res, next) => {
       },
       {
         $group: {
-          _id: { $month: "$createdAt" },
+          _id: {
+            month: { $month: "$createdAt" },
+            method: "$paymentMethod",
+          },
           total: { $sum: "$amount" },
         },
       },
-      { $sort: { _id: 1 } },
+      {
+        $sort: { "_id.month": 1 },
+      },
     ]);
 
     const monthNames = [
-      "",
       "Jan",
       "Feb",
       "Mar",
@@ -85,34 +150,32 @@ export const getDoctorDashboard = async (req, res, next) => {
       "Dec",
     ];
 
-    const formattedMonthly = monthlyEarnings.map((item) => ({
-      month: monthNames[item._id],
-      total: item.total,
-    }));
+    // Initialize 12 months with 0
+    const monthlyData = Array(12)
+      .fill()
+      .map(() => ({
+        cash: 0,
+        razorpay: 0,
+      }));
 
-    const paymentDistribution = await Payment.aggregate([
-      {
-        $match: {
-          doctorId,
-          status: "success",
-        },
-      },
-      {
-        $group: {
-          _id: "$paymentMethod",
-          total: { $sum: "$amount" },
-        },
-      },
-    ]);
+    monthlyEarnings.forEach((item) => {
+      const monthIndex = item._id.month - 1;
+      const method = item._id.method;
 
-    const formattedPayment = {
-      cash: 0,
-      razorpay: 0,
-    };
+      if (method === "cash") {
+        monthlyData[monthIndex].cash = item.total;
+      }
 
-    paymentDistribution.forEach((item) => {
-      formattedPayment[item._id] = item.total;
+      if (method === "razorpay") {
+        monthlyData[monthIndex].razorpay = item.total;
+      }
     });
+
+    const formattedMonthly = {
+      labels: monthNames,
+      cash: monthlyData.map((m) => m.cash),
+      razorpay: monthlyData.map((m) => m.razorpay),
+    };
 
     res.status(200).json({
       success: true,
@@ -120,7 +183,7 @@ export const getDoctorDashboard = async (req, res, next) => {
         totalEarnings,
         appointmentCounts: formattedStatus,
         monthlyEarnings: formattedMonthly,
-        paymentDistribution: formattedPayment,
+        // paymentDistribution: formattedPayment,
       },
     });
   } catch (error) {
