@@ -69,9 +69,7 @@ export const cancelAppointment = createAsyncThunk(
   "doctor/cancelAppointment",
   async (appointmentId, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.put(
-        `/doctor/cancel/${appointmentId}`,
-      );
+      const res = await axiosInstance.put(`/doctor/cancel/${appointmentId}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
@@ -96,7 +94,7 @@ export const fetchPatientDetails = createAsyncThunk(
   async (patientId, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(
-        `/doctor/patientDetails/${patientId}`,
+        `/doctor/patients/${patientId}`,
       );
       return res.data;
     } catch (err) {
