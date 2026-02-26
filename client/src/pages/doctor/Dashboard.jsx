@@ -87,6 +87,17 @@ function DoctorDashboardPage() {
               values={monthly.values}
             />
           </div>
+          <div className="mt-6 space-y-1 text-sm text-[#4d6da3]">
+            <span className="font-semibold">
+              Total Monthly Earnings:{" "}
+              {formatMoney(
+                (dashboard?.monthlyEarnings || []).reduce(
+                  (sum, item) => sum + (item.total || 0),
+                  0,
+                ),
+              )}
+            </span>
+          </div>
         </section>
 
         <section className="glass-card p-4 sm:p-5">
@@ -99,6 +110,12 @@ function DoctorDashboardPage() {
               pending={dashboard?.appointmentCounts?.pending || 0}
               cancelled={dashboard?.appointmentCounts?.cancelled || 0}
             />
+          </div>
+          <div className="mt-4 text-sm font-semibold text-[#4d6da3]">
+            Total Appointments:{" "}
+            {(dashboard?.appointmentCounts?.completed || 0) +
+              (dashboard?.appointmentCounts?.pending || 0) +
+              (dashboard?.appointmentCounts?.cancelled || 0)}
           </div>
         </section>
       </div>

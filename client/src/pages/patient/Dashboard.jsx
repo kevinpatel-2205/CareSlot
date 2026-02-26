@@ -25,6 +25,7 @@ function PatientDashboardPage() {
           icon={NotebookTabs}
           title="Total Bookings"
           value={dashboard?.totalBookings || 0}
+          note="All Bookings"
           tone="blue"
         />
         <StatCard

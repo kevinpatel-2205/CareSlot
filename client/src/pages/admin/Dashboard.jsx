@@ -34,12 +34,14 @@ function Dashboard() {
           icon={ShieldCheck}
           title="Total Doctors"
           value={dashboard?.totalDoctors || 0}
+          note="Registered Doctors"
           tone="blue"
         />
         <StatCard
           icon={Users}
           title="Total Patients"
           value={dashboard?.totalPatients || 0}
+          note="Registered Patient"
           tone="mint"
         />
       </div>
@@ -75,7 +77,7 @@ function Dashboard() {
               })}
             />
           </div>
-          <div className="mt-3 space-y-1 text-sm text-[#4d6da3]">
+          <div className="mt-6 space-y-1 text-sm text-[#4d6da3]">
             <span className="font-semibold">
               Total Appointments :{" "}
               {(dashboard?.monthlyAppointments || []).reduce(
