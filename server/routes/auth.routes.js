@@ -5,6 +5,7 @@ import {
   getMe,
   logoutUser,
   updateProfileImage,
+  updatePassword,
 } from "../controllers/auth.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
@@ -23,5 +24,6 @@ router.put(
   upload.single("image"),
   updateProfileImage,
 );
+router.put("/update-password", protect, updatePassword);
 
 export default router;

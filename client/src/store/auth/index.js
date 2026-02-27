@@ -81,6 +81,21 @@ export const logoutUser = createAsyncThunk(
   },
 );
 
+export const updatePassword = createAsyncThunk(
+  "/auth/updatePassword",
+  async (formData, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.put(
+        "/auth/update-password",
+        formData,
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
+    }
+  },
+);
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -128,11 +143,11 @@ const authSlice = createSlice({
         state.user = action.payload?.data?.user || null;
         state.profile = action.payload?.data?.profile || null;
       })
-      .addCase(getMe.rejected, (state,action) => {
+      .addCase(getMe.rejected, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.profile = null;        
+        state.profile = null;
         toast.error(action.payload);
       })
 
@@ -162,6 +177,18 @@ const authSlice = createSlice({
         toast.success(action.payload.message);
       })
       .addCase(logoutUser.rejected, (state) => {
+        state.isLoading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(updatePassword.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(updatePassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+        toast.success(action.payload.message);
+      })
+      .addCase(updatePassword.rejected, (state, action) => {
         state.isLoading = false;
         toast.error(action.payload);
       });

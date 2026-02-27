@@ -228,3 +228,50 @@ export const updateProfileImage = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updatePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400);
+      throw new Error(
+        "Current password, new password is required",
+      );
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400);
+      throw new Error("New password must be at least 8 characters");
+    }
+
+    if (newPassword == currentPassword) {
+      res.status(400);
+      throw new Error("New password and Current password is Same");
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+
+    if (!isMatch) {
+      res.status(400);
+      throw new Error("Current password is incorrect");
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import PageLoader from "../../components/PageLoader.jsx";
-import { updateProfileImage } from "../../store/auth";
+import { updateProfileImage, updatePassword } from "../../store/auth";
 import { formatDate } from "../../lib/format.js";
 import { fetchPatientProfile, updatePatientProfile } from "../../store/patient";
+import { toast } from "react-toastify";
 
 function PatientProfilePage() {
   const dispatch = useDispatch();
@@ -17,6 +18,12 @@ function PatientProfilePage() {
     gender: "",
     address: "",
     medicalHistory: "",
+  });
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   useEffect(() => {
@@ -66,6 +73,39 @@ function PatientProfilePage() {
   if (loading && !profile) {
     return <PageLoader label="Loading profile..." />;
   }
+
+  const handlePasswordChange = (key, value) => {
+    setPasswordForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("All password fields are required");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("New password and confirm password do not match");
+      return;
+    }
+
+    dispatch(updatePassword(passwordForm));
+
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+  };
 
   return (
     <div className="space-y-5">
@@ -194,6 +234,63 @@ function PatientProfilePage() {
           className="mt-4 h-12 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white disabled:opacity-60"
         >
           {loading ? "Saving..." : "Update Profile"}
+        </button>
+      </form>
+      <form onSubmit={handlePasswordSubmit} className="glass-card p-5 mt-5">
+        <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
+          Change Password
+        </h3>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <label className="space-y-1">
+            <span className="text-sm font-semibold text-[#4f6ea5]">
+              Current Password
+            </span>
+            <input
+              type="password"
+              className="soft-input"
+              value={passwordForm.currentPassword}
+              onChange={(e) =>
+                handlePasswordChange("currentPassword", e.target.value)
+              }
+            />
+          </label>
+
+          <label className="space-y-1">
+            <span className="text-sm font-semibold text-[#4f6ea5]">
+              New Password
+            </span>
+            <input
+              type="password"
+              className="soft-input"
+              value={passwordForm.newPassword}
+              onChange={(e) =>
+                handlePasswordChange("newPassword", e.target.value)
+              }
+            />
+          </label>
+
+          <label className="space-y-1 md:col-span-2">
+            <span className="text-sm font-semibold text-[#4f6ea5]">
+              Confirm Password
+            </span>
+            <input
+              type="password"
+              className="soft-input"
+              value={passwordForm.confirmPassword}
+              onChange={(e) =>
+                handlePasswordChange("confirmPassword", e.target.value)
+              }
+            />
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="mt-4 h-12 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white disabled:opacity-60"
+        >
+          {isLoading ? "Updating..." : "Update Password"}
         </button>
       </form>
     </div>
