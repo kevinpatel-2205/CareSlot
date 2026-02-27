@@ -116,7 +116,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
-        toast.error(action.payload.message);
+        toast.error(action.payload);
       })
 
       .addCase(getMe.pending, (state) => {

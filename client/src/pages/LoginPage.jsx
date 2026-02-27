@@ -2,7 +2,8 @@ import { Stethoscope, LogIn } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "../store/auth"; // adjust path if needed
+import { loginUser } from "../store/auth";
+import { toast } from "react-toastify";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -10,20 +11,18 @@ function LoginPage() {
   const { isLoading } = useSelector((state) => state.auth);
 
   const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
 
   const onChange = (key, value) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
     try {
-      await dispatch(loginUser(form)).unwrap();
-      navigate("/", { replace: true });
+    await dispatch(loginUser(form)).unwrap();
+    navigate("/", { replace: true });
     } catch (err) {
-      setError(err || "Login failed");
+    toast.error();
     }
   };
 
@@ -64,8 +63,6 @@ function LoginPage() {
             onChange={(e) => onChange("password", e.target.value)}
             required
           />
-
-          {error && <p className="text-sm text-red-500">{error}</p>}
 
           <button
             type="submit"
