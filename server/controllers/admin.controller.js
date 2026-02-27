@@ -282,11 +282,12 @@ export const createDoctor = async (req, res, next) => {
         isApproved: true,
       });
 
-      await sendDoctorEmail({
-        doctorName: name,
-        email,
-        password,
-      });
+      // ! Uncomment after all testing is complete.
+      // await sendDoctorEmail({
+      //   doctorName: name,
+      //   email,
+      //   password,
+      // });
 
       res.status(201).json({
         success: true,

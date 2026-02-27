@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Welcome to CareSlot</title>
+<title>New Appointment Booked - CareSlot</title>
 
 <style>
 /* Reset */
@@ -119,26 +119,32 @@ body {
   </div>
 
   <div class="content">
-    <h2>Welcome Dr. {{doctorName}},</h2>
+    <h2>New Appointment Booked, Dr. {{doctorName}},</h2>
 
     <p>
-      Your account has been successfully created by the administrator.
-      Below are your login details:
+      A patient has successfully booked an appointment with you.
+      Below are the appointment and patient details:
     </p>
 
     <div class="info-card">
-      <p><span class="label">Email:</span> {{email}}</p>
-      <p><span class="label">Password:</span> {{password}}</p>
+      <p><span class="label">Patient Name:</span> {{patientName}}</p>
+      <p><span class="label">Patient Email:</span> {{patientEmail}}</p>
+      <p><span class="label">Patient Age:</span> {{patientAge}}</p>
+      <p><span class="label">Date of Birth:</span> {{dateOfBirth}}</p>
+      <p><span class="label">Appointment Date:</span> {{appointmentDate}}</p>
+      <p><span class="label">Time Slot:</span> {{timeSlot}}</p>
+      <p><span class="label">Reason / Notes:</span> {{reason}}</p>
+      <p><span class="label">Medical History:</span> {{medicalHistory}}</p>
     </div>
 
     <div class="button-wrapper">
       <a href="{{dashboardLink}}" class="button">
-        Open Doctor Dashboard
+        View Appointment Details
       </a>
     </div>
 
     <p style="margin-top:30px;">
-      For security reasons, please log in and change your password immediately.
+      Please log in to your dashboard for more details and to manage this appointment.
     </p>
   </div>
 

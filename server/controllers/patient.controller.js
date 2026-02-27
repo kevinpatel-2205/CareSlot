@@ -6,6 +6,7 @@ import Payment from "../models/payment.model.js";
 import razorpayInstance from "../utils/RazorPay.js";
 import { CURRENCY, RAZORPAY_KEY_SECRET } from "../utils/env.js";
 import crypto from "crypto";
+import { sendAppointmentBookedEmailToDoctor } from "../utils/sendEmail.js";
 
 export const getPatientDashboard = async (req, res, next) => {
   try {
@@ -291,6 +292,20 @@ export const bookAppointment = async (req, res, next) => {
       paymentMethod: "cash",
       status: "created",
     });
+    
+    // ! Uncomment after all testing is complete.
+    //  sendAppointmentBookedEmailToDoctor({
+    //   doctorName: isActiveDoctor.name,
+    //   doctorEmail: isActiveDoctor.email,
+    //   patientName: req.user.name,
+    //   patientEmail: req.user.email,
+    //   patientAge: patient.age,
+    //   dateOfBirth: patient.dateOfBirth,
+    //   appointmentDate,
+    //   timeSlot,
+    //   reason: notes,
+    //   medicalHistory: patient.medicalHistory,
+    // });
 
     slot.times = slot.times.filter((t) => t !== timeSlot);
 
