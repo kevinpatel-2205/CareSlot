@@ -20,10 +20,12 @@ function DoctorPatientDetailPage() {
 
   const handleChangeStatus = (appointmentId) => {
     dispatch(changeAppointmentStatus(appointmentId));
+    dispatch(fetchPatientDetails(patientId));
   };
 
   const handleCancelAppointment = (appointmentId) => {
     dispatch(cancelAppointment(appointmentId));
+    dispatch(fetchPatientDetails(patientId));
   };
 
   return (
