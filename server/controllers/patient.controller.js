@@ -191,11 +191,43 @@ export const getDoctorDetails = async (req, res, next) => {
 
 export const bookAppointment = async (req, res, next) => {
   try {
-    const { doctorId, appointmentDate, timeSlot, notes } = req.body;
+    let { doctorId, appointmentDate, timeSlot, notes } = req.body;
+
+    appointmentDate = appointmentDate?.trim();
+    timeSlot = timeSlot?.trim();
+    notes = notes?.trim();
 
     if (!doctorId || !appointmentDate || !timeSlot) {
       res.status(400);
       throw new Error("All required fields must be provided");
+    }
+
+    const selectedDate = new Date(appointmentDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (isNaN(selectedDate.getTime())) {
+      res.status(400);
+      throw new Error("Invalid appointment date");
+    }
+
+    if (selectedDate <= today) {
+      res.status(400);
+      throw new Error("Appointment date must be greater than today");
+    }
+
+    const timeRegex = /^(0[1-9]|1[0-2]):([0-5][0-9])\s?(AM|PM)$/i;
+
+    if (!timeRegex.test(timeSlot)) {
+      res.status(400);
+      throw new Error(
+        "Time must be in proper format like 09:10 AM or 10:30 PM",
+      );
+    }
+
+    if (notes !== undefined && notes === "") {
+      res.status(400);
+      throw new Error("Notes cannot be empty");
     }
 
     const patient = await Patient.findOne({
@@ -229,10 +261,9 @@ export const bookAppointment = async (req, res, next) => {
       res.status(404);
       throw new Error("Doctor is not active");
     }
+
     const slot = doctor.availableSlots.find(
-      (s) =>
-        new Date(s.date).toDateString() ===
-        new Date(appointmentDate).toDateString(),
+      (s) => new Date(s.date).toDateString() === selectedDate.toDateString(),
     );
 
     if (!slot || !slot.times.includes(timeSlot)) {
@@ -243,7 +274,7 @@ export const bookAppointment = async (req, res, next) => {
     const appointment = await Appointment.create({
       doctorId,
       patientId: patient._id,
-      appointmentDate,
+      appointmentDate: selectedDate,
       timeSlot,
       consultationFee: doctor.consultationFee,
       paymentMethod: "cash",
@@ -262,6 +293,13 @@ export const bookAppointment = async (req, res, next) => {
     });
 
     slot.times = slot.times.filter((t) => t !== timeSlot);
+
+    if (slot.times.length === 0) {
+      doctor.availableSlots = doctor.availableSlots.filter(
+        (s) => new Date(s.date).toDateString() !== selectedDate.toDateString(),
+      );
+    }
+
     await doctor.save();
 
     res.status(201).json({
@@ -371,8 +409,13 @@ export const getProfile = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
   try {
-    const { name, phone, dateOfBirth, gender, address, medicalHistory } =
+    let { name, phone, dateOfBirth, gender, address, medicalHistory } =
       req.body;
+
+    name = name?.trim();
+    phone = phone?.trim();
+    address = address?.trim();
+    medicalHistory = medicalHistory?.trim();
 
     const user = await User.findOne({
       _id: req.user._id,
@@ -384,8 +427,29 @@ export const updateProfile = async (req, res, next) => {
       throw new Error("User not found");
     }
 
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
+    if (name !== undefined) {
+      if (name.length < 2 || name.length > 20) {
+        res.status(400);
+        throw new Error("Name must be between 2 and 20 characters");
+      }
+      user.name = name;
+    }
+
+    if (phone !== undefined) {
+      const phoneRegex = /^[0-9]+$/;
+
+      if (!phoneRegex.test(phone)) {
+        res.status(400);
+        throw new Error("Phone number must contain only digits");
+      }
+
+      if (phone.length !== 10) {
+        res.status(400);
+        throw new Error("Phone number must be exactly 10 digits");
+      }
+
+      user.phone = phone;
+    }
 
     await user.save();
 
@@ -395,10 +459,51 @@ export const updateProfile = async (req, res, next) => {
     });
 
     if (patient) {
-      if (dateOfBirth) patient.dateOfBirth = dateOfBirth;
-      if (gender) patient.gender = gender;
-      if (address) patient.address = address;
-      if (medicalHistory) patient.medicalHistory = medicalHistory;
+      if (dateOfBirth !== undefined) {
+        const dob = new Date(dateOfBirth);
+        const today = new Date();
+
+        if (isNaN(dob.getTime())) {
+          res.status(400);
+          throw new Error("Invalid date of birth");
+        }
+
+        if (dob >= today) {
+          res.status(400);
+          throw new Error("Date of birth must be in the past");
+        }
+
+        patient.dateOfBirth = dob;
+      }
+
+      if (gender !== undefined) {
+        const allowedGenders = ["male", "female", "other"];
+
+        if (!allowedGenders.includes(gender.toLowerCase())) {
+          res.status(400);
+          throw new Error("Gender must be male, female, or other");
+        }
+
+        patient.gender = gender.toLowerCase();
+      }
+
+      if (address) {
+        if (address.length < 5) {
+          res.status(400);
+          throw new Error("Address must be at least 5 characters long");
+        }
+
+        patient.address = address;
+      }
+
+      if (medicalHistory !== undefined) {
+        if (medicalHistory === "") {
+          res.status(400);
+          throw new Error("Medical history cannot be empty");
+        }
+
+        patient.medicalHistory = medicalHistory;
+      }
 
       await patient.save();
     }

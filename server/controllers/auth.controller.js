@@ -7,11 +7,46 @@ import { NODE_ENV } from "../utils/env.js";
 
 export const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password, phone } = req.body;
+    let { name, email, password, phone } = req.body;
+
+    name = name?.trim();
+    email = email?.trim();
+    password = password?.trim();
+    phone = phone?.trim();
 
     if (!name || !email || !password) {
       res.status(400);
       throw new Error("All required fields must be provided");
+    }
+
+    if (name.length < 2 || name.length > 20) {
+      res.status(400);
+      throw new Error("Name must be between 2 and 20 characters");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      res.status(400);
+      throw new Error("Invalid email format");
+    }
+
+    if (password.length < 8) {
+      res.status(400);
+      throw new Error("Password must be at least 8 characters");
+    }
+
+    const phoneRegex = /^[0-9]+$/;
+    if (phone) {
+      if (!phoneRegex.test(phone)) {
+        res.status(400);
+        throw new Error("Phone number must contain only digits");
+      }
+
+      if (phone.length !== 10) {
+        res.status(400);
+        throw new Error("Phone number must be exactly 10 digits");
+      }
     }
 
     const userExists = await User.findOne({ email });
@@ -30,6 +65,7 @@ export const registerUser = async (req, res, next) => {
     });
 
     await Patient.create({ userId: user._id });
+
     const token = generateToken(user._id);
 
     res.cookie("token", token, {

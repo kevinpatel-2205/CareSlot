@@ -53,67 +53,6 @@ export const getDoctorDashboard = async (req, res, next) => {
     const totalEarnings =
       earningsData.length > 0 ? earningsData[0].totalEarnings : 0;
 
-    // const monthlyEarnings = await Payment.aggregate([
-    //   {
-    //     $match: {
-    //       doctorId,
-    //       status: "success",
-    //     },
-    //   },
-    //   {
-    //     $group: {
-    //       _id: { $month: "$createdAt" },
-    //       total: { $sum: "$amount" },
-    //     },
-    //   },
-    //   { $sort: { _id: 1 } },
-    // ]);
-
-    // const monthNames = [
-    //   "",
-    //   "Jan",
-    //   "Feb",
-    //   "Mar",
-    //   "Apr",
-    //   "May",
-    //   "Jun",
-    //   "Jul",
-    //   "Aug",
-    //   "Sep",
-    //   "Oct",
-    //   "Nov",
-    //   "Dec",
-    // ];
-
-    // const formattedMonthly = monthlyEarnings.map((item) => ({
-    //   month: monthNames[item._id],
-    //   total: item.total,
-    // }));
-
-    // const paymentDistribution = await Payment.aggregate([
-    //   {
-    //     $match: {
-    //       doctorId,
-    //       status: "success",
-    //     },
-    //   },
-    //   {
-    //     $group: {
-    //       _id: "$paymentMethod",
-    //       total: { $sum: "$amount" },
-    //     },
-    //   },
-    // ]);
-
-    // const formattedPayment = {
-    //   cash: 0,
-    //   razorpay: 0,
-    // };
-
-    // paymentDistribution.forEach((item) => {
-    //   formattedPayment[item._id] = item.total;
-    // });
-
     const monthlyEarnings = await Payment.aggregate([
       {
         $match: {
@@ -150,7 +89,6 @@ export const getDoctorDashboard = async (req, res, next) => {
       "Dec",
     ];
 
-    // Initialize 12 months with 0
     const monthlyData = Array(12)
       .fill()
       .map(() => ({
@@ -183,7 +121,6 @@ export const getDoctorDashboard = async (req, res, next) => {
         totalEarnings,
         appointmentCounts: formattedStatus,
         monthlyEarnings: formattedMonthly,
-        // paymentDistribution: formattedPayment,
       },
     });
   } catch (error) {
@@ -522,9 +459,34 @@ export const addAvailableSlots = async (req, res, next) => {
   try {
     const { date, times } = req.body;
 
-    if (!date || !times || !Array.isArray(times)) {
+    if (!date || !times || !Array.isArray(times) || times.length === 0) {
       res.status(400);
       throw new Error("Date and times are required");
+    }
+
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (isNaN(selectedDate.getTime())) {
+      res.status(400);
+      throw new Error("Invalid date format");
+    }
+
+    if (selectedDate <= today) {
+      res.status(400);
+      throw new Error("Date must be greater than today");
+    }
+
+    const timeRegex = /^(0[1-9]|1[0-2]):([0-5][0-9])\s?(AM|PM)$/i;
+
+    const invalidTime = times.find((time) => !timeRegex.test(time.trim()));
+
+    if (invalidTime) {
+      res.status(400);
+      throw new Error(
+        "Time must be in proper format like 09:10 AM or 10:30 PM",
+      );
     }
 
     const doctor = await Doctor.findOne({
@@ -539,7 +501,7 @@ export const addAvailableSlots = async (req, res, next) => {
 
     const existingSlot = doctor.availableSlots.find(
       (slot) =>
-        new Date(slot.date).toDateString() === new Date(date).toDateString(),
+        new Date(slot.date).toDateString() === selectedDate.toDateString(),
     );
 
     if (existingSlot) {
@@ -550,7 +512,7 @@ export const addAvailableSlots = async (req, res, next) => {
       existingSlot.times.push(...uniqueTimes);
     } else {
       doctor.availableSlots.push({
-        date,
+        date: selectedDate,
         times,
       });
     }
@@ -633,9 +595,45 @@ export const updateDoctorProfile = async (req, res, next) => {
       throw new Error("User not found");
     }
 
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
-    if (isActive !== undefined) user.isActive = isActive;
+    if (name !== undefined) {
+      const trimmedName = name.trim();
+      if (!trimmedName) {
+        res.status(400);
+        throw new Error("Name cannot be empty");
+      }
+      if (trimmedName.length < 2 || trimmedName.length > 20) {
+        res.status(400);
+        throw new Error("Name must be between 2 and 20 characters");
+      }
+      user.name = trimmedName;
+    }
+
+    if (phone !== undefined) {
+      const trimmedPhone = phone.trim();
+
+      if (!trimmedPhone) {
+        res.status(400);
+        throw new Error("Phone cannot be empty");
+      }
+
+      const phoneRegex = /^[0-9]+$/;
+
+      if (!phoneRegex.test(trimmedPhone)) {
+        res.status(400);
+        throw new Error("Phone number must contain only digits");
+      }
+
+      if (trimmedPhone.length !== 10) {
+        res.status(400);
+        throw new Error("Phone number must be exactly 10 digits");
+      }
+
+      user.phone = trimmedPhone;
+    }
+
+    if (isActive !== undefined) {
+      user.isActive = isActive;
+    }
 
     await user.save();
 
@@ -649,10 +647,45 @@ export const updateDoctorProfile = async (req, res, next) => {
       throw new Error("Doctor profile not found");
     }
 
-    if (specialization) doctor.specialization = specialization;
-    if (experience !== undefined) doctor.experience = experience;
-    if (about) doctor.about = about;
-    if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
+    // =========================
+    // DOCTOR VALIDATIONS
+    // =========================
+
+    if (specialization !== undefined) {
+      const trimmedSpecialization = specialization.trim();
+      if (!trimmedSpecialization) {
+        res.status(400);
+        throw new Error("Specialization cannot be empty");
+      }
+      doctor.specialization = trimmedSpecialization;
+    }
+
+    if (experience !== undefined) {
+      if (experience < 1 || experience > 50) {
+        res.status(400);
+        throw new Error("Experience must be between 1 and 50 years");
+      }
+      doctor.experience = experience;
+    }
+
+    if (about !== undefined) {
+      const trimmedAbout = about.trim();
+      if (!trimmedAbout) {
+        res.status(400);
+        throw new Error("About section cannot be empty");
+      }
+      doctor.about = trimmedAbout;
+    }
+
+    if (consultationFee !== undefined) {
+      if (consultationFee <= 100 || consultationFee >= 2000) {
+        res.status(400);
+        throw new Error(
+          "Consultation fee must be greater than 100 and less than 2000",
+        );
+      }
+      doctor.consultationFee = consultationFee;
+    }
 
     await doctor.save();
 

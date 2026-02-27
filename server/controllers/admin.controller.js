@@ -147,6 +147,7 @@ export const createDoctor = async (req, res, next) => {
     name = name?.trim();
     email = email?.trim();
     password = password?.trim();
+    phone = phone?.trim();
     specialization = specialization?.trim();
     about = about?.trim();
 
@@ -154,6 +155,7 @@ export const createDoctor = async (req, res, next) => {
       !name ||
       !email ||
       !password ||
+      !phone ||
       !specialization ||
       experience === undefined ||
       !about ||
@@ -180,6 +182,17 @@ export const createDoctor = async (req, res, next) => {
       throw new Error("Password must be at least 8 characters");
     }
 
+    const phoneRegex = /^[0-9]+$/;
+    if (!phoneRegex.test(phone)) {
+      res.status(400);
+      throw new Error("Phone number must contain only digits");
+    }
+
+    if (phone.length !== 10) {
+      res.status(400);
+      throw new Error("Phone number must be exactly 10 digits");
+    }
+
     if (experience < 1 || experience > 50) {
       res.status(400);
       throw new Error("Experience must be between 1 and 50 years");
@@ -192,18 +205,57 @@ export const createDoctor = async (req, res, next) => {
       );
     }
 
+    if (!Array.isArray(availableSlots) || availableSlots.length === 0) {
+      res.status(400);
+      throw new Error("Available slots must be a non-empty array");
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const isValidSlots = availableSlots.every((slot) => {
-      const slotDate = new Date(slot.date);
-      return slotDate > today;
-    });
+    const timeRegex = /^(0[1-9]|1[0-2]):([0-5][0-9])\s?(AM|PM)$/i;
 
-    if (!isValidSlots) {
-      res.status(400);
-      throw new Error("All available slot dates must be greater than today");
-    }
+    const validatedSlots = availableSlots.map((slot) => {
+      if (!slot.date || !slot.times) {
+        res.status(400);
+        throw new Error("Each slot must contain date and times");
+      }
+
+      const slotDate = new Date(slot.date);
+
+      if (isNaN(slotDate.getTime())) {
+        res.status(400);
+        throw new Error("Invalid date format in available slots");
+      }
+
+      if (slotDate <= today) {
+        res.status(400);
+        throw new Error("All slot dates must be greater than today");
+      }
+
+      if (!Array.isArray(slot.times) || slot.times.length === 0) {
+        res.status(400);
+        throw new Error("Each slot must have a non-empty times array");
+      }
+
+      const trimmedTimes = slot.times.map((time) => time.trim());
+
+      const invalidTime = trimmedTimes.find((time) => !timeRegex.test(time));
+
+      if (invalidTime) {
+        res.status(400);
+        throw new Error(
+          "Time must be in proper format like 09:10 AM or 10:30 PM",
+        );
+      }
+
+      const uniqueTimes = [...new Set(trimmedTimes)];
+
+      return {
+        date: slotDate,
+        times: uniqueTimes,
+      };
+    });
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -226,7 +278,7 @@ export const createDoctor = async (req, res, next) => {
         experience,
         about,
         consultationFee,
-        availableSlots,
+        availableSlots: validatedSlots,
         isApproved: true,
       });
 
