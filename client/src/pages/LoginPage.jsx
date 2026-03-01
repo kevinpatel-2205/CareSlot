@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../store/auth";
-import { toast } from "react-toastify";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -17,13 +16,8 @@ function LoginPage() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-
-    try {
     await dispatch(loginUser(form)).unwrap();
     navigate("/", { replace: true });
-    } catch (err) {
-    toast.error();
-    }
   };
 
   return (

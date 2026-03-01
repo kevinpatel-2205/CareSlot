@@ -148,7 +148,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.profile = null;
-        toast.error(action.payload);
+        // toast.error(action.payload);
       })
 
       .addCase(updateProfileImage.pending, (state) => {

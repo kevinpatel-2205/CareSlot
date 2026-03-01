@@ -5,10 +5,10 @@ import PageLoader from "../components/PageLoader.jsx";
 
 function RoleRedirectPage() {
   const navigate = useNavigate();
-  const { user, loading } = useSelector((state) => state.auth);
+  const { user, isLoading } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!isLoading && user) {
       switch (user.role) {
         case "admin":
           navigate("/admin/dashboard", { replace: true });
@@ -24,10 +24,10 @@ function RoleRedirectPage() {
       }
     }
 
-    if (!loading && !user) {
+    if (!isLoading && !user) {
       navigate("/login", { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, isLoading, navigate]);
 
   return (
     <div className="grid min-h-screen place-items-center">

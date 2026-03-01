@@ -3,9 +3,9 @@ import { Navigate, Outlet } from "react-router-dom";
 import PageLoader from "./PageLoader";
 
 const RoleProtectedRoute = ({ allowedRole }) => {
-  const { user, loading } = useSelector((state) => state.auth);
+  const { user, isLoading } = useSelector((state) => state.auth);
 
-  if (loading) return <PageLoader />;
+  if (isLoading) return <PageLoader />;
 
   if (!user) {
     return <Navigate to="/login" replace />;

@@ -34,9 +34,9 @@ import PatientDoctorDetailPage from "../pages/patient/PatientDoctorDetailPage.js
 import PatientProfilePage from "../pages/patient/PatientProfilePage.jsx";
 
 const AppRoutes = () => {
-  const { user, loading } = useSelector((state) => state.auth);
+  const { user, isLoading } = useSelector((state) => state.auth);
 
-  if (loading) return <PageLoader />;
+  if (isLoading) return <PageLoader />;
 
   return (
     <Routes>
