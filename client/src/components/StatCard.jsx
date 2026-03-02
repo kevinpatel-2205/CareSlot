@@ -4,6 +4,7 @@ function StatCard({ icon: Icon, title, value, note, tone = "blue" }) {
     mint: "from-[#e4f9f5] to-[#cff5ec] text-[#149e82]",
     amber: "from-[#fff2de] to-[#ffe8c5] text-[#cb7a14]",
     violet: "from-[#ece7ff] to-[#ddd4ff] text-[#7055d8]",
+    rose: "from-[#ffe6e9] to-[#ffd6dc] text-[#d6455d]",
   };
 
   return (

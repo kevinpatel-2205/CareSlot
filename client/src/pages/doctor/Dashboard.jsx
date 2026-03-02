@@ -43,7 +43,7 @@ function DoctorDashboardPage() {
         Doctor Dashboard
       </h2>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
         <StatCard
           icon={Users}
           title="Total Patients"
@@ -74,6 +74,13 @@ function DoctorDashboardPage() {
           value={formatMoney(dashboard?.totalEarnings || 0)}
           note="All time"
           tone="amber"
+        />
+        <StatCard
+          icon={DollarSign}
+          title="Admin Commission"
+          value={formatMoney(dashboard?.totalCommission || 0)}
+          note="All time"
+          tone="rose"
         />
       </div>
 

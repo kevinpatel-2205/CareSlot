@@ -91,7 +91,21 @@ function DoctorPatientDetailPage() {
                 </td>
                 <td className="px-4 py-3">{apt.paymentStatus}</td>
                 <td className="px-4 py-3">{apt.paymentMethod}</td>
-                <td className="px-4 py-3">{apt.consultationFee}</td>
+                {/* <td className="px-4 py-3">{apt.consultationFee}</td> */}
+                <td className="px-4 py-3">
+                  <div className="flex flex-col">
+                    {/* Main Fee */}
+                    <span className="font-semibold text-[#1c3f7a]">
+                      ₹{apt.consultationFee}
+                    </span>
+
+                    {/* Admin Commission */}
+                    <span className="text-xs text-gray-500">
+                      Admin:{" "}
+                      {apt.adminCommission ? `₹${apt.adminCommission}` : "-"}
+                    </span>
+                  </div>
+                </td>
                 <td className="px-4 py-3">{apt.notes || "--"}</td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-2">
