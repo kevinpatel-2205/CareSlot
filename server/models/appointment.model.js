@@ -49,6 +49,11 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
     },
 
+    adminCommission: {
+      type: Number,
+      default: 0,
+    },
+
     notes: {
       type: String,
       maxlength: 1000,

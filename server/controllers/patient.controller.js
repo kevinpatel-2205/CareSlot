@@ -292,20 +292,19 @@ export const bookAppointment = async (req, res, next) => {
       paymentMethod: "cash",
       status: "created",
     });
-    
-    // ! Uncomment after all testing is complete.
-    //  sendAppointmentBookedEmailToDoctor({
-    //   doctorName: isActiveDoctor.name,
-    //   doctorEmail: isActiveDoctor.email,
-    //   patientName: req.user.name,
-    //   patientEmail: req.user.email,
-    //   patientAge: patient.age,
-    //   dateOfBirth: patient.dateOfBirth,
-    //   appointmentDate,
-    //   timeSlot,
-    //   reason: notes,
-    //   medicalHistory: patient.medicalHistory,
-    // });
+
+    sendAppointmentBookedEmailToDoctor({
+      doctorName: isActiveDoctor.name,
+      doctorEmail: isActiveDoctor.email,
+      patientName: req.user.name,
+      patientEmail: req.user.email,
+      patientAge: patient.age,
+      dateOfBirth: patient.dateOfBirth,
+      appointmentDate,
+      timeSlot,
+      reason: notes,
+      medicalHistory: patient.medicalHistory,
+    });
 
     slot.times = slot.times.filter((t) => t !== timeSlot);
 
@@ -629,10 +628,31 @@ export const verifyRazorpay = async (req, res, next) => {
     payment.status = "success";
     await payment.save();
 
-    await Appointment.findByIdAndUpdate(payment.appointmentId, {
-      paymentStatus: "paid",
-      status: "confirmed",
-    });
+    const appointment = await Appointment.findById(payment.appointmentId);
+
+    if (!appointment) {
+      res.status(404);
+      throw new Error("Appointment not found");
+    }
+
+    const fee = appointment.consultationFee;
+    let commissionPercent = 0;
+
+    if (fee < 500) {
+      commissionPercent = 20;
+    } else if (fee < 1000) {
+      commissionPercent = 15;
+    } else if (fee < 2000) {
+      commissionPercent = 10;
+    } else {
+      commissionPercent = 5;
+    }
+
+    appointment.paymentStatus = "paid";
+    appointment.status = "confirmed";
+    appointment.adminCommission = (fee * commissionPercent) / 100;
+
+    await appointment.save();
 
     res.json({
       success: true,

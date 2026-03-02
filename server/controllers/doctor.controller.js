@@ -53,6 +53,25 @@ export const getDoctorDashboard = async (req, res, next) => {
     const totalEarnings =
       earningsData.length > 0 ? earningsData[0].totalEarnings : 0;
 
+    const commissionData = await Appointment.aggregate([
+      {
+        $match: {
+          doctorId,
+          isDeleted: false,
+          status: { $in: ["confirmed", "completed"] },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCommission: { $sum: "$adminCommission" },
+        },
+      },
+    ]);
+
+    const totalAdminCommission =
+      commissionData.length > 0 ? commissionData[0].totalCommission : 0;
+
     const monthlyEarnings = await Payment.aggregate([
       {
         $match: {
@@ -121,6 +140,7 @@ export const getDoctorDashboard = async (req, res, next) => {
         totalEarnings,
         appointmentCounts: formattedStatus,
         monthlyEarnings: formattedMonthly,
+        totalAdminCommission,
       },
     });
   } catch (error) {
@@ -224,6 +244,21 @@ export const changeAppointmentStatus = async (req, res, next) => {
 
     if (appointment.status === "pending") {
       appointment.status = "confirmed";
+
+      const fee = appointment.consultationFee;
+      let commissionPercent = 0;
+
+      if (fee < 500) {
+        commissionPercent = 20;
+      } else if (fee < 1000) {
+        commissionPercent = 15;
+      } else if (fee < 2000) {
+        commissionPercent = 10;
+      } else {
+        commissionPercent = 5;
+      }
+
+      appointment.adminCommission = (fee * commissionPercent) / 100;
     } else if (appointment.status === "confirmed") {
       appointment.status = "completed";
       appointment.paymentStatus = "paid";
@@ -407,7 +442,7 @@ export const getDoctorPatientDetails = async (req, res, next) => {
       isDeleted: false,
     })
       .select(
-        "_id patientId appointmentDate timeSlot status paymentStatus paymentMethod consultationFee notes",
+        "_id patientId appointmentDate timeSlot status paymentStatus paymentMethod consultationFee adminCommission notes",
       )
       .sort({ appointmentDate: -1 })
       .lean();
