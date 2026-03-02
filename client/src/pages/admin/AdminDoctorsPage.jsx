@@ -38,13 +38,14 @@ function AdminDoctorsPage() {
               <th className="px-4 py-3">Doctor</th>
               <th className="px-4 py-3">Specialization</th>
               <th className="px-4 py-3">Experience</th>
+              <th className="px-4 py-3">Total Commission</th>
               <th className="px-4 py-3">Active/Deactive</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td className="px-4 py-5 text-[#6b87b8]" colSpan={4}>
+                <td className="px-4 py-5 text-[#6b87b8]" colSpan={5}>
                   Loading doctors...
                 </td>
               </tr>
@@ -74,8 +75,12 @@ function AdminDoctorsPage() {
                   </td>
 
                   <td className="px-4 py-3">{doc.specialization}</td>
-
-                  <td className="px-4 py-3">{doc.experience}</td>
+                  <td className="px-4 py-3">{doc.experience} yrs</td>
+                  <td className="px-4 py-3">
+                    <span className="font-semibold text-[#1c3f7a]">
+                      ₹{doc.totalCommission || 0}
+                    </span>
+                  </td>
 
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
@@ -110,7 +115,7 @@ function AdminDoctorsPage() {
               ))
             ) : (
               <tr>
-                <td className="px-4 py-5 text-[#6b87b8]" colSpan={4}>
+                <td className="px-4 py-5 text-[#6b87b8]" colSpan={5}>
                   No doctors found.
                 </td>
               </tr>

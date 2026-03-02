@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { ShieldCheck, Users } from "lucide-react";
+import { ShieldCheck, Users, DollarSign } from "lucide-react";
 
 import StatCard from "../../components/StatCard";
 import AppointmentsBarChart from "../../components/charts/AppointmentsBarChart";
@@ -29,7 +29,7 @@ function Dashboard() {
       </h2>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <StatCard
           icon={ShieldCheck}
           title="Total Doctors"
@@ -43,6 +43,13 @@ function Dashboard() {
           value={dashboard?.totalPatients || 0}
           note="Registered Patient"
           tone="mint"
+        />
+        <StatCard
+          icon={DollarSign}
+          title="Admin Commission"
+          value={formatMoney(dashboard?.totalCommission || 0)}
+          note="All time"
+          tone="rose"
         />
       </div>
 

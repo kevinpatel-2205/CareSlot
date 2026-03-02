@@ -115,6 +115,24 @@ export const getAdminDashboard = async (req, res, next) => {
       { $sort: { _id: 1 } },
     ]);
 
+    const commissionData = await Appointment.aggregate([
+      {
+        $match: {
+          status: { $in: ["confirmed", "completed"] },
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCommission: { $sum: "$adminCommission" },
+        },
+      },
+    ]);
+
+    const totalCommission =
+      commissionData.length > 0 ? commissionData[0].totalCommission : 0;
+
     res.status(200).json({
       success: true,
       data: {
@@ -123,6 +141,7 @@ export const getAdminDashboard = async (req, res, next) => {
         topEarningDoctors,
         topBookedDoctors,
         monthlyAppointments,
+        totalCommission,
       },
     });
   } catch (error) {
@@ -319,6 +338,26 @@ export const getAllDoctors = async (req, res, next) => {
       })
       .select("specialization experience");
 
+    const commissionData = await Appointment.aggregate([
+      {
+        $match: {
+          status: { $in: ["confirmed", "completed"] },
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$doctorId",
+          totalCommission: { $sum: "$adminCommission" },
+        },
+      },
+    ]);
+
+    const commissionMap = {};
+    commissionData.forEach((item) => {
+      commissionMap[item._id.toString()] = item.totalCommission;
+    });
+
     const formattedDoctors = doctors.map((doc) => ({
       doctorId: doc._id,
       name: doc.userId?.name,
@@ -328,6 +367,7 @@ export const getAllDoctors = async (req, res, next) => {
       isActive: doc.userId?.isActive,
       specialization: doc.specialization,
       experience: doc.experience,
+      totalCommission: commissionMap[doc._id.toString()] || 0,
     }));
 
     res.status(200).json({
@@ -545,7 +585,7 @@ export const getAllAppointments = async (req, res, next) => {
           select: "name",
         },
       })
-      .select("appointmentDate timeSlot status")
+      .select("appointmentDate timeSlot status adminCommission")
       .sort({ appointmentDate: -1, timeSlot: 1 });
 
     const formattedAppointments = appointments.map((appt) => ({
@@ -555,6 +595,7 @@ export const getAllAppointments = async (req, res, next) => {
       appointmentDate: appt.appointmentDate,
       timeSlot: appt.timeSlot,
       status: appt.status,
+      adminCommission: appt.adminCommission,
     }));
 
     res.status(200).json({

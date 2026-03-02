@@ -78,7 +78,7 @@ function DoctorDashboardPage() {
         <StatCard
           icon={DollarSign}
           title="Admin Commission"
-          value={formatMoney(dashboard?.totalCommission || 0)}
+          value={formatMoney(dashboard?.totalAdminCommission || 0)}
           note="All time"
           tone="rose"
         />

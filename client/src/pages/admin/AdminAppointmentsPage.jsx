@@ -41,6 +41,7 @@ function AdminAppointmentsPage() {
               <th className="px-4 py-3">Doctor</th>
               <th className="px-4 py-3">Date</th>
               <th className="px-4 py-3">Time</th>
+              <th className="px-4 py-3">Commission</th>
               <th className="px-4 py-3">Status</th>
             </tr>
           </thead>
@@ -60,6 +61,13 @@ function AdminAppointmentsPage() {
                   {item.time || item.timeSlot || "--"}
                 </td>
                 <td className="px-4 py-3">
+                  <span className="text-sm font-semibold text-gray-700">
+                    {item.adminCommission && item.adminCommission > 0
+                      ? `₹${item.adminCommission}`
+                      : "-"}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
                   <span
                     className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${statusTone(
                       item.status,
@@ -73,7 +81,7 @@ function AdminAppointmentsPage() {
 
             {!appointments.length ? (
               <tr>
-                <td className="px-4 py-5 text-[#6b87b8]" colSpan={5}>
+                <td className="px-4 py-5 text-[#6b87b8]" colSpan={6}>
                   No appointments found.
                 </td>
               </tr>
