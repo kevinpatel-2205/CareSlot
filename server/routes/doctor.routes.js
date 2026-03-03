@@ -27,6 +27,6 @@ router.get("/availableSlots", getAvailableSlots);
 router.post("/addAvailableSlots", addAvailableSlots);
 router.get("/profile", getDoctorProfile);
 router.put("/updateProfile", updateDoctorProfile);
-router.get("/doctor/export-excel", exportDoctorExcel);
+router.get("/export-excel", exportDoctorExcel);
 
 export default router;

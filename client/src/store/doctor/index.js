@@ -159,8 +159,6 @@ export const exportDoctorExcel = createAsyncThunk(
       const response = await axiosInstance.get("/doctor/export-excel", {
         responseType: "blob",
       });
-
-      console.log("1");
       
       const url = window.URL.createObjectURL(new Blob([response.data]));
 
