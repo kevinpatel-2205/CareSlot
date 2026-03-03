@@ -1,4 +1,4 @@
-import { DollarSign, NotebookTabs, Users } from "lucide-react";
+import { DollarSign, FileSpreadsheet, NotebookTabs, Users } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,6 +11,7 @@ import {
   fetchDoctorDashboard,
   fetchUpcomingAppointments,
   fetchDoctorPatients,
+  exportDoctorExcel,
 } from "../../store/doctor";
 
 import { formatDate, formatMoney, statusTone } from "../../lib/format.js";
@@ -39,9 +40,26 @@ function DoctorDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="font-['Averia_Serif_Libre'] text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-        Doctor Dashboard
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-['Averia_Serif_Libre'] text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-[#1a3f7b]">
+          Doctor Dashboard
+        </h2>
+
+        <button
+          onClick={() => dispatch(exportDoctorExcel())}
+          className="group flex items-center justify-center gap-2  rounded-2xl border border-[#d8e4ff] bg-white/50 backdrop-blur-md px-3 py-3 sm:px-5 text-[#1a3f7b] shadow-sm transition-all duration-300 hover:bg-green-100 hover:border-green-300 hover:shadow-md active:scale-95"
+        >
+          <FileSpreadsheet
+            size={20}
+            className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
+          />
+
+          {/* Hide text on mobile */}
+          <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
+            Export Excel
+          </span>
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
         <StatCard

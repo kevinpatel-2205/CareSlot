@@ -152,6 +152,34 @@ export const updateDoctorProfile = createAsyncThunk(
   },
 );
 
+export const exportDoctorExcel = createAsyncThunk(
+  "doctor/exportExcel",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/doctor/export-excel", {
+        responseType: "blob",
+      });
+
+      console.log("1");
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "doctor-data.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to download excel",
+      );
+    }
+  },
+);
+
 const doctorSlice = createSlice({
   name: "doctor",
   initialState,
@@ -301,6 +329,18 @@ const doctorSlice = createSlice({
         toast.success(action.payload.message);
       })
       .addCase(updateDoctorProfile.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(exportDoctorExcel.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(exportDoctorExcel.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Excel downloaded successfully");
+      })
+      .addCase(exportDoctorExcel.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       });

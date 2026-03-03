@@ -3,6 +3,7 @@ import Payment from "../models/payment.model.js";
 import Doctor from "../models/doctor.model.js";
 import Patient from "../models/patient.model.js";
 import User from "../models/user.model.js";
+import ExcelJS from "exceljs";
 
 export const getDoctorDashboard = async (req, res, next) => {
   try {
@@ -728,6 +729,205 @@ export const updateDoctorProfile = async (req, res, next) => {
       success: true,
       message: "Doctor profile updated successfully",
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportDoctorExcel = async (req, res, next) => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+
+    const headerStyle = {
+      font: { bold: true },
+      alignment: { vertical: "middle", horizontal: "center" },
+      border: {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      },
+      fill: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFD9E1F2" },
+      },
+    };
+
+    const dataBorder = {
+      border: {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      },
+    };
+
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    const doctorId = doctor._id;
+
+    const appointmentSheet = workbook.addWorksheet("Appointments");
+
+    appointmentSheet.addRow([
+      "No",
+      "Patient Name",
+      "Patient Email",
+      "Date",
+      "Time",
+      "Status",
+      "Note",
+      "Fee",
+      "Commission",
+    ]);
+
+    appointmentSheet
+      .getRow(1)
+      .eachCell((cell) => Object.assign(cell, headerStyle));
+
+    const appointments = await Appointment.find({
+      doctorId,
+      isDeleted: false,
+    })
+      .populate({
+        path: "patientId",
+        populate: { path: "userId" },
+      })
+      .lean();
+
+    let index = 1;
+
+    for (const a of appointments) {
+      const row = appointmentSheet.addRow([
+        index++,
+        a.patientId?.userId?.name,
+        a.patientId?.userId?.email,
+        a.appointmentDate,
+        a.timeSlot,
+        a.status,
+        a.notes,
+        a.consultationFee,
+        a.adminCommission,
+      ]);
+
+      row.eachCell((cell) => Object.assign(cell, dataBorder));
+    }
+
+    const patientSheet = workbook.addWorksheet("Patients");
+
+    patientSheet.addRow([
+      "No",
+      "Name",
+      "Email",
+      "Gender",
+      "DOB",
+      "Total Appointment",
+      "Total Pay",
+      "Address",
+      "Medical History",
+      "Created At",
+    ]);
+
+    patientSheet.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
+
+    const patients = await Appointment.aggregate([
+      {
+        $match: {
+          doctorId,
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$patientId",
+          totalAppointments: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "patients",
+          localField: "_id",
+          foreignField: "_id",
+          as: "patient",
+        },
+      },
+      { $unwind: "$patient" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "patient.userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $project: {
+          patientId: "$_id",
+          totalAppointments: 1,
+          name: "$user.name",
+          email: "$user.email",
+          gender: "$patient.gender",
+          dateOfBirth: "$patient.dateOfBirth",
+          address: "$patient.address",
+          medicalHistory: "$patient.medicalHistory",
+        },
+      },
+    ]);
+
+    index = 1;
+
+    for (const p of patients) {
+      const payments = await Payment.aggregate([
+        {
+          $match: {
+            patientId: p.patientId,
+            status: "success",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalPay: { $sum: "$amount" },
+          },
+        },
+      ]);
+
+      const totalPay = payments.length > 0 ? payments[0].totalPay : 0;
+
+      const row = patientSheet.addRow([
+        index++,
+        p.name,
+        p.email,
+        p.gender,
+        p.dateOfBirth,
+        p.totalAppointments,
+        totalPay,
+        p.address,
+        p.medicalHistory,
+        doctor.createdAt,
+      ]);
+
+      row.eachCell((cell) => Object.assign(cell, dataBorder));
+    }
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=doctor-data.xlsx",
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (error) {
     next(error);
   }
