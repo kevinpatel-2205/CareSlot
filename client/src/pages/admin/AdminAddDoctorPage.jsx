@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createDoctor } from "../../store/admin";
 import { SPECIALIZATIONS } from "../../config/specializations.js";
+import { UserPlus } from "lucide-react";
 
 function AdminAddDoctorPage() {
   const dispatch = useDispatch();
@@ -266,8 +267,9 @@ function AdminAddDoctorPage() {
         <button
           type="submit"
           disabled={!canSubmit || loading}
-          className="mt-4 h-12 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white disabled:opacity-60"
+          className="mt-4 flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white disabled:opacity-60"
         >
+          <UserPlus className="w-5 h-5 text-white" />
           {loading ? "Creating..." : "Create Doctor"}
         </button>
       </form>

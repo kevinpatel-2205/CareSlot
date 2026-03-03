@@ -1,4 +1,4 @@
-import { MapPin, Search, Stethoscope } from "lucide-react";
+import { Info, MapPin, Search, Stethoscope, UserLock } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -105,15 +105,17 @@ function PatientBookDoctorsPage() {
             {doctor.isActive ? (
               <Link
                 to={`/patient/doctors/${doctor.doctorId}`}
-                className="mt-5 block rounded-xl border border-[#2d7cf2] bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-3 py-2 text-center font-semibold text-white"
+                className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-[#2d7cf2] bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-3 py-2 font-semibold text-white"
               >
-                Book Appointment
+                Doctor Detail
+                <Info className="w-4 h-4 text-white" />
               </Link>
             ) : (
               <button
                 disabled
-                className="mt-5 block w-full cursor-not-allowed rounded-xl border border-slate-300 bg-slate-200 px-3 py-2 text-center font-semibold text-slate-600"
+                className="mt-5 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-200 px-3 py-2 font-semibold text-slate-600"
               >
+                <UserLock className="w-4 h-4 text-slate-600" />
                 Booking Disabled
               </button>
             )}

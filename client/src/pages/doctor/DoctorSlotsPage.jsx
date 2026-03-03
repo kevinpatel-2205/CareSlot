@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAvailableSlots, addAvailableSlots } from "../../store/doctor";
 import { formatDate } from "../../lib/format.js";
+import { ClockPlus } from "lucide-react";
 
 function DoctorSlotsPage() {
   const dispatch = useDispatch();
@@ -65,9 +66,10 @@ function DoctorSlotsPage() {
 
           <button
             type="submit"
-            className="h-12 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white"
+            className="flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white"
           >
             Add
+            <ClockPlus className="w-5 h-5 text-white" />
           </button>
         </div>
       </form>

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDoctorPatients } from "../../store/doctor";
+import { Info } from "lucide-react";
 
 function DoctorPatientsPage() {
   const dispatch = useDispatch();
@@ -54,9 +55,10 @@ function DoctorPatientsPage() {
                 <td className="px-4 py-3">
                   <Link
                     to={`/doctor/patients/${item.patientId}`}
-                    className="rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-sm font-semibold text-[#345eaa]"
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-sm font-semibold text-[#345eaa]"
                   >
                     View Details
+                    <Info className="w-4 h-4 text-[#345eaa]" />
                   </Link>
                 </td>
               </tr>
@@ -64,10 +66,7 @@ function DoctorPatientsPage() {
 
             {!patients.length ? (
               <tr>
-                <td
-                  className="px-4 py-5 text-[#6b87b8]"
-                  colSpan={4}
-                >
+                <td className="px-4 py-5 text-[#6b87b8]" colSpan={4}>
                   No patients found.
                 </td>
               </tr>

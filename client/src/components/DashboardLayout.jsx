@@ -12,6 +12,7 @@ import {
   Stethoscope,
   Users,
   X,
+  UserRoundCog,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -226,14 +227,18 @@ function DashboardLayout({ navItems, roleLabel }) {
                     <div className="absolute right-0 top-11 z-30 w-44 rounded-xl border border-[#d3e0fb] bg-white p-2 shadow-soft">
                       <button
                         onClick={goProfile}
-                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[#3b5f99] hover:bg-[#eef4ff]"
+                        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold text-[#3b5f99] hover:bg-[#eef4ff]"
                       >
-                        Profile
+                        <span className="flex items-center gap-2">
+                          <UserRoundCog className="w-4 h-4 text-[#3b5f99]" />
+                          Profile
+                        </span>
                       </button>
                       <button
                         onClick={onLogout}
-                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50"
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50"
                       >
+                        <LogOut className="w-4 h-4 text-rose-600" />
                         Logout
                       </button>
                     </div>

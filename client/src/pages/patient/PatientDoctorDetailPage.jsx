@@ -1,11 +1,13 @@
-import { CalendarDays, Clock3, NotebookText } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardClock,
+  Clock3,
+  NotebookText,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchDoctorDetails,
-  bookAppointment,
-} from "../../store/patient";
+import { fetchDoctorDetails, bookAppointment } from "../../store/patient";
 import { formatMoney } from "../../lib/format.js";
 
 function PatientDoctorDetailPage() {
@@ -208,8 +210,9 @@ function PatientDoctorDetailPage() {
             <button
               type="submit"
               disabled={!doctor?.isActive}
-              className="h-12 w-full rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] text-lg font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] text-lg font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
+              <ClipboardClock className="w-5 h-5 text-white" />
               Book Appointment
             </button>
           </form>

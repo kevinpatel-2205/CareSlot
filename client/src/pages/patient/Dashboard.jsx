@@ -1,4 +1,4 @@
-import { CalendarClock, CheckCircle2, NotebookTabs } from "lucide-react";
+import { BookX, CalendarClock, CheckCircle2, NotebookTabs } from "lucide-react";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import StatCard from "../../components/StatCard.jsx";
@@ -43,6 +43,7 @@ function PatientDashboardPage() {
           tone="violet"
         />
         <StatCard
+          icon={BookX}
           title="Cancelled"
           value={dashboard?.cancelledBookings || 0}
           note="Cancelled bookings"
