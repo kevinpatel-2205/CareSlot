@@ -10,7 +10,6 @@ function AdminAddDoctorPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    password: "",
     phone: "",
     specialization: "",
     experience: "",
@@ -24,7 +23,6 @@ function AdminAddDoctorPage() {
     return (
       form.name &&
       form.email &&
-      form.password &&
       form.specialization &&
       form.experience !== "" &&
       form.about &&
@@ -74,7 +72,6 @@ function AdminAddDoctorPage() {
       createDoctor({
         name: form.name,
         email: form.email,
-        password: form.password,
         phone: form.phone,
         specialization: form.specialization,
         experience: Number(form.experience),
@@ -87,7 +84,6 @@ function AdminAddDoctorPage() {
         setForm({
           name: "",
           email: "",
-          password: "",
           phone: "",
           specialization: "",
           experience: "",
@@ -128,19 +124,6 @@ function AdminAddDoctorPage() {
               type="email"
               value={form.email}
               onChange={(e) => onChange("email", e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Password *
-            </span>
-            <input
-              className="soft-input"
-              type="password"
-              value={form.password}
-              onChange={(e) => onChange("password", e.target.value)}
               required
             />
           </label>

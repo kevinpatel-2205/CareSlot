@@ -155,7 +155,6 @@ export const createDoctor = async (req, res, next) => {
     let {
       name,
       email,
-      password,
       phone,
       specialization,
       experience,
@@ -166,10 +165,26 @@ export const createDoctor = async (req, res, next) => {
 
     name = name?.trim();
     email = email?.trim();
-    password = password?.trim();
     phone = phone?.trim();
     specialization = specialization?.trim();
     about = about?.trim();
+
+    function generatePassword() {
+      const chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+
+      let password;
+      do {
+        password = Array.from(
+          { length: Math.floor(Math.random() * 5) + 8 },
+          () => chars[Math.floor(Math.random() * chars.length)],
+        ).join("");
+      } while (password.length < 8 || password.length > 12);
+
+      return password;
+    }
+    let password = generatePassword();
+    console.log(generatePassword());
 
     if (
       !name ||
