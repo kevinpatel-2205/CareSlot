@@ -12,6 +12,7 @@ import {
   getDoctorProfile,
   updateDoctorProfile,
   exportDoctorExcel,
+  deleteAvailableSlot,
 } from "../controllers/doctor.controller.js";
 
 const router = express.Router();
@@ -27,6 +28,7 @@ router.get("/availableSlots", getAvailableSlots);
 router.post("/addAvailableSlots", addAvailableSlots);
 router.get("/profile", getDoctorProfile);
 router.put("/updateProfile", updateDoctorProfile);
+router.delete("/slots/:date", deleteAvailableSlot);
 router.get("/export-excel", exportDoctorExcel);
 
 export default router;

@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAvailableSlots, addAvailableSlots } from "../../store/doctor";
+import {
+  fetchAvailableSlots,
+  addAvailableSlots,
+  deleteAvailableSlot,
+} from "../../store/doctor";
 import { formatDate } from "../../lib/format.js";
 import { ClockPlus } from "lucide-react";
 
@@ -85,15 +89,24 @@ function DoctorSlotsPage() {
                 {formatDate(slot.date)}
               </p>
 
-              <div className="mt-2 flex flex-wrap gap-2">
-                {(slot.times || []).map((time) => (
-                  <span
-                    key={time}
-                    className="rounded-full border border-[#c6d8fc] bg-[#eff4ff] px-3 py-1 text-xs font-semibold text-[#335eaa]"
-                  >
-                    {time}
-                  </span>
-                ))}
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap gap-2">
+                  {(slot.times || []).map((time) => (
+                    <span
+                      key={time}
+                      className="rounded-full border border-[#c6d8fc] bg-[#eff4ff] px-3 py-1 text-xs font-semibold text-[#335eaa]"
+                    >
+                      {time}
+                    </span>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => dispatch(deleteAvailableSlot(slot.date))}
+                  className="whitespace-nowrap rounded-xl border border-[#f3b8c3] bg-white px-5 py-2 text-sm font-semibold text-[#d83b5a] shadow-sm hover:bg-[#fff7f9]"
+                >
+                  Delete
+                </button>
               </div>
             </article>
           ))}

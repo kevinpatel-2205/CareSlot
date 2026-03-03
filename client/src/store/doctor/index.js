@@ -152,6 +152,18 @@ export const updateDoctorProfile = createAsyncThunk(
   },
 );
 
+export const deleteAvailableSlot = createAsyncThunk(
+  "doctor/deleteSlot",
+  async (date, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.delete(`/doctor/slots/${date}`);      
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
 export const exportDoctorExcel = createAsyncThunk(
   "doctor/exportExcel",
   async (_, { rejectWithValue }) => {
@@ -159,7 +171,7 @@ export const exportDoctorExcel = createAsyncThunk(
       const response = await axiosInstance.get("/doctor/export-excel", {
         responseType: "blob",
       });
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
 
       const link = document.createElement("a");
@@ -340,6 +352,14 @@ const doctorSlice = createSlice({
       })
       .addCase(exportDoctorExcel.rejected, (state, action) => {
         state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(deleteAvailableSlot.fulfilled, (state, action) => {
+        state.availableSlots = action.payload.data;
+        toast.success(action.payload.message);
+      })
+      .addCase(deleteAvailableSlot.rejected, (state, action) => {
         toast.error(action.payload);
       });
   },

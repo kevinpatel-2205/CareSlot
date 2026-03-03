@@ -734,6 +734,49 @@ export const updateDoctorProfile = async (req, res, next) => {
   }
 };
 
+export const deleteAvailableSlot = async (req, res, next) => {
+  try {
+    const { date } = req.params;
+
+    if (!date) {
+      res.status(400);
+      throw new Error("Date is required");
+    }
+
+    const selectedDate = new Date(date);
+
+    if (isNaN(selectedDate.getTime())) {
+      res.status(400);
+      throw new Error("Invalid date format");
+    }
+
+    const doctor = await Doctor.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    doctor.availableSlots = doctor.availableSlots.filter(
+      (slot) =>
+        new Date(slot.date).toDateString() !== selectedDate.toDateString()
+    );
+
+    await doctor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Slot deleted successfully",
+      data: doctor.availableSlots,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const exportDoctorExcel = async (req, res, next) => {
   try {
     const workbook = new ExcelJS.Workbook();
