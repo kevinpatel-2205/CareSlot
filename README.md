@@ -161,6 +161,7 @@ User → React Frontend → Express API → MongoDB Database
 * Analytics charts
 * Top 5 highest earning doctors
 * Top 5 most booked doctors
+* Show its Commission
 
 ### ✅ Doctor Management
 

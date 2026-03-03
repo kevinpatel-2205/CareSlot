@@ -4,6 +4,7 @@ import Patient from "../models/patient.model.js";
 import Appointment from "../models/appointment.model.js";
 import Payment from "../models/payment.model.js";
 import { sendDoctorEmail } from "../utils/sendEmail.js";
+import ExcelJS from "exceljs";
 
 export const getAdminDashboard = async (req, res, next) => {
   try {
@@ -603,6 +604,311 @@ export const getAllAppointments = async (req, res, next) => {
       total: formattedAppointments.length,
       data: formattedAppointments,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportAdminDataToExcel = async (req, res, next) => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+
+    const headerStyle = {
+      font: { bold: true },
+      alignment: { vertical: "middle", horizontal: "center" },
+      border: {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      },
+      fill: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFD9E1F2" },
+      },
+    };
+
+    const dataBorder = {
+      border: {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      },
+    };
+
+    const metaSheet = workbook.addWorksheet("Dashboard_Meta");
+
+    const totalDoctors = await Doctor.countDocuments({ isDeleted: false });
+    const totalPatients = await Patient.countDocuments({ isDeleted: false });
+    const totalAppointments = await Appointment.countDocuments({
+      isDeleted: false,
+    });
+
+    const commissionData = await Appointment.aggregate([
+      {
+        $match: {
+          status: { $in: ["confirmed", "completed"] },
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCommission: { $sum: "$adminCommission" },
+        },
+      },
+    ]);
+
+    const totalCommission =
+      commissionData.length > 0 ? commissionData[0].totalCommission : 0;
+
+    const metaHeaders = [
+      "Total Doctors",
+      "Total Patients",
+      "Total Appointments",
+      "Total Commission",
+    ];
+
+    const metaValues = [
+      totalDoctors,
+      totalPatients,
+      totalAppointments,
+      totalCommission,
+    ];
+
+    metaSheet.addRow(metaHeaders);
+    metaSheet.addRow(metaValues);
+
+    metaSheet.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
+    metaSheet.getRow(2).eachCell((cell) => Object.assign(cell, dataBorder));
+
+    const doctorSheet = workbook.addWorksheet("Doctors");
+
+    doctorSheet.addRow([
+      "No",
+      "Name",
+      "Email",
+      "Phone",
+      "Specialization",
+      "Experience",
+      "Consultation Fee",
+      "Total Appointment",
+      "Total Patient",
+      "Total Commission",
+      "Total Earning",
+      "Approved",
+      "Created At",
+    ]);
+
+    doctorSheet.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
+
+    const doctors = await Doctor.find({ isDeleted: false }).populate("userId");
+
+    let index = 1;
+
+    for (const doc of doctors) {
+      const appointments = await Appointment.find({
+        doctorId: doc._id,
+        isDeleted: false,
+      });
+
+      const completedAppointments = appointments.filter((a) =>
+        ["confirmed", "completed"].includes(a.status),
+      );
+
+      const totalEarning = completedAppointments.reduce(
+        (sum, a) => sum + a.consultationFee,
+        0,
+      );
+
+      const totalCommission = completedAppointments.reduce(
+        (sum, a) => sum + a.adminCommission,
+        0,
+      );
+
+      const uniquePatients = new Set(
+        appointments.map((a) => a.patientId.toString()),
+      );
+
+      const row = doctorSheet.addRow([
+        index++,
+        doc.userId?.name,
+        doc.userId?.email,
+        doc.userId?.phone,
+        doc.specialization,
+        doc.experience,
+        doc.consultationFee,
+        appointments.length,
+        uniquePatients.size,
+        totalCommission,
+        totalEarning,
+        doc.isApproved,
+        doc.createdAt,
+      ]);
+
+      row.eachCell((cell) => Object.assign(cell, dataBorder));
+    }
+
+    const patientSheet = workbook.addWorksheet("Patients");
+
+    patientSheet.addRow([
+      "No",
+      "Name",
+      "Email",
+      "Gender",
+      "DOB",
+      "Total Appointment",
+      "Total Pay",
+      "Created At",
+    ]);
+
+    patientSheet.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
+
+    const patients = await Patient.find({ isDeleted: false }).populate(
+      "userId",
+    );
+
+    index = 1;
+
+    for (const patient of patients) {
+      const appointments = await Appointment.find({
+        patientId: patient._id,
+        isDeleted: false,
+      });
+
+      const completedAppointments = appointments.filter((a) =>
+        ["confirmed", "completed"].includes(a.status),
+      );
+
+      const totalPay = completedAppointments.reduce(
+        (sum, a) => sum + a.consultationFee,
+        0,
+      );
+
+      const row = patientSheet.addRow([
+        index++,
+        patient.userId?.name,
+        patient.userId?.email,
+        patient.gender,
+        patient.dateOfBirth,
+        appointments.length,
+        totalPay,
+        patient.createdAt,
+      ]);
+
+      row.eachCell((cell) => Object.assign(cell, dataBorder));
+    }
+
+    const appointmentSheet = workbook.addWorksheet("Appointments");
+
+    appointmentSheet.addRow([
+      "No",
+      "Doctor Name",
+      "Doctor Email",
+      "Patient Name",
+      "Patient Email",
+      "Date",
+      "Time",
+      "Status",
+      "Note",
+      "Fee",
+      "Commission",
+    ]);
+
+    appointmentSheet
+      .getRow(1)
+      .eachCell((cell) => Object.assign(cell, headerStyle));
+
+    const appointments = await Appointment.find({ isDeleted: false })
+      .populate({
+        path: "doctorId",
+        populate: { path: "userId" },
+      })
+      .populate({
+        path: "patientId",
+        populate: { path: "userId" },
+      });
+
+    index = 1;
+
+    for (const a of appointments) {
+      const row = appointmentSheet.addRow([
+        index++,
+        a.doctorId?.userId?.name,
+        a.doctorId?.userId?.email,
+        a.patientId?.userId?.name,
+        a.patientId?.userId?.email,
+        a.appointmentDate,
+        a.timeSlot,
+        a.status,
+        a.notes,
+        a.consultationFee,
+        a.adminCommission,
+      ]);
+
+      row.eachCell((cell) => Object.assign(cell, dataBorder));
+    }
+
+    const paymentSheet = workbook.addWorksheet("Payments");
+
+    paymentSheet.addRow([
+      "No",
+      "Appointment ID",
+      "Doctor Name",
+      "Doctor Email",
+      "Patient Name",
+      "Patient Email",
+      "Amount",
+      "Method",
+      "Status",
+      "Created At",
+    ]);
+
+    paymentSheet.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
+
+    const payments = await Payment.find()
+      .populate({
+        path: "doctorId",
+        populate: { path: "userId" },
+      })
+      .populate({
+        path: "patientId",
+        populate: { path: "userId" },
+      });
+
+    index = 1;
+
+    for (const p of payments) {
+      const row = paymentSheet.addRow([
+        index++,
+        p.appointmentId,
+        p.doctorId?.userId?.name,
+        p.doctorId?.userId?.email,
+        p.patientId?.userId?.name,
+        p.patientId?.userId?.email,
+        p.amount,
+        p.paymentMethod,
+        p.status,
+        p.createdAt,
+      ]);
+
+      row.eachCell((cell) => Object.assign(cell, dataBorder));
+    }
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=admin-data.xlsx",
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (error) {
     next(error);
   }

@@ -117,6 +117,32 @@ export const getAllAppointments = createAsyncThunk(
   },
 );
 
+export const exportAdminExcel = createAsyncThunk(
+  "admin/exportExcel",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/admin/export-excel", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "admin-data.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to download excel",
+      );
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState,
@@ -222,6 +248,18 @@ const adminSlice = createSlice({
         state.totalAppointments = action.payload.total;
       })
       .addCase(getAllAppointments.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(exportAdminExcel.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(exportAdminExcel.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Excel downloaded successfully");
+      })
+      .addCase(exportAdminExcel.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       });
