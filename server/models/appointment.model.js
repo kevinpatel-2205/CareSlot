@@ -33,6 +33,11 @@ const appointmentSchema = new mongoose.Schema(
       index: true,
     },
 
+    prescriptionAdded: {
+      type: Boolean,
+      default: false,
+    },
+
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],

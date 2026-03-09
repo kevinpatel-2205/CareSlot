@@ -5,6 +5,7 @@ import Patient from "../models/patient.model.js";
 import User from "../models/user.model.js";
 import ExcelJS from "exceljs";
 import Review from "../models/review.model.js";
+import Prescription from "../models/prescription.model.js";
 
 export const getDoctorDashboard = async (req, res, next) => {
   try {
@@ -444,7 +445,7 @@ export const getDoctorPatientDetails = async (req, res, next) => {
       isDeleted: false,
     })
       .select(
-        "_id patientId appointmentDate timeSlot status paymentStatus paymentMethod consultationFee adminCommission notes",
+        "_id patientId appointmentDate timeSlot status paymentStatus paymentMethod consultationFee prescriptionAdded adminCommission notes ",
       )
       .sort({ appointmentDate: -1 })
       .lean();
@@ -1019,6 +1020,72 @@ export const getDoctorReviews = async (req, res, next) => {
         averageRating: doctor.averageRating,
         reviews: formattedReviews,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addPrescription = async (req, res, next) => {
+  try {
+    const doctor = await Doctor.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    const doctorId = doctor._id;
+    const { appointmentId } = req.params;
+
+    const { medicines, additionalNotes } = req.body;
+
+    if (!medicines || medicines.length === 0) {
+      res.status(400);
+      throw new Error("At least one medicine is required");
+    }
+
+    const appointment = await Appointment.findOne({
+      _id: appointmentId,
+      doctorId,
+      isDeleted: false,
+    });
+
+    if (!appointment) {
+      res.status(404);
+      throw new Error("Appointment not found");
+    }
+
+    if (appointment.status !== "completed") {
+      res.status(400);
+      throw new Error(
+        "Prescription can only be added after appointment is completed",
+      );
+    }
+
+    if (appointment.prescriptionAdded) {
+      res.status(400);
+      throw new Error("Prescription already added for this appointment");
+    }
+
+    const prescription = await Prescription.create({
+      appointmentId: appointment._id,
+      doctorId,
+      patientId: appointment.patientId,
+      medicines,
+      additionalNotes,
+    });
+
+    appointment.prescriptionAdded = true;
+    await appointment.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Prescription added successfully",
+      data: prescription,
     });
   } catch (error) {
     next(error);

@@ -203,6 +203,21 @@ export const fetchDoctorReviews = createAsyncThunk(
   },
 );
 
+export const addPrescription = createAsyncThunk(
+  "doctor/addPrescription",
+  async ({ appointmentId, prescriptionData }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        `/doctor/prescription/${appointmentId}`,
+        prescriptionData,
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
 const doctorSlice = createSlice({
   name: "doctor",
   initialState,
@@ -384,6 +399,24 @@ const doctorSlice = createSlice({
         state.review = action.payload.data;
       })
       .addCase(fetchDoctorReviews.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(addPrescription.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(addPrescription.fulfilled, (state, action) => {
+        state.loading = false;
+        const appointmentId = action.payload.data.appointmentId;
+        state.appointments = state.appointments.map((appointment) =>
+          appointment._id === appointmentId
+            ? { ...appointment, prescriptionAdded: true }
+            : appointment,
+        );
+        toast.success(action.payload.message);
+      })
+      .addCase(addPrescription.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       });
