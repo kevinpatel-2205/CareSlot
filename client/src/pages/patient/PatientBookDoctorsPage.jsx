@@ -1,4 +1,4 @@
-import { Info, MapPin, Search, Stethoscope, UserLock } from "lucide-react";
+import { Info, Search, Stethoscope, UserLock, Star } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -86,9 +86,22 @@ function PatientBookDoctorsPage() {
             <div className="mt-4 space-y-2 text-[#45659d]">
               <p className="text-sm">{doctor.email}</p>
 
-              <p className="flex items-center gap-2 text-sm">
-                <MapPin size={16} /> {doctor.availabilityStatus}
-              </p>
+              <div className="flex items-center gap-1 text-yellow-400">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    size={16}
+                    className={
+                      star <= Math.round(doctor.averageRating || 0)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300"
+                    }
+                  />
+                ))}
+                <span className="ml-2 text-xs text-[#45659d]">
+                  ({doctor.totalReviews || 0} reviews)
+                </span>
+              </div>
 
               <p className="text-sm font-semibold">
                 Status:{" "}

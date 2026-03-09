@@ -138,7 +138,22 @@ export const markRazorpayPaymentFailed = createAsyncThunk(
   "patient/markRazorpayPaymentFailed",
   async (paymentData, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post("/patient/payment-failed", paymentData);
+      const res = await axiosInstance.post(
+        "/patient/payment-failed",
+        paymentData,
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const createDoctorReview = createAsyncThunk(
+  "patient/createDoctorReview",
+  async (reviewData, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post("/patient/reviews", reviewData);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
@@ -295,6 +310,18 @@ const patientSlice = createSlice({
         );
       })
       .addCase(markRazorpayPaymentFailed.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(createDoctorReview.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createDoctorReview.fulfilled, (state, action) => {
+        state.loading = false;
+        toast.success(action.payload.message);
+      })
+      .addCase(createDoctorReview.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       });

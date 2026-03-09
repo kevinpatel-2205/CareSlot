@@ -31,6 +31,4 @@ const reviewSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-reviewSchema.index({ doctorId: 1, patientId: 1 }, { unique: true });
-
 export default mongoose.model("Review", reviewSchema);

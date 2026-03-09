@@ -7,7 +7,11 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDoctorDetails, bookAppointment } from "../../store/patient";
+import {
+  fetchDoctorDetails,
+  bookAppointment,
+  createDoctorReview,
+} from "../../store/patient";
 import { formatMoney } from "../../lib/format.js";
 
 function PatientDoctorDetailPage() {
@@ -20,6 +24,8 @@ function PatientDoctorDetailPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [rating, setRating] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
 
   useEffect(() => {
     if (doctorId) {
@@ -61,6 +67,24 @@ function PatientDoctorDetailPage() {
 
     if (bookAppointment.fulfilled.match(resultAction)) {
       setTimeout(() => navigate("/patient/appointments"), 1000);
+    }
+  };
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+
+    const resultAction = await dispatch(
+      createDoctorReview({
+        doctorId,
+        rating,
+        comment: reviewComment,
+      }),
+    );
+
+    if (createDoctorReview.fulfilled.match(resultAction)) {
+      setRating("");
+      setReviewComment("");
+      dispatch(fetchDoctorDetails(doctorId));
     }
   };
 
@@ -117,6 +141,11 @@ function PatientDoctorDetailPage() {
             <p>
               <span className="font-semibold">Consultation Fee:</span>{" "}
               {formatMoney(doctor?.consultationFee || 0)}
+            </p>
+
+            <p className="mt-2 text-[#45659d]">
+              Rating: {doctor?.averageRating.toFixed(2) || 0} ⭐ (
+              {doctor?.totalReviews || 0} reviews)
             </p>
 
             <p className="break-words whitespace-pre-wrap break-all">
@@ -218,6 +247,82 @@ function PatientDoctorDetailPage() {
           </form>
         </aside>
       </div>
+
+      <section className="glass-card p-5">
+        <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
+          Reviews
+        </h3>
+
+        <div className="mt-4 space-y-3">
+          {(doctor?.reviews || []).map((rev) => (
+            <div
+              key={rev.reviewId}
+              className="rounded-xl border border-[#d7e2fb] bg-white/70 p-3"
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={
+                    rev.patientImage ||
+                    "https://placehold.co/40x40/e6efff/2e5fae?text=P"
+                  }
+                  alt="patient"
+                  className="h-8 w-8 rounded-full"
+                />
+
+                <p className="font-semibold text-[#1d3f80]">
+                  {rev.patientName || "Patient"}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1 mt-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    className={
+                      star <= rev.rating ? "text-yellow-400" : "text-gray-300"
+                    }
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+
+              <p className="text-sm text-[#45659d] mt-1">{rev.comment}</p>
+            </div>
+          ))}
+        </div>
+        <form onSubmit={submitReview} className="mt-5 space-y-3">
+          <h4 className="font-semibold text-[#1a3f7b]">Write Review</h4>
+
+          <div className="flex items-center gap-1 text-2xl cursor-pointer">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <span
+                key={star}
+                onClick={() => setRating(star)}
+                className={`${
+                  star <= rating ? "text-yellow-400" : "text-gray-300"
+                } hover:text-yellow-400`}
+              >
+                ★
+              </span>
+            ))}
+          </div>
+
+          <textarea
+            className="soft-input min-h-24"
+            placeholder="Write your review"
+            value={reviewComment}
+            onChange={(e) => setReviewComment(e.target.value)}
+          />
+
+          <button
+            type="submit"
+            className="flex h-10 items-center justify-center rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-4 font-bold text-white"
+          >
+            Submit Review
+          </button>
+        </form>
+      </section>
     </div>
   );
 }

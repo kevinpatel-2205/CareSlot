@@ -3,6 +3,7 @@ import Appointment from "../models/appointment.model.js";
 import Doctor from "../models/doctor.model.js";
 import User from "../models/user.model.js";
 import Payment from "../models/payment.model.js";
+import Review from "../models/review.model.js";
 import razorpayInstance from "../utils/RazorPay.js";
 import { CURRENCY, RAZORPAY_KEY_SECRET } from "../utils/env.js";
 import crypto from "crypto";
@@ -138,6 +139,8 @@ export const getAllDoctors = async (req, res, next) => {
         doc.availableSlots && doc.availableSlots.length > 0
           ? "Available"
           : "Unavailable",
+      averageRating: doc.averageRating || 0,
+      totalReviews: doc.totalReviews || 0,
     }));
 
     res.status(200).json({
@@ -170,6 +173,27 @@ export const getDoctorDetails = async (req, res, next) => {
       throw new Error("Doctor not found");
     }
 
+    const reviews = await Review.find({ doctorId: doctor._id })
+      .populate({
+        path: "patientId",
+        populate: {
+          path: "userId",
+          select: "name image",
+        },
+      })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
+    const formattedReviews = reviews.map((review) => ({
+      reviewId: review._id,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt,
+      patientName: review.patientId?.userId?.name || null,
+      patientImage: review.patientId?.userId?.image || null,
+    }));
+
     res.status(200).json({
       success: true,
       data: {
@@ -183,6 +207,9 @@ export const getDoctorDetails = async (req, res, next) => {
         about: doctor.about,
         consultationFee: doctor.consultationFee,
         availableSlots: doctor.availableSlots,
+        averageRating: doctor.averageRating,
+        totalReviews: doctor.totalReviews,
+        reviews: formattedReviews,
       },
     });
   } catch (error) {
@@ -700,6 +727,99 @@ export const markRazorpayFailed = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Payment marked as failed",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createReview = async (req, res, next) => {
+  try {
+    const { doctorId, rating, comment } = req.body;
+
+    if (!doctorId || !rating) {
+      res.status(400);
+      throw new Error("Doctor and rating are required");
+    }
+
+    if (rating < 1 || rating > 5) {
+      res.status(400);
+      throw new Error("Rating must be between 1 and 5");
+    }
+
+    const patient = await Patient.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!patient) {
+      res.status(404);
+      throw new Error("Patient profile not found");
+    }
+
+    const doctor = await Doctor.findOne({
+      _id: doctorId,
+      isDeleted: false,
+    });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    const appointment = await Appointment.findOne({
+      doctorId,
+      patientId: patient._id,
+      status: "completed",
+      isDeleted: false,
+    });
+
+    if (!appointment) {
+      res.status(400);
+      throw new Error(
+        "You can review only after completing appointment with this doctor",
+      );
+    }
+
+    const reviewCount = await Review.countDocuments({
+      doctorId,
+      patientId: patient._id,
+    });
+
+    if (reviewCount >= 5) {
+      res.status(400);
+      throw new Error("You can only submit 5 reviews for this doctor");
+    }
+
+    const review = await Review.create({
+      doctorId,
+      patientId: patient._id,
+      rating,
+      comment,
+    });
+
+    const stats = await Review.aggregate([
+      {
+        $match: { doctorId: doctor._id },
+      },
+      {
+        $group: {
+          _id: "$doctorId",
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    await Doctor.findByIdAndUpdate(doctor._id, {
+      averageRating: stats[0].averageRating,
+      totalReviews: stats[0].totalReviews,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Review submitted successfully",
+      data: review,
     });
   } catch (error) {
     next(error);
