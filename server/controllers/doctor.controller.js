@@ -4,6 +4,7 @@ import Doctor from "../models/doctor.model.js";
 import Patient from "../models/patient.model.js";
 import User from "../models/user.model.js";
 import ExcelJS from "exceljs";
+import Review from "../models/review.model.js";
 
 export const getDoctorDashboard = async (req, res, next) => {
   try {
@@ -762,7 +763,7 @@ export const deleteAvailableSlot = async (req, res, next) => {
 
     doctor.availableSlots = doctor.availableSlots.filter(
       (slot) =>
-        new Date(slot.date).toDateString() !== selectedDate.toDateString()
+        new Date(slot.date).toDateString() !== selectedDate.toDateString(),
     );
 
     await doctor.save();
@@ -971,6 +972,52 @@ export const exportDoctorExcel = async (req, res, next) => {
 
     await workbook.xlsx.write(res);
     res.end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getDoctorReviews = async (req, res, next) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    const reviews = await Review.find({
+      doctorId: doctor._id,
+    })
+      .populate({
+        path: "patientId",
+        populate: {
+          path: "userId",
+          select: "name image email",
+        },
+      })
+      .select("rating comment createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formattedReviews = reviews.map((rev) => ({
+      reviewId: rev._id,
+      patientName: rev.patientId?.userId?.name,
+      patientImage: rev.patientId?.userId?.image,
+      patientEmail: rev.patientId?.userId?.email,
+      rating: rev.rating,
+      comment: rev.comment,
+      createdAt: rev.createdAt,
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalReviews: doctor.totalReviews,
+        averageRating: doctor.averageRating,
+        reviews: formattedReviews,
+      },
+    });
   } catch (error) {
     next(error);
   }

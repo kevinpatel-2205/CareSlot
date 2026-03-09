@@ -13,6 +13,7 @@ import {
   Users,
   X,
   UserRoundCog,
+  MessageSquareText,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -28,6 +29,7 @@ const iconMap = {
   slots: Clock3,
   patients: Users,
   adminAppointments: ClipboardList,
+  reviews: MessageSquareText,
 };
 
 function MenuLink({ item, onClick }) {

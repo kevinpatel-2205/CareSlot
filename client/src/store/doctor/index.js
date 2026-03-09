@@ -10,6 +10,7 @@ const initialState = {
   patientDetails: null,
   availableSlots: [],
   profile: null,
+  review: null,
   loading: false,
 };
 
@@ -156,7 +157,7 @@ export const deleteAvailableSlot = createAsyncThunk(
   "doctor/deleteSlot",
   async (date, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.delete(`/doctor/slots/${date}`);      
+      const res = await axiosInstance.delete(`/doctor/slots/${date}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
@@ -186,6 +187,18 @@ export const exportDoctorExcel = createAsyncThunk(
       return rejectWithValue(
         error.response?.data?.message || "Failed to download excel",
       );
+    }
+  },
+);
+
+export const fetchDoctorReviews = createAsyncThunk(
+  "doctor/fetchReviews",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/doctor/reviews");
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
     }
   },
 );
@@ -360,6 +373,18 @@ const doctorSlice = createSlice({
         toast.success(action.payload.message);
       })
       .addCase(deleteAvailableSlot.rejected, (state, action) => {
+        toast.error(action.payload);
+      })
+
+      .addCase(fetchDoctorReviews.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchDoctorReviews.fulfilled, (state, action) => {
+        state.loading = false;
+        state.review = action.payload.data;
+      })
+      .addCase(fetchDoctorReviews.rejected, (state, action) => {
+        state.loading = false;
         toast.error(action.payload);
       });
   },

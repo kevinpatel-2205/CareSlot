@@ -7,6 +7,7 @@ export const doctorNav = [
   },
   { label: "Patients", to: "/doctor/patients", key: "patients" },
   { label: "Slots", to: "/doctor/slots", key: "slots" },
+  { label: "Reviews", to: "/doctor/reviews", key: "reviews" },
 ];
 
 export const patientNav = [
