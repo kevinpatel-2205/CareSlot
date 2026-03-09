@@ -23,12 +23,22 @@ const reviewSchema = new mongoose.Schema(
       max: 5,
     },
 
+    isApprove: {
+      type: Boolean,
+      default: false,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
     comment: {
       type: String,
       maxlength: 1000,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Review", reviewSchema);

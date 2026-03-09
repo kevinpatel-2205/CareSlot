@@ -11,6 +11,7 @@ const initialState = {
   totalPatients: 0,
   totalAppointments: 0,
   loading: false,
+  reviews: [],
 };
 
 export const getAdminDashboard = createAsyncThunk(
@@ -143,6 +144,42 @@ export const exportAdminExcel = createAsyncThunk(
   },
 );
 
+export const getPendingReviews = createAsyncThunk(
+  "admin/getPendingReviews",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/admin/reviews");
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
+    }
+  },
+);
+
+export const approveReview = createAsyncThunk(
+  "admin/approveReview",
+  async (reviewId, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.patch(`/admin/reviews/${reviewId}`);
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
+    }
+  },
+);
+
+export const deleteReview = createAsyncThunk(
+  "admin/deleteReview",
+  async (reviewId, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.delete(`/admin/reviews/${reviewId}`);
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState,
@@ -260,6 +297,52 @@ const adminSlice = createSlice({
         toast.success("Excel downloaded successfully");
       })
       .addCase(exportAdminExcel.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(getPendingReviews.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getPendingReviews.fulfilled, (state, action) => {
+        state.loading = false;
+        state.reviews = action.payload.data;
+      })
+      .addCase(getPendingReviews.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(approveReview.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(approveReview.fulfilled, (state, action) => {
+        state.loading = false;
+
+        state.reviews = state.reviews.filter(
+          (r) => r._id !== action.payload.reviewId,
+        );
+
+        toast.success(action.payload.message);
+      })
+      .addCase(approveReview.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(deleteReview.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteReview.fulfilled, (state, action) => {
+        state.loading = false;
+
+        state.reviews = state.reviews.filter(
+          (r) => r._id !== action.payload.reviewId,
+        );
+
+        toast.success(action.payload.message);
+      })
+      .addCase(deleteReview.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       });

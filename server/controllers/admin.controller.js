@@ -3,6 +3,7 @@ import Doctor from "../models/doctor.model.js";
 import Patient from "../models/patient.model.js";
 import Appointment from "../models/appointment.model.js";
 import Payment from "../models/payment.model.js";
+import Review from "../models/review.model.js";
 import { sendDoctorEmail } from "../utils/sendEmail.js";
 import ExcelJS from "exceljs";
 
@@ -924,6 +925,110 @@ export const exportAdminDataToExcel = async (req, res, next) => {
 
     await workbook.xlsx.write(res);
     res.end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPendingReviews = async (req, res, next) => {
+  try {
+    const reviews = await Review.find({ isApprove: false, isDeleted: false })
+      .populate({
+        path: "patientId",
+        populate: {
+          path: "userId",
+          select: "name image",
+        },
+      })
+      .populate({
+        path: "doctorId",
+        populate: {
+          path: "userId",
+          select: "name",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      total: reviews.length,
+      data: reviews,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const approveReview = async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+
+    const review = await Review.findById(reviewId);
+
+    if (!review || review.isDeleted) {
+      res.status(404);
+      throw new Error("Review not found");
+    }
+
+    review.isApprove = true;
+    await review.save();
+
+    const doctorId = review.doctorId;
+
+    const ratingData = await Review.aggregate([
+      {
+        $match: {
+          doctorId: doctorId,
+          isApprove: true,
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$doctorId",
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const averageRating = ratingData[0]?.averageRating || 0;
+    const totalReviews = ratingData[0]?.totalReviews || 0;
+
+    await Doctor.findByIdAndUpdate(doctorId, {
+      averageRating: Number(averageRating.toFixed(1)),
+      totalReviews,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Review approved successfully",
+      reviewId,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteReview = async (req, res, next) => {
+  try {
+    const { reviewId } = req.params;
+
+    const review = await Review.findById(reviewId);
+
+    if (!review || review.isDeleted) {
+      res.status(404);
+      throw new Error("Review not found");
+    }
+
+    review.isDeleted = true;
+    await review.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Review deleted successfully",
+      reviewId,
+    });
   } catch (error) {
     next(error);
   }

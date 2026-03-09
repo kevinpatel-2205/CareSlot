@@ -9,6 +9,9 @@ import {
   deletePatient,
   getAllAppointments,
   exportAdminDataToExcel,
+  getPendingReviews,
+  approveReview,
+  deleteReview,
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -22,5 +25,8 @@ router.get("/allPatients", getAllPatients);
 router.delete("/deletePatient/:patientId", deletePatient);
 router.get("/allAppointments", getAllAppointments);
 router.get("/export-excel", exportAdminDataToExcel);
+router.get("/reviews", getPendingReviews);
+router.patch("/reviews/:reviewId", approveReview);
+router.delete("/reviews/:reviewId", deleteReview);
 
 export default router;

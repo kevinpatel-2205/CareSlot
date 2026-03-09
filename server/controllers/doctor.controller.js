@@ -988,6 +988,8 @@ export const getDoctorReviews = async (req, res, next) => {
 
     const reviews = await Review.find({
       doctorId: doctor._id,
+      isApprove: true,
+      isDeleted: false,
     })
       .populate({
         path: "patientId",

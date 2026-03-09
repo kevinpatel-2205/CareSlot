@@ -144,7 +144,7 @@ function PatientDoctorDetailPage() {
             </p>
 
             <p className="mt-2 text-[#45659d]">
-              Rating: {doctor?.averageRating.toFixed(2) || 0} ⭐ (
+              Rating: {doctor?.averageRating?.toFixed(2) || 0} ⭐ (
               {doctor?.totalReviews || 0} reviews)
             </p>
 

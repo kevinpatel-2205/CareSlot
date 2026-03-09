@@ -26,4 +26,5 @@ export const adminNav = [
   { label: "All Doctors", to: "/admin/doctors", key: "doctors" },
   { label: "All Patients", to: "/admin/patients", key: "patients" },
   { label: "Appointments", to: "/admin/appointments", key: "appointments" },
+  { label: "Reviews", to: "/admin/reviews", key: "reviews" },
 ];

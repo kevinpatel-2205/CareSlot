@@ -173,7 +173,11 @@ export const getDoctorDetails = async (req, res, next) => {
       throw new Error("Doctor not found");
     }
 
-    const reviews = await Review.find({ doctorId: doctor._id })
+    const reviews = await Review.find({
+      doctorId: doctor._id,
+      isApprove: true,
+      isDeleted: false,
+    })
       .populate({
         path: "patientId",
         populate: {
@@ -796,24 +800,6 @@ export const createReview = async (req, res, next) => {
       patientId: patient._id,
       rating,
       comment,
-    });
-
-    const stats = await Review.aggregate([
-      {
-        $match: { doctorId: doctor._id },
-      },
-      {
-        $group: {
-          _id: "$doctorId",
-          averageRating: { $avg: "$rating" },
-          totalReviews: { $sum: 1 },
-        },
-      },
-    ]);
-
-    await Doctor.findByIdAndUpdate(doctor._id, {
-      averageRating: stats[0].averageRating,
-      totalReviews: stats[0].totalReviews,
     });
 
     res.status(201).json({

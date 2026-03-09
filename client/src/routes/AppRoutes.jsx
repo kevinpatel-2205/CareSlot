@@ -33,6 +33,7 @@ import PatientAppointmentsPage from "../pages/patient/PatientAppointmentsPage.js
 import PatientDoctorDetailPage from "../pages/patient/PatientDoctorDetailPage.jsx";
 import PatientProfilePage from "../pages/patient/PatientProfilePage.jsx";
 import DoctorReviews from "../pages/doctor/DoctorReviews.jsx";
+import AdminReviews from "../pages/admin/AdminReviews.jsx";
 
 const AppRoutes = () => {
   const { user, isLoading } = useSelector((state) => state.auth);
@@ -74,6 +75,7 @@ const AppRoutes = () => {
           <Route path="doctors" element={<AdminDoctorsPage />} />
           <Route path="patients" element={<AdminPatientsPage />} />
           <Route path="appointments" element={<AdminAppointmentsPage />} />
+          <Route path="reviews" element={<AdminReviews />} />
         </Route>
       </Route>
 
