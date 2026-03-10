@@ -403,6 +403,7 @@ export const getAppointments = async (req, res, next) => {
       paymentStatus: apt.paymentStatus,
       paymentMethod: apt.paymentMethod,
       consultationFee: apt.consultationFee,
+      prescriptionAdded: apt.prescriptionAdded,
     }));
 
     res.status(200).json({

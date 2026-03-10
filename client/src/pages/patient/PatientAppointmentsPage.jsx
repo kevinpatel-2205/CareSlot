@@ -97,6 +97,13 @@ function PatientAppointmentsPage() {
     }
   };
 
+  const downloadPrescription = (appointmentId) => {
+    window.open(
+      `${import.meta.env.VITE_API_BASE_URL}/patient/prescription/${appointmentId}`,
+      "_blank",
+    );
+  };
+
   return (
     <div className="space-y-5">
       <h2 className="font-['Averia_Serif_Libre'] text-5xl font-semibold tracking-tight text-[#1a3f7b]">
@@ -136,12 +143,12 @@ function PatientAppointmentsPage() {
             <tr>
               <th className="px-4 py-3">Doctor</th>
               <th className="px-4 py-3">Doctor Email</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Time</th>
+              <th className="px-4 py-3">Date & Time</th>
               <th className="px-4 py-3">Appointment Status</th>
               <th className="px-4 py-3">Payment</th>
               <th className="px-4 py-3">Fee</th>
               <th className="px-4 py-3">Razorpay</th>
+              <th className="px-4 py-3">Prescription</th>
             </tr>
           </thead>
 
@@ -163,10 +170,11 @@ function PatientAppointmentsPage() {
                 <td className="px-4 py-3">{item.doctorEmail || "--"}</td>
 
                 <td className="px-4 py-3">
-                  {formatDate(item.appointmentDate)}
+                  <div className="font-semibold">
+                    {formatDate(item.appointmentDate)}
+                  </div>
+                  <div className="text-xs text-[#6f8bc0]">{item.timeSlot}</div>
                 </td>
-
-                <td className="px-4 py-3">{item.timeSlot}</td>
 
                 <td className="px-4 py-3">
                   <span
@@ -198,6 +206,15 @@ function PatientAppointmentsPage() {
                     className="rounded-lg border border-[#2d7cf2] bg-white px-3 py-1.5 text-xs font-semibold text-[#2d7cf2] disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400"
                   >
                     Pay Online
+                  </button>
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    disabled={!item.prescriptionAdded}
+                    onClick={() => downloadPrescription(item.appointmentId)}
+                    className="rounded-lg border border-green-600 bg-white px-3 py-1.5 text-xs font-semibold text-green-600 hover:bg-green-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400"
+                  >
+                    Download
                   </button>
                 </td>
               </tr>
