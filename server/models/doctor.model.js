@@ -62,6 +62,11 @@ const doctorSchema = new mongoose.Schema(
       default: 0,
     },
 
+    aCommission: {
+      type: Number,
+      default: 10,
+    },
+
     isDeleted: {
       type: Boolean,
       default: false,

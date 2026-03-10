@@ -4,6 +4,7 @@ import {
   getAllDoctors,
   toggleDoctorStatus,
   deleteDoctor,
+  updateDoctorCommission,
 } from "../../store/admin";
 
 function AdminDoctorsPage() {
@@ -21,8 +22,12 @@ function AdminDoctorsPage() {
   const handleDeleteDoctor = (doctorId) => {
     const ok = window.confirm("Delete this doctor and related data?");
     if (!ok) return;
-
     dispatch(deleteDoctor(doctorId));
+  };
+
+  const handleCommissionChange = (doctorId, value) => {
+    const percent = Number(value);
+    dispatch(updateDoctorCommission({ doctorId, commission: percent }));
   };
 
   return (
@@ -39,13 +44,15 @@ function AdminDoctorsPage() {
               <th className="px-4 py-3">Specialization</th>
               <th className="px-4 py-3">Experience</th>
               <th className="px-4 py-3">Total Commission</th>
-              <th className="px-4 py-3">Active/Deactive</th>
+              <th className="px-4 py-3">Admin Commission %</th>
+              <th className="px-4 py-3 text-center">Status</th>
             </tr>
           </thead>
+
           <tbody>
             {loading ? (
               <tr>
-                <td className="px-4 py-5 text-[#6b87b8]" colSpan={5}>
+                <td className="px-4 py-5 text-[#6b87b8]" colSpan={6}>
                   Loading doctors...
                 </td>
               </tr>
@@ -55,6 +62,7 @@ function AdminDoctorsPage() {
                   key={doc.doctorId}
                   className="border-t border-[#e0e8fc] text-[#2e4f86]"
                 >
+                  {/* Doctor */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <img
@@ -74,38 +82,53 @@ function AdminDoctorsPage() {
                     </div>
                   </td>
 
+                  {/* specialization */}
                   <td className="px-4 py-3">{doc.specialization}</td>
+
+                  {/* experience */}
                   <td className="px-4 py-3">{doc.experience} yrs</td>
-                  <td className="px-4 py-3">
-                    <span className="font-semibold text-[#1c3f7a]">
-                      ₹{doc.totalCommission || 0}
-                    </span>
+
+                  {/* total commission */}
+                  <td className="px-4 py-3 font-semibold text-[#1c3f7a]">
+                    ₹{doc.totalCommission || 0}
                   </td>
 
+                  {/* admin commission */}
                   <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold ${
-                          doc.isActive
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-rose-100 text-rose-700"
-                        }`}
-                      >
-                        {doc.isActive ? "Active" : "Inactive"}
-                      </span>
+                    <select
+                      defaultValue={doc.aCommission || 10}
+                      onChange={(e) =>
+                        handleCommissionChange(doc.doctorId, e.target.value)
+                      }
+                      className="rounded-lg border border-[#c4d6fb] bg-white px-2 py-1 text-sm font-semibold text-[#345eaa]"
+                    >
+                      {[5, 10, 15, 20, 25, 30, 35].map((val) => (
+                        <option key={val} value={val}>
+                          {val}%
+                        </option>
+                      ))}
+                    </select>
+                  </td>
 
+                  {/* status buttons */}
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex justify-center gap-2">
                       <button
                         onClick={() =>
                           handleToggleStatus(doc.doctorId, !doc.isActive)
                         }
-                        className="rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-sm font-semibold text-[#345eaa]"
+                        className={`rounded-lg px-3 py-1.5 text-sm font-semibold text-white ${
+                          doc.isActive
+                            ? "bg-emerald-500 hover:bg-emerald-600"
+                            : "bg-gray-400 hover:bg-gray-500"
+                        }`}
                       >
                         {doc.isActive ? "Deactivate" : "Activate"}
                       </button>
 
                       <button
                         onClick={() => handleDeleteDoctor(doc.doctorId)}
-                        className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-semibold text-rose-700"
+                        className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-100"
                       >
                         Delete
                       </button>
@@ -115,7 +138,7 @@ function AdminDoctorsPage() {
               ))
             ) : (
               <tr>
-                <td className="px-4 py-5 text-[#6b87b8]" colSpan={5}>
+                <td className="px-4 py-5 text-[#6b87b8]" colSpan={6}>
                   No doctors found.
                 </td>
               </tr>

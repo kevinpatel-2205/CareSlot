@@ -7,6 +7,150 @@ import ExcelJS from "exceljs";
 import Review from "../models/review.model.js";
 import Prescription from "../models/prescription.model.js";
 
+// export const getDoctorDashboard = async (req, res, next) => {
+//   try {
+//     const doctor = await Doctor.findOne({ userId: req.user._id });
+//     const doctorId = doctor._id;
+
+//     const statusCounts = await Appointment.aggregate([
+//       {
+//         $match: {
+//           doctorId,
+//           isDeleted: false,
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$status",
+//           count: { $sum: 1 },
+//         },
+//       },
+//     ]);
+
+//     const formattedStatus = {
+//       pending: 0,
+//       confirmed: 0,
+//       completed: 0,
+//       cancelled: 0,
+//     };
+
+//     statusCounts.forEach((item) => {
+//       formattedStatus[item._id] = item.count;
+//     });
+
+//     const commissionData = await Appointment.aggregate([
+//       {
+//         $match: {
+//           doctorId,
+//           isDeleted: false,
+//           status: { $in: ["confirmed", "completed"] },
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: null,
+//           totalCommission: { $sum: "$adminCommission" },
+//         },
+//       },
+//     ]);
+
+//     const totalAdminCommission =
+//       commissionData.length > 0 ? commissionData[0].totalCommission : 0;
+
+//     const earningsData = await Payment.aggregate([
+//       {
+//         $match: {
+//           doctorId,
+//           status: "success",
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: null,
+//           totalEarnings: { $sum: "$amount" },
+//         },
+//       },
+//     ]);
+
+//     const totalEarnings =
+//       earningsData.length > 0 ? earningsData[0].totalEarnings : 0;
+
+//     const monthlyEarnings = await Payment.aggregate([
+//       {
+//         $match: {
+//           doctorId,
+//           status: "success",
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             month: { $month: "$createdAt" },
+//             method: "$paymentMethod",
+//           },
+//           total: { $sum: "$amount" },
+//         },
+//       },
+//       {
+//         $sort: { "_id.month": 1 },
+//       },
+//     ]);
+
+//     const monthNames = [
+//       "Jan",
+//       "Feb",
+//       "Mar",
+//       "Apr",
+//       "May",
+//       "Jun",
+//       "Jul",
+//       "Aug",
+//       "Sep",
+//       "Oct",
+//       "Nov",
+//       "Dec",
+//     ];
+
+//     const monthlyData = Array(12)
+//       .fill()
+//       .map(() => ({
+//         cash: 0,
+//         razorpay: 0,
+//       }));
+
+//     monthlyEarnings.forEach((item) => {
+//       const monthIndex = item._id.month - 1;
+//       const method = item._id.method;
+
+//       if (method === "cash") {
+//         monthlyData[monthIndex].cash = item.total;
+//       }
+
+//       if (method === "razorpay") {
+//         monthlyData[monthIndex].razorpay = item.total;
+//       }
+//     });
+
+//     const formattedMonthly = {
+//       labels: monthNames,
+//       cash: monthlyData.map((m) => m.cash),
+//       razorpay: monthlyData.map((m) => m.razorpay),
+//     };
+
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         totalEarnings,
+//         appointmentCounts: formattedStatus,
+//         monthlyEarnings: formattedMonthly,
+//         totalAdminCommission,
+//       },
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 export const getDoctorDashboard = async (req, res, next) => {
   try {
     const doctor = await Doctor.findOne({ userId: req.user._id });
@@ -38,24 +182,7 @@ export const getDoctorDashboard = async (req, res, next) => {
       formattedStatus[item._id] = item.count;
     });
 
-    const earningsData = await Payment.aggregate([
-      {
-        $match: {
-          doctorId,
-          status: "success",
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalEarnings: { $sum: "$amount" },
-        },
-      },
-    ]);
-
-    const totalEarnings =
-      earningsData.length > 0 ? earningsData[0].totalEarnings : 0;
-
+    // TOTAL ADMIN COMMISSION
     const commissionData = await Appointment.aggregate([
       {
         $match: {
@@ -75,6 +202,41 @@ export const getDoctorDashboard = async (req, res, next) => {
     const totalAdminCommission =
       commissionData.length > 0 ? commissionData[0].totalCommission : 0;
 
+    // DOCTOR TOTAL EARNINGS (AFTER COMMISSION)
+    const earningsData = await Payment.aggregate([
+      {
+        $match: {
+          doctorId,
+          status: "success",
+        },
+      },
+      {
+        $lookup: {
+          from: "appointments",
+          localField: "appointmentId",
+          foreignField: "_id",
+          as: "appointment",
+        },
+      },
+      {
+        $unwind: "$appointment",
+      },
+      {
+        $group: {
+          _id: null,
+          totalEarnings: {
+            $sum: {
+              $subtract: ["$amount", "$appointment.adminCommission"],
+            },
+          },
+        },
+      },
+    ]);
+
+    const totalEarnings =
+      earningsData.length > 0 ? earningsData[0].totalEarnings : 0;
+
+    // MONTHLY EARNINGS (AFTER COMMISSION)
     const monthlyEarnings = await Payment.aggregate([
       {
         $match: {
@@ -83,12 +245,27 @@ export const getDoctorDashboard = async (req, res, next) => {
         },
       },
       {
+        $lookup: {
+          from: "appointments",
+          localField: "appointmentId",
+          foreignField: "_id",
+          as: "appointment",
+        },
+      },
+      {
+        $unwind: "$appointment",
+      },
+      {
         $group: {
           _id: {
             month: { $month: "$createdAt" },
             method: "$paymentMethod",
           },
-          total: { $sum: "$amount" },
+          total: {
+            $sum: {
+              $subtract: ["$amount", "$appointment.adminCommission"],
+            },
+          },
         },
       },
       {
@@ -249,17 +426,7 @@ export const changeAppointmentStatus = async (req, res, next) => {
       appointment.status = "confirmed";
 
       const fee = appointment.consultationFee;
-      let commissionPercent = 0;
-
-      if (fee < 500) {
-        commissionPercent = 20;
-      } else if (fee < 1000) {
-        commissionPercent = 15;
-      } else if (fee < 2000) {
-        commissionPercent = 10;
-      } else {
-        commissionPercent = 5;
-      }
+      let commissionPercent = doctor.aCommission;
 
       appointment.adminCommission = (fee * commissionPercent) / 100;
     } else if (appointment.status === "confirmed") {
@@ -582,7 +749,9 @@ export const getDoctorProfile = async (req, res, next) => {
     const doctor = await Doctor.findOne({
       userId: user._id,
       isDeleted: false,
-    }).select("specialization experience about consultationFee isApproved");
+    }).select(
+      "specialization experience about consultationFee isApproved aCommission",
+    );
 
     if (!doctor) {
       res.status(404);
@@ -604,6 +773,7 @@ export const getDoctorProfile = async (req, res, next) => {
         about: doctor.about,
         consultationFee: doctor.consultationFee,
         isApproved: doctor.isApproved,
+        aCommission: doctor.aCommission,
       },
     });
   } catch (error) {

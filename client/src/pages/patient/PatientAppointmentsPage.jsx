@@ -9,7 +9,7 @@ import {
 } from "../../store/patient";
 import { formatDate, formatMoney, statusTone } from "../../lib/format.js";
 import { toast } from "react-toastify";
-import { RAZORPAY_KEY_ID } from "../../lib/env.js";
+import { RAZORPAY_KEY_ID, VITE_API_BASE_URL } from "../../lib/env.js";
 
 function PatientAppointmentsPage() {
   const dispatch = useDispatch();
@@ -99,7 +99,7 @@ function PatientAppointmentsPage() {
 
   const downloadPrescription = (appointmentId) => {
     window.open(
-      `${import.meta.env.VITE_API_BASE_URL}/patient/prescription/${appointmentId}`,
+      `${VITE_API_BASE_URL}/patient/prescription/${appointmentId}`,
       "_blank",
     );
   };

@@ -16,6 +16,7 @@ function AdminAddDoctorPage() {
     experience: "",
     about: "",
     consultationFee: "",
+    aCommission: "10",
   });
 
   const [slots, setSlots] = useState([{ date: "", times: "" }]);
@@ -76,6 +77,7 @@ function AdminAddDoctorPage() {
         phone: form.phone,
         specialization: form.specialization,
         experience: Number(form.experience),
+        aCommission: Number(form.aCommission),
         about: form.about,
         consultationFee: Number(form.consultationFee),
         availableSlots,
@@ -90,6 +92,7 @@ function AdminAddDoctorPage() {
           experience: "",
           about: "",
           consultationFee: "",
+          aCommission: "10",
         });
         setSlots([{ date: "", times: "" }]);
       }
@@ -172,6 +175,24 @@ function AdminAddDoctorPage() {
               onChange={(e) => onChange("experience", e.target.value)}
               required
             />
+          </label>
+
+          <label className="space-y-1">
+            <span className="text-sm font-semibold text-[#4f6ea5]">
+              Admin Commission (%) *
+            </span>
+            <select
+              className="soft-input"
+              value={form.aCommission}
+              onChange={(e) => onChange("aCommission", e.target.value)}
+              required
+            >
+              {[5, 10, 15, 20, 25, 30, 35].map((val) => (
+                <option key={val} value={val}>
+                  {val}%
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="space-y-1 md:col-span-2">

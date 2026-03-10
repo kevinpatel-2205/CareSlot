@@ -27,7 +27,11 @@ export const getAdminDashboard = async (req, res, next) => {
       {
         $group: {
           _id: "$doctorId",
-          totalEarning: { $sum: "$consultationFee" },
+          totalEarning: {
+            $sum: {
+              $subtract: ["$consultationFee", "$adminCommission"],
+            },
+          },
           totalAppointments: { $sum: 1 },
         },
       },
@@ -162,6 +166,7 @@ export const createDoctor = async (req, res, next) => {
       about,
       consultationFee,
       availableSlots,
+      aCommission,
     } = req.body;
 
     name = name?.trim();
@@ -185,7 +190,6 @@ export const createDoctor = async (req, res, next) => {
       return password;
     }
     let password = generatePassword();
-    console.log(generatePassword());
 
     if (
       !name ||
@@ -293,6 +297,18 @@ export const createDoctor = async (req, res, next) => {
       };
     });
 
+    if (aCommission === undefined) {
+      res.status(400);
+      throw new Error("Commission is required");
+    }
+
+    const percent = Number(aCommission);
+
+    if (percent < 5 || percent > 35) {
+      res.status(400);
+      throw new Error("Commission must be between 5% and 35%");
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) {
       res.status(400);
@@ -316,6 +332,7 @@ export const createDoctor = async (req, res, next) => {
         consultationFee,
         availableSlots: validatedSlots,
         isApproved: true,
+        aCommission: aCommission,
       });
 
       await sendDoctorEmail({
@@ -335,6 +352,7 @@ export const createDoctor = async (req, res, next) => {
           experience: doctor.experience,
           consultationFee: doctor.consultationFee,
           isApproved: doctor.isApproved,
+          aCommission: doctor.aCommission,
         },
       });
     } catch (err) {
@@ -353,7 +371,7 @@ export const getAllDoctors = async (req, res, next) => {
         path: "userId",
         select: "name email phone image isActive",
       })
-      .select("specialization experience");
+      .select("specialization experience aCommission");
 
     const commissionData = await Appointment.aggregate([
       {
@@ -384,6 +402,7 @@ export const getAllDoctors = async (req, res, next) => {
       isActive: doc.userId?.isActive,
       specialization: doc.specialization,
       experience: doc.experience,
+      aCommission: doc.aCommission,
       totalCommission: commissionMap[doc._id.toString()] || 0,
     }));
 
@@ -1028,6 +1047,47 @@ export const deleteReview = async (req, res, next) => {
       success: true,
       message: "Review deleted successfully",
       reviewId,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateDoctorCommission = async (req, res, next) => {
+  try {
+    const { doctorId } = req.params;
+    const { commission } = req.body;
+
+    if (commission === undefined) {
+      res.status(400);
+      throw new Error("Commission is required");
+    }
+
+    const percent = Number(commission);
+
+    if (percent < 5 || percent > 35) {
+      res.status(400);
+      throw new Error("Commission must be between 5% and 35%");
+    }
+
+    const doctor = await Doctor.findOne({
+      _id: doctorId,
+      isDeleted: false,
+    });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    doctor.aCommission = percent;
+    await doctor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Doctor commission updated successfully",
+      doctorId,
+      commission: percent,
     });
   } catch (error) {
     next(error);

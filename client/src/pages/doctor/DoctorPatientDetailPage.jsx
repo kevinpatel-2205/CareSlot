@@ -8,6 +8,7 @@ import {
 } from "../../store/doctor";
 import { formatDate, statusTone } from "../../lib/format.js";
 import { useNavigate } from "react-router-dom";
+import { VITE_API_BASE_URL } from "../../lib/env.js";
 
 function DoctorPatientDetailPage() {
   const { patientId } = useParams();
@@ -31,7 +32,7 @@ function DoctorPatientDetailPage() {
 
   const downloadPrescription = (appointmentId) => {
     window.open(
-      `${import.meta.env.VITE_API_BASE_URL}/doctor/prescription/${appointmentId}`,
+      `${VITE_API_BASE_URL}/doctor/prescription/${appointmentId}`,
       "_blank",
     );
   };

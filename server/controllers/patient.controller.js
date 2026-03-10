@@ -576,7 +576,7 @@ export const paymentRazorpay = async (req, res, next) => {
 
     if (appointmentData.paymentStatus === "paid") {
       res.status(400);
-      throw new Error("Payment already completed");
+      throw new Error("Payment already paid");
     }
 
     const options = {
@@ -667,18 +667,10 @@ export const verifyRazorpay = async (req, res, next) => {
       throw new Error("Appointment not found");
     }
 
-    const fee = appointment.consultationFee;
-    let commissionPercent = 0;
+    const doctor = await Doctor.findById(appointment.doctorId);
 
-    if (fee < 500) {
-      commissionPercent = 20;
-    } else if (fee < 1000) {
-      commissionPercent = 15;
-    } else if (fee < 2000) {
-      commissionPercent = 10;
-    } else {
-      commissionPercent = 5;
-    }
+    const fee = appointment.consultationFee;
+    const commissionPercent = doctor?.aCommission || 0;
 
     appointment.paymentStatus = "paid";
     appointment.status = "confirmed";

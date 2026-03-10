@@ -180,6 +180,20 @@ export const deleteReview = createAsyncThunk(
   },
 );
 
+export const updateDoctorCommission = createAsyncThunk(
+  "admin/updateDoctorCommission",
+  async ({ doctorId, commission }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.put(`/admin/commission/${doctorId}`, {
+        commission,
+      });
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState,
@@ -343,6 +357,27 @@ const adminSlice = createSlice({
         toast.success(action.payload.message);
       })
       .addCase(deleteReview.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(updateDoctorCommission.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateDoctorCommission.fulfilled, (state, action) => {
+        state.loading = false;
+
+        const doctor = state.doctors.find(
+          (d) => d.doctorId === action.payload.doctorId,
+        );
+
+        if (doctor) {
+          doctor.aCommission = action.payload.commission;
+        }
+
+        toast.success(action.payload.message);
+      })
+      .addCase(updateDoctorCommission.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       });

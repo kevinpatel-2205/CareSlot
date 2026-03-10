@@ -168,6 +168,9 @@ function DoctorProfilePage() {
           <p className="mt-4 rounded-xl bg-[#edf3ff] px-3 py-2 text-sm font-semibold text-[#305ea9]">
             Consultation Fee: {formatMoney(profile?.consultationFee || 0)}
           </p>
+          <p className="mt-4 rounded-xl bg-[#edf3ff] px-3 py-2 text-sm font-semibold text-[#305ea9]">
+            Admin Commission: {profile?.aCommission || 0}%
+          </p>
         </article>
       </section>
 
