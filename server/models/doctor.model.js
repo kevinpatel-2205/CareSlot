@@ -67,6 +67,20 @@ const doctorSchema = new mongoose.Schema(
       default: 10,
     },
 
+    commissionHistory: [
+      {
+        commission: {
+          type: Number,
+          required: true,
+        },
+
+        changedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     isDeleted: {
       type: Boolean,
       default: false,

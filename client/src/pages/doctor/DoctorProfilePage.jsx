@@ -171,6 +171,38 @@ function DoctorProfilePage() {
           <p className="mt-4 rounded-xl bg-[#edf3ff] px-3 py-2 text-sm font-semibold text-[#305ea9]">
             Admin Commission: {profile?.aCommission || 0}%
           </p>
+          {profile?.commissionHistory?.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-sm font-semibold text-[#305ea9]">
+                Commission History
+              </p>
+
+              <div className="max-h-40 overflow-y-auto rounded-xl border border-[#d8e2fb] bg-[#f6f9ff] p-3 space-y-2">
+                {[...profile.commissionHistory]
+                  .sort((a, b) => new Date(b.changedAt) - new Date(a.changedAt))
+                  .map((item, index) => {
+                    const date = new Date(item.changedAt).toLocaleDateString();
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between text-sm text-[#36598f]"
+                      >
+                        <span>{date}</span>
+
+                        <span
+                          className={`font-semibold ${
+                            index === 0 ? "text-green-600" : ""
+                          }`}
+                        >
+                          {item.commission}% {index === 0 && "(Current)"}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
         </article>
       </section>
 

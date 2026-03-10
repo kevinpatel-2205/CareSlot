@@ -333,6 +333,12 @@ export const createDoctor = async (req, res, next) => {
         availableSlots: validatedSlots,
         isApproved: true,
         aCommission: aCommission,
+        commissionHistory: [
+          {
+            commission: aCommission,
+            changedAt: new Date(),
+          },
+        ],
       });
 
       await sendDoctorEmail({
@@ -1080,8 +1086,16 @@ export const updateDoctorCommission = async (req, res, next) => {
       throw new Error("Doctor not found");
     }
 
-    doctor.aCommission = percent;
-    await doctor.save();
+    if (doctor.aCommission !== percent) {
+      doctor.aCommission = percent;
+
+      doctor.commissionHistory.push({
+        commission: percent,
+        changedAt: new Date(),
+      });
+
+      await doctor.save();
+    }
 
     res.status(200).json({
       success: true,
