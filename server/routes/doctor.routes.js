@@ -16,6 +16,7 @@ import {
   getDoctorReviews,
   addPrescription,
 } from "../controllers/doctor.controller.js";
+import { downloadPrescription } from "../controllers/prescriptionDownload.controller.js";
 
 const router = express.Router();
 
@@ -34,4 +35,5 @@ router.delete("/slots/:date", deleteAvailableSlot);
 router.get("/reviews", getDoctorReviews);
 router.get("/export-excel", exportDoctorExcel);
 router.post("/prescription/:appointmentId", addPrescription);
+router.get("/prescription/:appointmentId", downloadPrescription);
 export default router;

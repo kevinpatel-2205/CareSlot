@@ -44,8 +44,8 @@ function DoctorAddPrescriptionPage() {
     setMedicines(updated);
   };
 
-  const handleSubmit = () => {
-    dispatch(
+  const handleSubmit = async () => {
+    const result = await dispatch(
       addPrescription({
         appointmentId,
         prescriptionData: {
@@ -54,8 +54,11 @@ function DoctorAddPrescriptionPage() {
         },
       }),
     );
-    if (result.meta.requestStatus === "fulfilled") {
-      navigate(`/doctor/patient-details/${patientId}`);
+
+    if (addPrescription.fulfilled.match(result)) {
+      setTimeout(() => {
+        navigate(`/doctor/patients/${patientId}`);
+      }, 1000);
     }
   };
 

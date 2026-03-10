@@ -29,6 +29,13 @@ function DoctorPatientDetailPage() {
     dispatch(fetchPatientDetails(patientId));
   };
 
+  const downloadPrescription = (appointmentId) => {
+    window.open(
+      `${import.meta.env.VITE_API_BASE_URL}/doctor/prescription/${appointmentId}`,
+      "_blank",
+    );
+  };
+
   return (
     <div className="space-y-5">
       <h2 className="font-['Averia_Serif_Libre'] text-5xl font-semibold tracking-tight text-[#1a3f7b]">
@@ -107,38 +114,44 @@ function DoctorPatientDetailPage() {
                 <td className="px-4 py-3">{apt.notes || "--"}</td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => handleChangeStatus(apt._id)}
-                      className="rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-xs font-semibold text-[#345eaa]"
-                    >
-                      Change Status
-                    </button>
+                    {apt.status !== "completed" ? (
+                      <>
+                        <button
+                          onClick={() => handleChangeStatus(apt._id)}
+                          className="rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-xs font-semibold text-[#345eaa]"
+                        >
+                          Change Status
+                        </button>
 
-                    <button
-                      onClick={() => handleCancelAppointment(apt._id)}
-                      className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700"
-                    >
-                      Cancel
-                    </button>
-
-                    {apt.prescriptionAdded ? (
-                      <button
-                        onClick={() => downloadPrescription(apt._id)}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg"
-                      >
-                        Download Rx
-                      </button>
+                        <button
+                          onClick={() => handleCancelAppointment(apt._id)}
+                          className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700"
+                        >
+                          Cancel
+                        </button>
+                      </>
                     ) : (
-                      <button
-                        onClick={() =>
-                          navigate(
-                            `/doctor/prescription/${patientId}/${apt._id}`,
-                          )
-                        }
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-                      >
-                        Create Rx
-                      </button>
+                      <>
+                        {apt.prescriptionAdded ? (
+                          <button
+                            onClick={() => downloadPrescription(apt._id)}
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg"
+                          >
+                            Download Rx
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              navigate(
+                                `/doctor/prescription/${patientId}/${apt._id}`,
+                              )
+                            }
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                          >
+                            Create Rx
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </td>
