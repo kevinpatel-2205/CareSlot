@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllAppointments } from "../../store/admin";
 import { formatDate, statusTone } from "../../lib/format.js";
+import { VITE_API_BASE_URL } from "../../lib/env.js";
 
 function AdminAppointmentsPage() {
   const dispatch = useDispatch();
@@ -12,6 +13,13 @@ function AdminAppointmentsPage() {
   useEffect(() => {
     dispatch(getAllAppointments(statusFilter));
   }, [dispatch, statusFilter]);
+
+  const downloadPrescription = (appointmentId) => {
+    window.open(
+      `${VITE_API_BASE_URL}/admin/prescription/${appointmentId}`,
+      "_blank",
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -43,6 +51,7 @@ function AdminAppointmentsPage() {
               <th className="px-4 py-3">Time</th>
               <th className="px-4 py-3">Commission</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Prescription</th>
             </tr>
           </thead>
 
@@ -75,6 +84,15 @@ function AdminAppointmentsPage() {
                   >
                     {item.status}
                   </span>
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    disabled={!item.prescriptionAdded}
+                    onClick={() => downloadPrescription(item.appointmentId)}
+                    className="rounded-lg border border-green-600 bg-white px-3 py-1.5 text-xs font-semibold text-green-600 hover:bg-green-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400"
+                  >
+                    Download
+                  </button>
                 </td>
               </tr>
             ))}

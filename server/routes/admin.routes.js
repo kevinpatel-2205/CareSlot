@@ -14,6 +14,7 @@ import {
   deleteReview,
   updateDoctorCommission,
 } from "../controllers/admin.controller.js";
+import { downloadPrescription } from "../controllers/prescriptionDownload.controller.js";
 
 const router = express.Router();
 
@@ -30,5 +31,6 @@ router.get("/reviews", getPendingReviews);
 router.patch("/reviews/:reviewId", approveReview);
 router.delete("/reviews/:reviewId", deleteReview);
 router.put("/commission/:doctorId", updateDoctorCommission);
+router.get("/prescription/:appointmentId", downloadPrescription);
 
 export default router;

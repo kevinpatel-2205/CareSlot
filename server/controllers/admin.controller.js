@@ -627,7 +627,9 @@ export const getAllAppointments = async (req, res, next) => {
           select: "name",
         },
       })
-      .select("appointmentDate timeSlot status adminCommission")
+      .select(
+        "appointmentDate timeSlot status adminCommission prescriptionAdded",
+      )
       .sort({ appointmentDate: -1, timeSlot: 1 });
 
     const formattedAppointments = appointments.map((appt) => ({
@@ -638,6 +640,7 @@ export const getAllAppointments = async (req, res, next) => {
       timeSlot: appt.timeSlot,
       status: appt.status,
       adminCommission: appt.adminCommission,
+      prescriptionAdded: appt.prescriptionAdded,
     }));
 
     res.status(200).json({
