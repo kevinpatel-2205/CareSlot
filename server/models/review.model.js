@@ -28,6 +28,11 @@ const reviewSchema = new mongoose.Schema(
       default: false,
     },
 
+    aiReason: {
+      type: String,
+      default: "",
+    },
+
     isDeleted: {
       type: Boolean,
       default: false,

@@ -46,6 +46,7 @@ const AdminReviews = () => {
                 <th className="p-4">Doctor</th>
                 <th className="p-4">Rating</th>
                 <th className="p-4">Comment</th>
+                <th className="p-4">AI Reason</th>
                 <th className="p-4">Date</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
@@ -63,18 +64,23 @@ const AdminReviews = () => {
                     <span>{rev?.patientId?.userId?.name}</span>
                   </td>
 
-                  <td className="p-4">
-                    {rev?.doctorId?.userId?.name}
-                  </td>
+                  <td className="p-4">{rev?.doctorId?.userId?.name}</td>
 
                   <td className="p-4 text-yellow-500">
                     {renderStars(rev.rating)}
                   </td>
 
-                  <td className="p-4 text-gray-600">
-                    {rev.comment}
-                  </td>
+                  <td className="p-4 text-gray-600">{rev.comment}</td>
 
+                  <td className="p-4">
+                    {rev.aiReason ? (
+                      <span className="text-red-500 text-sm">
+                        {rev.aiReason}
+                      </span>
+                    ) : (
+                      <span className="text-green-600 text-sm">No issues</span>
+                    )}
+                  </td>
                   <td className="p-4 text-gray-500 text-sm">
                     {new Date(rev.createdAt).toLocaleDateString()}
                   </td>

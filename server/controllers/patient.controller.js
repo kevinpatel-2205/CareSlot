@@ -8,6 +8,8 @@ import razorpayInstance from "../utils/RazorPay.js";
 import { CURRENCY, RAZORPAY_KEY_SECRET } from "../utils/env.js";
 import crypto from "crypto";
 import { sendAppointmentBookedEmailToDoctor } from "../utils/sendEmail.js";
+import { checkReviewWithAI } from "../utils/aiModeration.js";
+import mongoose from "mongoose";
 
 export const getPatientDashboard = async (req, res, next) => {
   try {
@@ -736,7 +738,7 @@ export const createReview = async (req, res, next) => {
 
     if (!doctorId || !rating) {
       res.status(400);
-      throw new Error("Doctor and rating are required");
+      throw new Error("rating is required");
     }
 
     if (rating < 1 || rating > 5) {
@@ -783,21 +785,54 @@ export const createReview = async (req, res, next) => {
       patientId: patient._id,
     });
 
-    if (reviewCount >= 5) {
+    if (reviewCount >= 100) {
       res.status(400);
-      throw new Error("You can only submit 5 reviews for this doctor");
+      throw new Error("You can only submit 1 reviews for this doctor");
     }
+
+    const aiResult = await checkReviewWithAI(comment || "");
 
     const review = await Review.create({
       doctorId,
       patientId: patient._id,
       rating,
       comment,
+      isApprove: aiResult.approved,
+      aiReason: aiResult.approved ? "" : aiResult.reason,
     });
+
+    if (aiResult.approved) {
+      const ratingData = await Review.aggregate([
+        {
+          $match: {
+            doctorId: new mongoose.Types.ObjectId(doctorId),
+            isApprove: true,
+            isDeleted: false,
+          },
+        },
+        {
+          $group: {
+            _id: "$doctorId",
+            averageRating: { $avg: "$rating" },
+            totalReviews: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const averageRating = ratingData[0]?.averageRating || 0;
+      const totalReviews = ratingData[0]?.totalReviews || 0;
+
+      await Doctor.findByIdAndUpdate(doctorId, {
+        averageRating: Number(averageRating.toFixed(1)),
+        totalReviews,
+      });
+    }
 
     res.status(201).json({
       success: true,
-      message: "Review submitted successfully",
+      message: aiResult.approved
+        ? "Review submitted and approved"
+        : "Review submitted and waiting for admin approval",
       data: review,
     });
   } catch (error) {
