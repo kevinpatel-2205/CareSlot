@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ShieldCheck, Users, DollarSign, FileSpreadsheet } from "lucide-react";
 
@@ -18,7 +18,6 @@ import { formatMoney } from "../../lib/format";
 
 function Dashboard() {
   const dispatch = useDispatch();
-
   const { dashboard, loading } = useSelector((state) => state.admin);
 
   const [showDownload, setShowDownload] = useState(false);
@@ -26,6 +25,46 @@ function Dashboard() {
   useEffect(() => {
     dispatch(getAdminDashboard());
   }, [dispatch]);
+
+  const monthlyAppointments = dashboard?.monthlyAppointments || [];
+
+  const monthlyValues = useMemo(() => {
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => {
+      const item = monthlyAppointments.find((m) => m._id === month);
+      return item?.totalAppointments || 0;
+    });
+  }, [monthlyAppointments]);
+
+  const totalAppointments = useMemo(() => {
+    return monthlyAppointments.reduce(
+      (sum, item) => sum + (item.totalAppointments || 0),
+      0,
+    );
+  }, [monthlyAppointments]);
+
+  const topEarningDoctors = dashboard?.topEarningDoctors || [];
+
+  const topEarningLabels = useMemo(
+    () => topEarningDoctors.map((item) => item.name),
+    [topEarningDoctors],
+  );
+
+  const topEarningValues = useMemo(
+    () => topEarningDoctors.map((item) => item.totalEarning),
+    [topEarningDoctors],
+  );
+
+  const topBookedDoctors = dashboard?.topBookedDoctors || [];
+
+  const topBookedLabels = useMemo(
+    () => topBookedDoctors.map((item) => item.name),
+    [topBookedDoctors],
+  );
+
+  const topBookedValues = useMemo(
+    () => topBookedDoctors.map((item) => item.totalAppointments),
+    [topBookedDoctors],
+  );
 
   if (loading) return <PageLoader />;
 
@@ -47,7 +86,6 @@ function Dashboard() {
               className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
             />
 
-            {/* Hide text on mobile */}
             <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
               Export
             </span>
@@ -129,22 +167,13 @@ function Dashboard() {
                 "Nov",
                 "Dec",
               ]}
-              values={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => {
-                const item = (dashboard?.monthlyAppointments || []).find(
-                  (m) => m._id === month,
-                );
-                return item?.totalAppointments || 0;
-              })}
+              values={monthlyValues}
             />
           </div>
 
           <div className="mt-6 space-y-1 text-sm text-[#4d6da3]">
             <span className="font-semibold">
-              Total Appointments :{" "}
-              {(dashboard?.monthlyAppointments || []).reduce(
-                (sum, item) => sum + (item.totalAppointments || 0),
-                0,
-              )}
+              Total Appointments : {totalAppointments}
             </span>
           </div>
         </section>
@@ -156,17 +185,13 @@ function Dashboard() {
 
           <div className="mt-4 h-80">
             <TopEarningDoughnutChart
-              labels={(dashboard?.topEarningDoctors || []).map(
-                (item) => item.name,
-              )}
-              values={(dashboard?.topEarningDoctors || []).map(
-                (item) => item.totalEarning,
-              )}
+              labels={topEarningLabels}
+              values={topEarningValues}
             />
           </div>
 
           <div className="mt-3 space-y-1 text-sm text-[#4d6da3]">
-            {(dashboard?.topEarningDoctors || []).map((item) => (
+            {topEarningDoctors.map((item) => (
               <p key={item.doctorId}>
                 {item.name}:{" "}
                 <span className="font-semibold">
@@ -187,17 +212,13 @@ function Dashboard() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_1fr]">
           <div className="h-80">
             <TopBookedPolarChart
-              labels={(dashboard?.topBookedDoctors || []).map(
-                (item) => item.name,
-              )}
-              values={(dashboard?.topBookedDoctors || []).map(
-                (item) => item.totalAppointments,
-              )}
+              labels={topBookedLabels}
+              values={topBookedValues}
             />
           </div>
 
           <div className="space-y-2 rounded-2xl border border-[#d8e4ff] bg-white/60 p-4 text-sm text-[#4d6da3]">
-            {(dashboard?.topBookedDoctors || []).map((item, idx) => (
+            {topBookedDoctors.map((item, idx) => (
               <div
                 key={item.doctorId}
                 className="flex items-center justify-between rounded-xl bg-[#f3f7ff] px-3 py-2"
@@ -209,7 +230,7 @@ function Dashboard() {
               </div>
             ))}
 
-            {!dashboard?.topBookedDoctors?.length && (
+            {!topBookedDoctors.length && (
               <p className="text-[#6b87b8]">No booking data available.</p>
             )}
           </div>

@@ -1,5 +1,5 @@
 import { DollarSign, FileSpreadsheet, NotebookTabs, Users } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -16,7 +16,6 @@ import {
 } from "../../store/doctor";
 
 import { formatDate, formatMoney, statusTone } from "../../lib/format.js";
-import { useState } from "react";
 
 function DoctorDashboardPage() {
   const dispatch = useDispatch();
@@ -34,13 +33,49 @@ function DoctorDashboardPage() {
   }, [dispatch]);
 
   const monthly = useMemo(() => {
-    const series = dashboard?.monthlyEarnings || [];
+    const series = dashboard?.monthlyEarnings || {};
     return {
-      labels: series.labels,
-      cash: series.cash,
-      razorpay: series.razorpay,
+      labels: series.labels || [],
+      cash: series.cash || [],
+      razorpay: series.razorpay || [],
     };
   }, [dashboard]);
+
+  const totalCash = useMemo(() => {
+    return Array.isArray(monthly.cash)
+      ? monthly.cash.reduce((sum, value) => sum + value, 0)
+      : 0;
+  }, [monthly.cash]);
+
+  const totalRazorpay = useMemo(() => {
+    return Array.isArray(monthly.razorpay)
+      ? monthly.razorpay.reduce((sum, value) => sum + value, 0)
+      : 0;
+  }, [monthly.razorpay]);
+
+  const appointmentCounts = dashboard?.appointmentCounts || {};
+
+  const totalAppointments = useMemo(() => {
+    return (
+      (appointmentCounts.completed || 0) +
+      (appointmentCounts.pending || 0) +
+      (appointmentCounts.cancelled || 0)
+    );
+  }, [appointmentCounts]);
+
+  const pendingConfirmedAppointments = useMemo(() => {
+    return (
+      (appointmentCounts.pending || 0) + (appointmentCounts.confirmed || 0)
+    );
+  }, [appointmentCounts]);
+
+  const upcomingList = useMemo(() => {
+    return upcomingAppointments.slice(0, 7);
+  }, [upcomingAppointments]);
+
+  const recentPatients = useMemo(() => {
+    return patients.slice(0, 5);
+  }, [patients]);
 
   return (
     <div className="space-y-6">
@@ -98,23 +133,23 @@ function DoctorDashboardPage() {
           note="Unique patients"
           tone="blue"
         />
+
         <StatCard
           icon={NotebookTabs}
           title="Total Appointments"
-          value={
-            (dashboard?.appointmentCounts?.pending || 0) +
-            (dashboard?.appointmentCounts?.confirmed || 0)
-          }
+          value={pendingConfirmedAppointments}
           note="Pending + Confirmed"
           tone="mint"
         />
+
         <StatCard
           icon={NotebookTabs}
           title="Completed Appointments"
-          value={dashboard?.appointmentCounts?.completed || 0}
+          value={appointmentCounts.completed || 0}
           note="Completed visits"
           tone="violet"
         />
+
         <StatCard
           icon={DollarSign}
           title="Total Earnings"
@@ -122,6 +157,7 @@ function DoctorDashboardPage() {
           note="All time"
           tone="amber"
         />
+
         <StatCard
           icon={DollarSign}
           title="Admin Commission"
@@ -136,6 +172,7 @@ function DoctorDashboardPage() {
           <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
             Monthly Earnings
           </h3>
+
           <div className="mt-4 h-80">
             <EarningsLineChart
               labels={monthly.labels}
@@ -146,27 +183,11 @@ function DoctorDashboardPage() {
 
           <div className="mt-6 space-y-1 text-sm text-[#4d6da3]">
             <span className="font-semibold">
-              Total Cash:{" "}
-              {formatMoney(
-                Array.isArray(dashboard?.monthlyEarnings?.cash)
-                  ? dashboard.monthlyEarnings.cash.reduce(
-                      (sum, value) => sum + value,
-                      0,
-                    )
-                  : 0,
-              )}
+              Total Cash: {formatMoney(totalCash)}
             </span>
             <br />
             <span className="font-semibold">
-              Total Razorpay:{" "}
-              {formatMoney(
-                Array.isArray(dashboard?.monthlyEarnings?.razorpay)
-                  ? dashboard.monthlyEarnings.razorpay.reduce(
-                      (sum, value) => sum + value,
-                      0,
-                    )
-                  : 0,
-              )}
+              Total Razorpay: {formatMoney(totalRazorpay)}
             </span>
           </div>
         </section>
@@ -175,18 +196,17 @@ function DoctorDashboardPage() {
           <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
             Appointment Overview
           </h3>
+
           <div className="mt-4 h-80">
             <StatusDonutChart
-              completed={dashboard?.appointmentCounts?.completed || 0}
-              pending={dashboard?.appointmentCounts?.pending || 0}
-              cancelled={dashboard?.appointmentCounts?.cancelled || 0}
+              completed={appointmentCounts.completed || 0}
+              pending={appointmentCounts.pending || 0}
+              cancelled={appointmentCounts.cancelled || 0}
             />
           </div>
+
           <div className="mt-4 text-sm font-semibold text-[#4d6da3]">
-            Total Appointments:{" "}
-            {(dashboard?.appointmentCounts?.completed || 0) +
-              (dashboard?.appointmentCounts?.pending || 0) +
-              (dashboard?.appointmentCounts?.cancelled || 0)}
+            Total Appointments: {totalAppointments}
           </div>
         </section>
       </div>
@@ -198,6 +218,7 @@ function DoctorDashboardPage() {
               Upcoming Appointments
             </h4>
           </div>
+
           <div className="max-h-[48vh] overflow-auto">
             <table className="min-w-full text-left">
               <thead className="sticky top-0 bg-[#eff4ff] text-[#5f7db2]">
@@ -209,21 +230,26 @@ function DoctorDashboardPage() {
                   <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
+
               <tbody>
-                {upcomingAppointments.slice(0, 7).map((item) => (
+                {upcomingList.map((item) => (
                   <tr key={item._id} className="border-t border-[#e0e8fc]">
                     <td className="px-4 py-3 text-[#1c3f7a]">
                       {item.patientId?.userId?.name || "--"}
                     </td>
+
                     <td className="px-4 py-3 text-[#46659b]">
                       {formatDate(item.appointmentDate)}
                     </td>
+
                     <td className="px-4 py-3 text-[#46659b]">
                       {item.timeSlot}
                     </td>
+
                     <td className="px-4 py-3 capitalize text-[#46659b]">
                       {item.paymentMethod || "--"}
                     </td>
+
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${statusTone(
@@ -235,13 +261,14 @@ function DoctorDashboardPage() {
                     </td>
                   </tr>
                 ))}
-                {!upcomingAppointments.length ? (
+
+                {!upcomingAppointments.length && (
                   <tr>
                     <td className="px-4 py-5 text-[#6985b8]" colSpan={5}>
                       No upcoming appointments.
                     </td>
                   </tr>
-                ) : null}
+                )}
               </tbody>
             </table>
           </div>
@@ -251,17 +278,20 @@ function DoctorDashboardPage() {
           <h4 className="font-['Averia_Serif_Libre'] text-2xl text-[#1a3f7b]">
             Recent Patients
           </h4>
+
           <div className="mt-3 space-y-3">
-            {patients.slice(0, 5).map((item) => (
+            {recentPatients.map((item) => (
               <article
                 key={item.patientId}
                 className="rounded-xl border border-[#d7e2fb] bg-white/70 p-3 text-[#36598f]"
               >
                 <p className="font-bold text-[#1d3f80]">{item.name}</p>
                 <p className="text-sm">{item.email}</p>
+
                 <p className="mt-1 text-xs font-semibold text-[#6381b7]">
                   Total appointments: {item.totalAppointments}
                 </p>
+
                 <Link
                   to={`/doctor/patients/${item.patientId}`}
                   className="mt-2 inline-block text-sm font-semibold text-[#2d7cf2]"
@@ -270,9 +300,10 @@ function DoctorDashboardPage() {
                 </Link>
               </article>
             ))}
-            {!patients.length ? (
+
+            {!patients.length && (
               <p className="text-sm text-[#6381b7]">No patients found.</p>
-            ) : null}
+            )}
           </div>
         </section>
       </div>

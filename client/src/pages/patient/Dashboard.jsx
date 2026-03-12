@@ -1,6 +1,7 @@
 import { BookX, CalendarClock, CheckCircle2, NotebookTabs } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+
 import StatCard from "../../components/StatCard.jsx";
 import { fetchPatientDashboard } from "../../store/patient";
 import { formatDate, statusTone } from "../../lib/format.js";
@@ -14,6 +15,17 @@ function PatientDashboardPage() {
     dispatch(fetchPatientDashboard());
   }, [dispatch]);
 
+
+  const totalBookings = dashboard?.totalBookings || 0;
+  const upcomingBookings = dashboard?.upcomingBookings || 0;
+  const completedBookings = dashboard?.completedBookings || 0;
+  const cancelledBookings = dashboard?.cancelledBookings || 0;
+
+  const upcomingAppointments = useMemo(() => {
+    return dashboard?.upcomingAppointments || [];
+  }, [dashboard]);
+
+
   return (
     <div className="space-y-6">
       <h2 className="font-['Averia_Serif_Libre'] text-5xl font-semibold tracking-tight text-[#1a3f7b]">
@@ -24,28 +36,31 @@ function PatientDashboardPage() {
         <StatCard
           icon={NotebookTabs}
           title="Total Bookings"
-          value={dashboard?.totalBookings || 0}
+          value={totalBookings}
           note="All Bookings"
           tone="blue"
         />
+
         <StatCard
           icon={CalendarClock}
           title="Upcoming"
-          value={dashboard?.upcomingBookings || 0}
+          value={upcomingBookings}
           note="Pending + Confirmed"
           tone="mint"
         />
+
         <StatCard
           icon={CheckCircle2}
           title="Completed"
-          value={dashboard?.completedBookings || 0}
+          value={completedBookings}
           note="Finished visits"
           tone="violet"
         />
+
         <StatCard
           icon={BookX}
           title="Cancelled"
-          value={dashboard?.cancelledBookings || 0}
+          value={cancelledBookings}
           note="Cancelled bookings"
           tone="amber"
         />
@@ -69,16 +84,19 @@ function PatientDashboardPage() {
           </thead>
 
           <tbody>
-            {(dashboard?.upcomingAppointments || []).map((item, index) => (
+            {upcomingAppointments.map((item, index) => (
               <tr
                 key={`${item.appointmentDate}-${index}`}
                 className="border-t border-[#e0e8fc] text-[#2e4f86]"
               >
                 <td className="px-4 py-3">{item.doctorName}</td>
+
                 <td className="px-4 py-3">
                   {formatDate(item.appointmentDate)}
                 </td>
+
                 <td className="px-4 py-3">{item.timeSlot}</td>
+
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${statusTone(
@@ -91,13 +109,13 @@ function PatientDashboardPage() {
               </tr>
             ))}
 
-            {!dashboard?.upcomingAppointments?.length ? (
+            {!upcomingAppointments.length && (
               <tr>
                 <td className="px-4 py-5 text-[#6b87b8]" colSpan={4}>
                   No upcoming appointments.
                 </td>
               </tr>
-            ) : null}
+            )}
           </tbody>
         </table>
       </section>

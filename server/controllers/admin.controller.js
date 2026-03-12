@@ -11,135 +11,143 @@ import PDFDocument from "pdfkit";
 
 export const getAdminDashboard = async (req, res, next) => {
   try {
-    const totalDoctors = await Doctor.countDocuments({
-      isDeleted: false,
-    });
+    const [
+      totalDoctors,
+      totalPatients,
+      topEarningDoctors,
+      topBookedDoctors,
+      monthlyAppointments,
+      commissionData,
+    ] = await Promise.all([
+      Doctor.countDocuments({
+        isDeleted: false,
+      }),
 
-    const totalPatients = await Patient.countDocuments({
-      isDeleted: false,
-    });
+      Patient.countDocuments({
+        isDeleted: false,
+      }),
 
-    const topEarningDoctors = await Appointment.aggregate([
-      {
-        $match: {
-          status: "completed",
-          isDeleted: false,
-        },
-      },
-      {
-        $group: {
-          _id: "$doctorId",
-          totalEarning: {
-            $sum: {
-              $subtract: ["$consultationFee", "$adminCommission"],
-            },
+      Appointment.aggregate([
+        {
+          $match: {
+            status: "completed",
+            isDeleted: false,
           },
-          totalAppointments: { $sum: 1 },
         },
-      },
-      { $sort: { totalEarning: -1 } },
-      { $limit: 5 },
-      {
-        $lookup: {
-          from: "doctors",
-          localField: "_id",
-          foreignField: "_id",
-          as: "doctor",
+        {
+          $group: {
+            _id: "$doctorId",
+            totalEarning: {
+              $sum: {
+                $subtract: ["$consultationFee", "$adminCommission"],
+              },
+            },
+            totalAppointments: { $sum: 1 },
+          },
         },
-      },
-      { $unwind: "$doctor" },
-      {
-        $lookup: {
-          from: "users",
-          localField: "doctor.userId",
-          foreignField: "_id",
-          as: "user",
+        { $sort: { totalEarning: -1 } },
+        { $limit: 5 },
+        {
+          $lookup: {
+            from: "doctors",
+            localField: "_id",
+            foreignField: "_id",
+            as: "doctor",
+          },
         },
-      },
-      { $unwind: "$user" },
-      {
-        $project: {
-          doctorId: "$_id",
-          name: "$user.name",
-          totalEarning: 1,
-          totalAppointments: 1,
+        { $unwind: "$doctor" },
+        {
+          $lookup: {
+            from: "users",
+            localField: "doctor.userId",
+            foreignField: "_id",
+            as: "user",
+          },
         },
-      },
+        { $unwind: "$user" },
+        {
+          $project: {
+            doctorId: "$_id",
+            name: "$user.name",
+            totalEarning: 1,
+            totalAppointments: 1,
+          },
+        },
+      ]),
+
+      Appointment.aggregate([
+        {
+          $match: {
+            isDeleted: false,
+          },
+        },
+        {
+          $group: {
+            _id: "$doctorId",
+            totalAppointments: { $sum: 1 },
+          },
+        },
+        { $sort: { totalAppointments: -1 } },
+        { $limit: 5 },
+        {
+          $lookup: {
+            from: "doctors",
+            localField: "_id",
+            foreignField: "_id",
+            as: "doctor",
+          },
+        },
+        { $unwind: "$doctor" },
+        {
+          $lookup: {
+            from: "users",
+            localField: "doctor.userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        { $unwind: "$user" },
+        {
+          $project: {
+            doctorId: "$_id",
+            name: "$user.name",
+            totalAppointments: 1,
+          },
+        },
+      ]),
+
+      Appointment.aggregate([
+        {
+          $match: {
+            isDeleted: false,
+          },
+        },
+        {
+          $group: {
+            _id: { $month: "$createdAt" },
+            totalAppointments: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+
+      Appointment.aggregate([
+        {
+          $match: {
+            status: { $in: ["confirmed", "completed"] },
+            isDeleted: false,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalCommission: { $sum: "$adminCommission" },
+          },
+        },
+      ]),
     ]);
 
-    const topBookedDoctors = await Appointment.aggregate([
-      {
-        $match: {
-          isDeleted: false,
-        },
-      },
-      {
-        $group: {
-          _id: "$doctorId",
-          totalAppointments: { $sum: 1 },
-        },
-      },
-      { $sort: { totalAppointments: -1 } },
-      { $limit: 5 },
-      {
-        $lookup: {
-          from: "doctors",
-          localField: "_id",
-          foreignField: "_id",
-          as: "doctor",
-        },
-      },
-      { $unwind: "$doctor" },
-      {
-        $lookup: {
-          from: "users",
-          localField: "doctor.userId",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      { $unwind: "$user" },
-      {
-        $project: {
-          doctorId: "$_id",
-          name: "$user.name",
-          totalAppointments: 1,
-        },
-      },
-    ]);
-
-    const monthlyAppointments = await Appointment.aggregate([
-      {
-        $match: {
-          isDeleted: false,
-        },
-      },
-      {
-        $group: {
-          _id: { $month: "$createdAt" },
-          totalAppointments: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
-
-    const commissionData = await Appointment.aggregate([
-      {
-        $match: {
-          status: { $in: ["confirmed", "completed"] },
-          isDeleted: false,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalCommission: { $sum: "$adminCommission" },
-        },
-      },
-    ]);
-
-    const totalCommission =
-      commissionData.length > 0 ? commissionData[0].totalCommission : 0;
+    const totalCommission = commissionData?.[0]?.totalCommission || 0;
 
     res.status(200).json({
       success: true,
@@ -625,7 +633,9 @@ export const deletePatient = async (req, res, next) => {
 
 export const getAllAppointments = async (req, res, next) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
+    let { status, page = 1, limit = 10 } = req.query;
+    page = Number(page);
+    limit = Number(limit);
 
     const skip = (page - 1) * limit;
 
@@ -635,31 +645,34 @@ export const getAllAppointments = async (req, res, next) => {
       filter.status = status;
     }
 
-    const appointments = await Appointment.find(filter)
-      .skip(skip)
-      .limit(Number(limit))
-      .populate({
-        path: "patientId",
-        select: "userId",
-        populate: {
-          path: "userId",
-          select: "name",
-        },
-      })
-      .populate({
-        path: "doctorId",
-        select: "userId",
-        populate: {
-          path: "userId",
-          select: "name",
-        },
-      })
-      .select(
-        "appointmentDate timeSlot status adminCommission prescriptionAdded",
-      )
-      .sort({ appointmentDate: -1, timeSlot: 1 });
+    const [appointments, totalAppointments] = await Promise.all([
+      Appointment.find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort({ appointmentDate: -1, timeSlot: 1 })
+        .select(
+          "appointmentDate timeSlot status adminCommission prescriptionAdded patientId doctorId",
+        )
+        .populate({
+          path: "patientId",
+          select: "userId",
+          populate: {
+            path: "userId",
+            select: "name",
+          },
+        })
+        .populate({
+          path: "doctorId",
+          select: "userId",
+          populate: {
+            path: "userId",
+            select: "name",
+          },
+        })
+        .lean(),
 
-    const totalAppointments = await Appointment.countDocuments(filter);
+      Appointment.countDocuments(filter),
+    ]);
 
     const formattedAppointments = appointments.map((appt) => ({
       appointmentId: appt._id,
@@ -715,26 +728,26 @@ export const exportAdminDataToExcel = async (req, res, next) => {
 
     const metaSheet = workbook.addWorksheet("Dashboard_Meta");
 
-    const totalDoctors = await Doctor.countDocuments({ isDeleted: false });
-    const totalPatients = await Patient.countDocuments({ isDeleted: false });
-    const totalAppointments = await Appointment.countDocuments({
-      isDeleted: false,
-    });
-
-    const commissionData = await Appointment.aggregate([
-      {
-        $match: {
-          status: { $in: ["confirmed", "completed"] },
-          isDeleted: false,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalCommission: { $sum: "$adminCommission" },
-        },
-      },
-    ]);
+    const [totalDoctors, totalPatients, totalAppointments, commissionData] =
+      await Promise.all([
+        Doctor.countDocuments({ isDeleted: false }),
+        Patient.countDocuments({ isDeleted: false }),
+        Appointment.countDocuments({ isDeleted: false }),
+        Appointment.aggregate([
+          {
+            $match: {
+              status: { $in: ["confirmed", "completed"] },
+              isDeleted: false,
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalCommission: { $sum: "$adminCommission" },
+            },
+          },
+        ]),
+      ]);
 
     const totalCommission =
       commissionData.length > 0 ? commissionData[0].totalCommission : 0;
@@ -781,15 +794,17 @@ export const exportAdminDataToExcel = async (req, res, next) => {
 
     doctorSheet.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
 
-    const doctors = await Doctor.find({ isDeleted: false }).populate("userId");
+    const [doctors, doctorAppointments] = await Promise.all([
+      Doctor.find({ isDeleted: false }).populate("userId").lean(),
+      Appointment.find({ isDeleted: false }).lean(),
+    ]);
 
     let index = 1;
 
     for (const doc of doctors) {
-      const appointments = await Appointment.find({
-        doctorId: doc._id,
-        isDeleted: false,
-      });
+      const appointments = doctorAppointments.filter(
+        (a) => a.doctorId.toString() === doc._id.toString(),
+      );
 
       const completedAppointments = appointments.filter((a) =>
         ["confirmed", "completed"].includes(a.status),
@@ -847,17 +862,17 @@ export const exportAdminDataToExcel = async (req, res, next) => {
 
     patientSheet.getRow(1).eachCell((cell) => Object.assign(cell, headerStyle));
 
-    const patients = await Patient.find({ isDeleted: false }).populate(
-      "userId",
-    );
+    const [patients, patientAppointments] = await Promise.all([
+      Patient.find({ isDeleted: false }).populate("userId").lean(),
+      Appointment.find({ isDeleted: false }).lean(),
+    ]);
 
     index = 1;
 
     for (const patient of patients) {
-      const appointments = await Appointment.find({
-        patientId: patient._id,
-        isDeleted: false,
-      });
+      const appointments = patientAppointments.filter(
+        (a) => a.patientId.toString() === patient._id.toString(),
+      );
 
       const completedAppointments = appointments.filter((a) =>
         ["confirmed", "completed"].includes(a.status),
