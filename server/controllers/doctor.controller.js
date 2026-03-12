@@ -187,7 +187,15 @@ export const getDoctorDashboard = async (req, res, next) => {
 
 export const getUpcomingAppointments = async (req, res, next) => {
   try {
-    const doctor = await Doctor.findOne({ userId: req.user._id });
+    const doctor = await Doctor.findOne({ userId: req.user._id }).select("_id");
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
     const doctorId = doctor._id;
 
     const appointments = await Appointment.find({
@@ -205,7 +213,7 @@ export const getUpcomingAppointments = async (req, res, next) => {
           select: "name email",
         },
       })
-      .sort({ appointmentDate: 1 })
+      .sort({ appointmentDate: 1, timeSlot: 1 })
       .lean();
 
     res.status(200).json({
