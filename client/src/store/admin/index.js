@@ -215,6 +215,32 @@ export const updateDoctorCommission = createAsyncThunk(
   },
 );
 
+export const exportAdminPDF = createAsyncThunk(
+  "admin/exportPDF",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/admin/export-pdf", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "admin-data.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to download pdf",
+      );
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState,
@@ -338,6 +364,18 @@ const adminSlice = createSlice({
         toast.success("Excel downloaded successfully");
       })
       .addCase(exportAdminExcel.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(exportAdminPDF.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(exportAdminPDF.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("PDF downloaded successfully");
+      })
+      .addCase(exportAdminPDF.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       })

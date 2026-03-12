@@ -13,6 +13,7 @@ import {
   approveReview,
   deleteReview,
   updateDoctorCommission,
+  exportAdminDataToPDF,
 } from "../controllers/admin.controller.js";
 import { downloadPrescription } from "../controllers/prescriptionDownload.controller.js";
 
@@ -32,5 +33,6 @@ router.patch("/reviews/:reviewId", approveReview);
 router.delete("/reviews/:reviewId", deleteReview);
 router.put("/commission/:doctorId", updateDoctorCommission);
 router.get("/prescription/:appointmentId", downloadPrescription);
+router.get("/export-pdf", exportAdminDataToPDF);
 
 export default router;

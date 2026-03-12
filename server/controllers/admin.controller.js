@@ -7,6 +7,7 @@ import Review from "../models/review.model.js";
 import Prescription from "../models/prescription.model.js";
 import { sendDoctorEmail } from "../utils/sendEmail.js";
 import ExcelJS from "exceljs";
+import PDFDocument from "pdfkit";
 
 export const getAdminDashboard = async (req, res, next) => {
   try {
@@ -1213,6 +1214,339 @@ export const updateDoctorCommission = async (req, res, next) => {
       doctorId,
       commission: percent,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportAdminDataToPDF = async (req, res, next) => {
+  try {
+    const doc = new PDFDocument({
+      margin: 40,
+      size: "A4",
+      layout: "landscape",
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=admin-data.pdf");
+
+    doc.pipe(res);
+
+    const formatDate = (date) => {
+      if (!date) return "";
+      return new Date(date).toLocaleDateString("en-IN");
+    };
+
+    let isFirstTable = true;
+
+    const drawTable = (title, headers, rows) => {
+      if (!isFirstTable) doc.addPage();
+      isFirstTable = false;
+
+      doc.fontSize(18).font("Helvetica-Bold").text(title, { align: "center" });
+      doc.moveDown();
+
+      const pageWidth = doc.page.width - 80;
+      const columnWidth = pageWidth / headers.length;
+
+      const drawRow = (row, y, isHeader = false) => {
+        let x = 40;
+
+        const heights = row.map((cell) =>
+          doc.heightOfString(String(cell ?? ""), {
+            width: columnWidth - 10,
+          }),
+        );
+
+        const rowHeight = Math.max(...heights) + 10;
+
+        row.forEach((cell) => {
+          doc.rect(x, y, columnWidth, rowHeight).stroke();
+
+          doc
+            .fontSize(isHeader ? 10 : 9)
+            .font(isHeader ? "Helvetica-Bold" : "Helvetica")
+            .text(String(cell ?? ""), x + 5, y + 5, {
+              width: columnWidth - 10,
+            });
+
+          x += columnWidth;
+        });
+
+        return rowHeight;
+      };
+
+      let y = doc.y;
+
+      const headerHeight = drawRow(headers, y, true);
+      y += headerHeight;
+
+      rows.forEach((row) => {
+        const heights = row.map((cell) =>
+          doc.heightOfString(String(cell ?? ""), {
+            width: columnWidth - 10,
+          }),
+        );
+
+        const rowHeight = Math.max(...heights) + 10;
+
+        if (y + rowHeight > doc.page.height - 50) {
+          doc.addPage();
+          y = 40;
+          y += drawRow(headers, y, true);
+        }
+
+        const h = drawRow(row, y);
+        y += h;
+      });
+    };
+
+    /* ================= DASHBOARD SUMMARY ================= */
+
+    const totalDoctors = await Doctor.countDocuments({ isDeleted: false });
+    const totalPatients = await Patient.countDocuments({ isDeleted: false });
+    const totalAppointments = await Appointment.countDocuments({
+      isDeleted: false,
+    });
+
+    const commissionData = await Appointment.aggregate([
+      {
+        $match: {
+          status: { $in: ["confirmed", "completed"] },
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCommission: { $sum: "$adminCommission" },
+        },
+      },
+    ]);
+
+    const totalCommission =
+      commissionData.length > 0 ? commissionData[0].totalCommission : 0;
+
+    drawTable(
+      "Dashboard Summary",
+      ["Total Doctors", "Total Patients", "Appointments", "Admin Commission"],
+      [[totalDoctors, totalPatients, totalAppointments, totalCommission]],
+    );
+
+    /* ================= DOCTORS ================= */
+
+    const doctors = await Doctor.find({ isDeleted: false }).populate("userId");
+
+    let index = 1;
+    const doctorRows = [];
+
+    for (const d of doctors) {
+      const appointments = await Appointment.find({
+        doctorId: d._id,
+        isDeleted: false,
+      });
+
+      const completed = appointments.filter((a) =>
+        ["confirmed", "completed"].includes(a.status),
+      );
+
+      const totalEarning = completed.reduce(
+        (sum, a) => sum + a.consultationFee,
+        0,
+      );
+
+      const totalCommission = completed.reduce(
+        (sum, a) => sum + a.adminCommission,
+        0,
+      );
+
+      const netEarning = totalEarning - totalCommission;
+
+      const uniquePatients = new Set(
+        appointments.map((a) => a.patientId.toString()),
+      );
+
+      doctorRows.push([
+        index++,
+        d.userId?.name,
+        d.userId?.email,
+        d.userId?.phone,
+        d.specialization,
+        d.experience,
+        d.consultationFee,
+        d.aCommission + "%",
+        appointments.length,
+        uniquePatients.size,
+        totalCommission,
+        totalEarning,
+        netEarning,
+        d.isApproved ? "Yes" : "No",
+        formatDate(d.createdAt),
+      ]);
+    }
+
+    drawTable(
+      "Doctors",
+      [
+        "No",
+        "Name",
+        "Email",
+        "Phone",
+        "Specialization",
+        "Experience",
+        "Fee",
+        "Commission %",
+        "Appointments",
+        "Patients",
+        "Admin Commission",
+        "Total Earning",
+        "Net Earning",
+        "Approved",
+        "Created",
+      ],
+      doctorRows,
+    );
+
+    /* ================= PATIENTS ================= */
+
+    const patients = await Patient.find({ isDeleted: false }).populate(
+      "userId",
+    );
+
+    index = 1;
+    const patientRows = [];
+
+    for (const p of patients) {
+      const appointments = await Appointment.find({
+        patientId: p._id,
+        isDeleted: false,
+      });
+
+      const completed = appointments.filter((a) =>
+        ["confirmed", "completed"].includes(a.status),
+      );
+
+      const totalPay = completed.reduce((sum, a) => sum + a.consultationFee, 0);
+
+      patientRows.push([
+        index++,
+        p.userId?.name,
+        p.userId?.email,
+        p.gender,
+        formatDate(p.dateOfBirth),
+        appointments.length,
+        totalPay,
+        formatDate(p.createdAt),
+      ]);
+    }
+
+    drawTable(
+      "Patients",
+      [
+        "No",
+        "Name",
+        "Email",
+        "Gender",
+        "DOB",
+        "Appointments",
+        "Total Pay",
+        "Created",
+      ],
+      patientRows,
+    );
+
+    /* ================= APPOINTMENTS ================= */
+
+    const appointments = await Appointment.find({ isDeleted: false })
+      .populate({ path: "doctorId", populate: { path: "userId" } })
+      .populate({ path: "patientId", populate: { path: "userId" } });
+
+    index = 1;
+    const appointmentRows = [];
+
+    for (const a of appointments) {
+      const commissionPercent =
+        a.consultationFee > 0
+          ? ((a.adminCommission / a.consultationFee) * 100).toFixed(2)
+          : 0;
+
+      appointmentRows.push([
+        index++,
+        a.doctorId?.userId?.name,
+        a.doctorId?.userId?.email,
+        a.patientId?.userId?.name,
+        a.patientId?.userId?.email,
+        formatDate(a.appointmentDate),
+        a.timeSlot,
+        a.status,
+        a.notes,
+        a.consultationFee,
+        commissionPercent + "%",
+        a.adminCommission,
+      ]);
+    }
+
+    drawTable(
+      "Appointments",
+      [
+        "No",
+        "Doctor Name",
+        "Doctor Email",
+        "Patient Name",
+        "Patient Email",
+        "Date",
+        "Time",
+        "Status",
+        "Note",
+        "Fee",
+        "Commission %",
+        "Commission",
+      ],
+      appointmentRows,
+    );
+
+    /* ================= PAYMENTS ================= */
+
+    const payments = await Payment.find()
+      .populate({ path: "doctorId", populate: { path: "userId" } })
+      .populate({ path: "patientId", populate: { path: "userId" } });
+
+    index = 1;
+    const paymentRows = [];
+
+    for (const p of payments) {
+      paymentRows.push([
+        index++,
+        p.appointmentId,
+        p.doctorId?.userId?.name,
+        p.doctorId?.userId?.email,
+        p.patientId?.userId?.name,
+        p.patientId?.userId?.email,
+        p.amount,
+        p.paymentMethod,
+        p.status,
+        formatDate(p.createdAt),
+      ]);
+    }
+
+    drawTable(
+      "Payments",
+      [
+        "No",
+        "Appointment ID",
+        "Doctor Name",
+        "Doctor Email",
+        "Patient Name",
+        "Patient Email",
+        "Amount",
+        "Method",
+        "Status",
+        "Created",
+      ],
+      paymentRows,
+    );
+
+    doc.end();
   } catch (error) {
     next(error);
   }
