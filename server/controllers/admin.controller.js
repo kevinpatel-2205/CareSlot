@@ -4,6 +4,7 @@ import Patient from "../models/patient.model.js";
 import Appointment from "../models/appointment.model.js";
 import Payment from "../models/payment.model.js";
 import Review from "../models/review.model.js";
+import Prescription from "../models/prescription.model.js";
 import { sendDoctorEmail } from "../utils/sendEmail.js";
 import ExcelJS from "exceljs";
 
@@ -767,10 +768,12 @@ export const exportAdminDataToExcel = async (req, res, next) => {
       "Specialization",
       "Experience",
       "Consultation Fee",
+      "Commission %",
       "Total Appointment",
       "Total Patient",
       "Total Commission",
       "Total Earning",
+      "Net Earning",
       "Approved",
       "Created At",
     ]);
@@ -801,6 +804,8 @@ export const exportAdminDataToExcel = async (req, res, next) => {
         0,
       );
 
+      const netEarning = totalEarning - totalCommission;
+
       const uniquePatients = new Set(
         appointments.map((a) => a.patientId.toString()),
       );
@@ -813,10 +818,12 @@ export const exportAdminDataToExcel = async (req, res, next) => {
         doc.specialization,
         doc.experience,
         doc.consultationFee,
+        doc.aCommission + "%",
         appointments.length,
         uniquePatients.size,
         totalCommission,
         totalEarning,
+        netEarning,
         doc.isApproved,
         doc.createdAt,
       ]);
@@ -887,6 +894,7 @@ export const exportAdminDataToExcel = async (req, res, next) => {
       "Status",
       "Note",
       "Fee",
+      "Commission %",
       "Commission",
     ]);
 
@@ -907,6 +915,10 @@ export const exportAdminDataToExcel = async (req, res, next) => {
     index = 1;
 
     for (const a of appointments) {
+      const commissionPercent =
+        a.consultationFee > 0
+          ? ((a.adminCommission / a.consultationFee) * 100).toFixed(2)
+          : 0;
       const row = appointmentSheet.addRow([
         index++,
         a.doctorId?.userId?.name,
@@ -918,6 +930,7 @@ export const exportAdminDataToExcel = async (req, res, next) => {
         a.status,
         a.notes,
         a.consultationFee,
+        commissionPercent + "%",
         a.adminCommission,
       ]);
 
@@ -964,6 +977,59 @@ export const exportAdminDataToExcel = async (req, res, next) => {
         p.amount,
         p.paymentMethod,
         p.status,
+        p.createdAt,
+      ]);
+
+      row.eachCell((cell) => Object.assign(cell, dataBorder));
+    }
+
+    const prescriptionSheet = workbook.addWorksheet("Prescriptions");
+
+    prescriptionSheet.addRow([
+      "No",
+      "Appointment Date",
+      "Appointment Time",
+      "Doctor Name",
+      "Doctor Email",
+      "Patient Name",
+      "Patient Email",
+      "Medicines",
+      "Additional Notes",
+      "Created At",
+    ]);
+
+    prescriptionSheet
+      .getRow(1)
+      .eachCell((cell) => Object.assign(cell, headerStyle));
+
+    const prescriptions = await Prescription.find({ isDeleted: false })
+      .populate({
+        path: "doctorId",
+        populate: { path: "userId" },
+      })
+      .populate({
+        path: "patientId",
+        populate: { path: "userId" },
+      })
+      .populate("appointmentId");
+
+    let pIndex = 1;
+
+    for (const p of prescriptions) {
+      const medicines = p.medicines
+        ?.map((m) => `${m.medicineName} (${m.dosage})`)
+        .join(", ");
+
+      const row = prescriptionSheet.addRow([
+        pIndex++,
+        p.appointmentId?.appointmentDate,
+        p.appointmentId?.timeSlot,
+        p.doctorId?.userId?.name,
+        p.doctorId?.userId?.email,
+        p.patientId?.userId?.name,
+        p.patientId?.userId?.email,
+        medicines,
+        p.additionalNotes,
         p.createdAt,
       ]);
 
