@@ -1,15 +1,18 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDoctorReviews } from "../../store/doctor";
 
 const DoctorReviews = () => {
   const dispatch = useDispatch();
 
-  const { review, loading } = useSelector((state) => state.doctor);
+  const { review, loading, currentPage, totalPages } = useSelector(
+    (state) => state.doctor,
+  );
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchDoctorReviews());
-  }, [dispatch]);
+    dispatch(fetchDoctorReviews(page));
+  }, [dispatch, page]);
 
   const reviews = review?.reviews || [];
   const totalReviews = review?.totalReviews || 0;
@@ -95,6 +98,27 @@ const DoctorReviews = () => {
             </div>
           ))
         )}
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-6">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((prev) => prev - 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-medium text-gray-700">
+          {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={page >= totalPages}
+          onClick={() => setPage((prev) => prev + 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

@@ -12,13 +12,16 @@ import { formatDate, statusTone } from "../../lib/format.js";
 function DoctorAppointmentsPage() {
   const dispatch = useDispatch();
 
-  const { appointments } = useSelector((state) => state.doctor);
+  const { appointments, currentPage, totalPages } = useSelector(
+    (state) => state.doctor,
+  );
 
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchAllAppointments(statusFilter));
-  }, [dispatch, statusFilter]);
+    dispatch(fetchAllAppointments({ status: statusFilter, page }));
+  }, [dispatch, statusFilter, page]);
 
   const changeStatus = (appointmentId) => {
     dispatch(changeAppointmentStatus(appointmentId));
@@ -38,7 +41,10 @@ function DoctorAppointmentsPage() {
         <select
           className="soft-input"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
         >
           <option value="">All Status</option>
           <option value="pending">Pending</option>
@@ -116,6 +122,27 @@ function DoctorAppointmentsPage() {
             ) : null}
           </tbody>
         </table>
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((prev) => prev - 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-medium text-[#2e4f86]">
+          {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={page >= totalPages}
+          onClick={() => setPage((prev) => prev + 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

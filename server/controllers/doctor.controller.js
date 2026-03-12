@@ -221,13 +221,13 @@ export const getAllAppointments = async (req, res, next) => {
     const doctor = await Doctor.findOne({ userId: req.user._id });
     const doctorId = doctor._id;
 
-    const { status } = req.query;
+    const { status, page = 1, limit = 5 } = req.query;
 
     const filter = {
       doctorId,
       isDeleted: false,
     };
-
+    const skip = (page - 1) * limit;
     if (status) {
       filter.status = status;
     }
@@ -243,12 +243,17 @@ export const getAllAppointments = async (req, res, next) => {
         },
       })
       .sort({ appointmentDate: 1, timeSlot: 1 })
+      .skip(skip)
+      .limit(parseInt(limit))
       .lean();
+
+    const total = await Appointment.countDocuments(filter);
 
     res.status(200).json({
       success: true,
-      count: appointments.length,
       data: appointments,
+      currentPage: Number(page),
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     next(error);
@@ -383,6 +388,9 @@ export const cancelAppointment = async (req, res, next) => {
 
 export const getDoctorPatients = async (req, res, next) => {
   try {
+    const { page = 1, limit = 5 } = req.query;
+    const skip = (page - 1) * limit;
+
     const doctor = await Doctor.findOne({ userId: req.user._id });
     const doctorId = doctor._id;
 
@@ -417,6 +425,7 @@ export const getDoctorPatients = async (req, res, next) => {
         },
       },
       { $unwind: "$user" },
+
       {
         $project: {
           patientId: "$_id",
@@ -427,12 +436,33 @@ export const getDoctorPatients = async (req, res, next) => {
           image: "$user.image",
         },
       },
+
+      { $skip: skip },
+
+      { $limit: parseInt(limit) },
     ]);
+
+    const totalPatients = await Appointment.aggregate([
+      {
+        $match: {
+          doctorId,
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$patientId",
+        },
+      },
+    ]);
+
+    const totalPages = Math.ceil(totalPatients.length / limit);
 
     res.status(200).json({
       success: true,
-      count: patients.length,
       data: patients,
+      currentPage: Number(page),
+      totalPages,
     });
   } catch (error) {
     next(error);
@@ -497,6 +527,8 @@ export const getDoctorPatientDetails = async (req, res, next) => {
 
 export const getAvailableSlots = async (req, res, next) => {
   try {
+    const { page = 1, limit = 5 } = req.query;
+
     const doctor = await Doctor.findOne({
       userId: req.user._id,
       isDeleted: false,
@@ -507,9 +539,18 @@ export const getAvailableSlots = async (req, res, next) => {
       throw new Error("Doctor not found");
     }
 
+    const slots = doctor.availableSlots || [];
+
+    const start = (page - 1) * limit;
+    const end = start + Number(limit);
+
+    const paginatedSlots = slots.slice(start, end);
+
     res.status(200).json({
       success: true,
-      data: doctor.availableSlots,
+      data: paginatedSlots,
+      currentPage: Number(page),
+      totalPages: Math.ceil(slots.length / limit),
     });
   } catch (error) {
     next(error);
@@ -1007,6 +1048,9 @@ export const exportDoctorExcel = async (req, res, next) => {
 
 export const getDoctorReviews = async (req, res, next) => {
   try {
+    const { page = 1, limit = 5 } = req.query;
+    const skip = (page - 1) * limit;
+
     const doctor = await Doctor.findOne({ userId: req.user._id });
 
     if (!doctor) {
@@ -1028,6 +1072,8 @@ export const getDoctorReviews = async (req, res, next) => {
       })
       .select("rating comment createdAt")
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
       .lean();
 
     const formattedReviews = reviews.map((rev) => ({
@@ -1040,6 +1086,12 @@ export const getDoctorReviews = async (req, res, next) => {
       createdAt: rev.createdAt,
     }));
 
+    const totalReviewsCount = await Review.countDocuments({
+      doctorId: doctor._id,
+      isApprove: true,
+      isDeleted: false,
+    });
+
     res.status(200).json({
       success: true,
       data: {
@@ -1047,6 +1099,8 @@ export const getDoctorReviews = async (req, res, next) => {
         averageRating: doctor.averageRating,
         reviews: formattedReviews,
       },
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalReviewsCount / limit),
     });
   } catch (error) {
     next(error);

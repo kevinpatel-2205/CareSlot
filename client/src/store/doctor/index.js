@@ -12,6 +12,8 @@ const initialState = {
   profile: null,
   review: null,
   loading: false,
+  currentPage: 1,
+  totalPages: 1,
 };
 
 export const fetchDoctorDashboard = createAsyncThunk(
@@ -40,10 +42,10 @@ export const fetchUpcomingAppointments = createAsyncThunk(
 
 export const fetchAllAppointments = createAsyncThunk(
   "doctor/fetchAllAppointments",
-  async (status, { rejectWithValue }) => {
+  async ({ status, page }, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get("/doctor/allAppointments", {
-        params: status ? { status } : {},
+        params: { status, page, limit: 5 },
       });
       return res.data;
     } catch (err) {
@@ -80,9 +82,11 @@ export const cancelAppointment = createAsyncThunk(
 
 export const fetchDoctorPatients = createAsyncThunk(
   "doctor/fetchPatients",
-  async (_, { rejectWithValue }) => {
+  async (page = 1, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("/doctor/patients");
+      const res = await axiosInstance.get("/doctor/patients", {
+        params: { page, limit: 5 },
+      });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
@@ -104,9 +108,11 @@ export const fetchPatientDetails = createAsyncThunk(
 
 export const fetchAvailableSlots = createAsyncThunk(
   "doctor/fetchSlots",
-  async (_, { rejectWithValue }) => {
+  async (page = 1, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("/doctor/availableSlots");
+      const res = await axiosInstance.get("/doctor/availableSlots", {
+        params: { page, limit: 5 },
+      });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
@@ -193,9 +199,11 @@ export const exportDoctorExcel = createAsyncThunk(
 
 export const fetchDoctorReviews = createAsyncThunk(
   "doctor/fetchReviews",
-  async (_, { rejectWithValue }) => {
+  async (page = 1, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("/doctor/reviews");
+      const res = await axiosInstance.get("/doctor/reviews", {
+        params: { page, limit: 5 },
+      });
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
@@ -255,6 +263,8 @@ const doctorSlice = createSlice({
       .addCase(fetchAllAppointments.fulfilled, (state, action) => {
         state.loading = false;
         state.appointments = action.payload.data;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchAllAppointments.rejected, (state, action) => {
         state.loading = false;
@@ -304,6 +314,8 @@ const doctorSlice = createSlice({
       .addCase(fetchDoctorPatients.fulfilled, (state, action) => {
         state.loading = false;
         state.patients = action.payload.data;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchDoctorPatients.rejected, (state, action) => {
         state.loading = false;
@@ -328,6 +340,8 @@ const doctorSlice = createSlice({
       .addCase(fetchAvailableSlots.fulfilled, (state, action) => {
         state.loading = false;
         state.availableSlots = action.payload.data;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchAvailableSlots.rejected, (state, action) => {
         state.loading = false;
@@ -397,6 +411,8 @@ const doctorSlice = createSlice({
       .addCase(fetchDoctorReviews.fulfilled, (state, action) => {
         state.loading = false;
         state.review = action.payload.data;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchDoctorReviews.rejected, (state, action) => {
         state.loading = false;

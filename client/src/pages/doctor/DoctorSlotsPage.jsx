@@ -11,14 +11,17 @@ import { ClockPlus } from "lucide-react";
 function DoctorSlotsPage() {
   const dispatch = useDispatch();
 
-  const { availableSlots } = useSelector((state) => state.doctor);
+  const { availableSlots, currentPage, totalPages } = useSelector(
+    (state) => state.doctor,
+  );
 
   const [date, setDate] = useState("");
   const [times, setTimes] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchAvailableSlots());
-  }, [dispatch]);
+    dispatch(fetchAvailableSlots(page));
+  }, [page, dispatch]);
 
   const addSlots = (e) => {
     e.preventDefault();
@@ -115,6 +118,27 @@ function DoctorSlotsPage() {
             <p className="text-[#6b87b8]">No slots available.</p>
           ) : null}
         </div>
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((prev) => prev - 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-medium text-[#2e4f86]">
+          {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={page >= totalPages}
+          onClick={() => setPage((prev) => prev + 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

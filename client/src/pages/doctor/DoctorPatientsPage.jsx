@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDoctorPatients } from "../../store/doctor";
@@ -7,11 +7,14 @@ import { Info } from "lucide-react";
 function DoctorPatientsPage() {
   const dispatch = useDispatch();
 
-  const { patients, error } = useSelector((state) => state.doctor);
+  const { patients, error, currentPage, totalPages } = useSelector(
+    (state) => state.doctor,
+  );
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchDoctorPatients());
-  }, [dispatch]);
+    dispatch(fetchDoctorPatients(page));
+  }, [page, dispatch]);
 
   return (
     <div className="space-y-5">
@@ -73,6 +76,27 @@ function DoctorPatientsPage() {
             ) : null}
           </tbody>
         </table>
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((prev) => prev - 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-medium text-[#2e4f86]">
+          {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={page >= totalPages}
+          onClick={() => setPage((prev) => prev + 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
