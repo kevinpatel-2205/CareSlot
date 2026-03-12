@@ -10,6 +10,7 @@ import {
 import { formatDate, formatMoney, statusTone } from "../../lib/format.js";
 import { toast } from "react-toastify";
 import { RAZORPAY_KEY_ID, VITE_API_BASE_URL } from "../../lib/env.js";
+import Pagination from "../../components/Pagination.jsx";
 
 function PatientAppointmentsPage() {
   const dispatch = useDispatch();
@@ -236,29 +237,11 @@ function PatientAppointmentsPage() {
           </tbody>
         </table>
       </div>
-      <div className="mt-4 flex items-center justify-center gap-2">
-        {/* Previous Button */}
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setPage(currentPage - 1)}
-          className="rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Prev
-        </button>
-
-        {/* Page Numbers */}
-        <span className="text-sm font-medium text-[#2e4f86]">
-          {currentPage} of {totalPages}
-        </span>
-        {/* Next Button */}
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setPage(currentPage + 1)}
-          className="rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setPage={setPage}
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   deleteDoctor,
   updateDoctorCommission,
 } from "../../store/admin";
+import Pagination from "../../components/Pagination";
 
 function AdminDoctorsPage() {
   const dispatch = useDispatch();
@@ -150,27 +151,11 @@ function AdminDoctorsPage() {
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-center gap-4 mt-4">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage((prev) => prev - 1)}
-          className="px-3 py-1 border rounded"
-        >
-          Prev
-        </button>
-
-        <span className="text-sm font-medium text-[#2e4f86]">
-          {currentPage} of {totalPages}
-        </span>
-
-        <button
-          disabled={page >= totalPages}
-          onClick={() => setPage((prev) => prev + 1)}
-          className="px-3 py-1 border rounded"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setPage={setPage}
+      />
     </div>
   );
 }
