@@ -6,6 +6,7 @@ import User from "../models/user.model.js";
 import ExcelJS from "exceljs";
 import Review from "../models/review.model.js";
 import Prescription from "../models/prescription.model.js";
+import PDFDocument from "pdfkit";
 
 export const getDoctorDashboard = async (req, res, next) => {
   try {
@@ -1029,6 +1030,72 @@ export const exportDoctorExcel = async (req, res, next) => {
       row.eachCell((cell) => Object.assign(cell, dataBorder));
     }
 
+    const commissionSheet = workbook.addWorksheet("Commission History");
+
+    commissionSheet.addRow([
+      "No",
+      "Commission %",
+      "Start Date",
+      "End Date",
+      "Appointments",
+      "Total Fee",
+      "Total Commission",
+    ]);
+
+    commissionSheet
+      .getRow(1)
+      .eachCell((cell) => Object.assign(cell, headerStyle));
+
+    const history = doctor.commissionHistory || [];
+
+    let commissionIndex = 1;
+
+    for (let i = 0; i < history.length; i++) {
+      const startDate = history[i].changedAt;
+
+      const endDate = i + 1 < history.length ? history[i + 1].changedAt : null;
+
+      const commissionPercent = history[i].commission;
+
+      const matchStage = {
+        doctorId,
+        isDeleted: false,
+        status: { $in: ["confirmed", "completed"] },
+        createdAt: {
+          $gte: startDate,
+        },
+      };
+
+      if (endDate) {
+        matchStage.createdAt.$lt = endDate;
+      }
+
+      const appointments = await Appointment.find(matchStage);
+
+      let totalFee = 0;
+      let totalCommission = 0;
+
+      for (const a of appointments) {
+        totalFee += a.consultationFee;
+
+        const commissionAmount = (a.consultationFee * commissionPercent) / 100;
+
+        totalCommission += commissionAmount;
+      }
+
+      const row = commissionSheet.addRow([
+        commissionIndex++,
+        commissionPercent + "%",
+        startDate.toLocaleDateString("en-IN"),
+        endDate ? endDate.toLocaleDateString("en-IN") : "Present",
+        appointments.length,
+        totalFee,
+        totalCommission,
+      ]);
+
+      row.eachCell((cell) => Object.assign(cell, dataBorder));
+    }
+
     res.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -1168,6 +1235,320 @@ export const addPrescription = async (req, res, next) => {
       message: "Prescription added successfully",
       data: prescription,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportDoctorPDF = async (req, res, next) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    const doctorId = doctor._id;
+
+    const doc = new PDFDocument({
+      margin: 40,
+      size: "A4",
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=doctor-report.pdf",
+    );
+
+    doc.pipe(res);
+
+    const pageWidth = 515;
+    const startX = 40;
+    const rowHeight = 22;
+    const bottomMargin = 760;
+
+    let y = 120;
+
+    const checkPageBreak = () => {
+      if (y > bottomMargin) {
+        doc.addPage();
+        y = 60;
+      }
+    };
+
+    const drawRow = (row, columnWidths, isHeader = false) => {
+      let x = startX;
+
+      row.forEach((text, i) => {
+        doc.rect(x, y, columnWidths[i], rowHeight).stroke();
+
+        doc
+          .font(isHeader ? "Helvetica-Bold" : "Helvetica")
+          .fontSize(9)
+          .text(String(text), x + 3, y + 6, {
+            width: columnWidths[i] - 6,
+            align: "center",
+          });
+
+        x += columnWidths[i];
+      });
+
+      y += rowHeight;
+    };
+
+    // HEADER
+    doc
+      .fontSize(18)
+      .font("Helvetica-Bold")
+      .text("Doctor Report", { align: "center" });
+
+    doc.moveDown();
+
+    doc
+      .fontSize(12)
+      .font("Helvetica")
+      .text(`Doctor Name: ${doctor.name || ""}`)
+      .text(`Generated: ${new Date().toLocaleDateString("en-IN")}`);
+
+    y = doc.y + 20;
+
+    // ================================
+    // APPOINTMENTS
+    // ================================
+
+    doc
+      .moveTo(startX, y - 10)
+      .lineTo(startX + pageWidth, y - 10)
+      .stroke();
+
+    doc.fontSize(14).font("Helvetica-Bold").text("Appointments", startX, y);
+
+    y += 20;
+
+    const appointmentHeaders = [
+      "No",
+      "Patient",
+      "Email",
+      "Date",
+      "Time",
+      "Status",
+      "Fee",
+      "Commission",
+    ];
+
+    const appointmentWidths = [30, 80, 130, 70, 60, 70, 40, 60];
+
+    drawRow(appointmentHeaders, appointmentWidths, true);
+
+    const appointments = await Appointment.find({
+      doctorId,
+      isDeleted: false,
+    })
+      .populate({
+        path: "patientId",
+        populate: { path: "userId" },
+      })
+      .lean();
+
+    let index = 1;
+
+    for (const a of appointments) {
+      checkPageBreak();
+
+      const row = [
+        index++,
+        a.patientId?.userId?.name || "",
+        a.patientId?.userId?.email || "",
+        new Date(a.appointmentDate).toLocaleDateString("en-IN"),
+        a.timeSlot,
+        a.status,
+        a.consultationFee,
+        a.adminCommission,
+      ];
+
+      drawRow(row, appointmentWidths);
+    }
+
+    y += 30;
+    checkPageBreak();
+
+    // ================================
+    // PATIENTS
+    // ================================
+
+    doc.fontSize(14).font("Helvetica-Bold").text("Patients", startX, y);
+
+    y += 20;
+
+    const patientHeaders = [
+      "No",
+      "Name",
+      "Email",
+      "Gender",
+      "DOB",
+      "Appointments",
+      "Total Pay",
+    ];
+
+    const patientWidths = [30, 90, 140, 60, 70, 60, 65];
+
+    drawRow(patientHeaders, patientWidths, true);
+
+    const patients = await Appointment.aggregate([
+      {
+        $match: {
+          doctorId,
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$patientId",
+          totalAppointments: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "patients",
+          localField: "_id",
+          foreignField: "_id",
+          as: "patient",
+        },
+      },
+      { $unwind: "$patient" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "patient.userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $project: {
+          patientId: "$_id",
+          totalAppointments: 1,
+          name: "$user.name",
+          email: "$user.email",
+          gender: "$patient.gender",
+          dateOfBirth: "$patient.dateOfBirth",
+        },
+      },
+    ]);
+
+    index = 1;
+
+    for (const p of patients) {
+      checkPageBreak();
+
+      const payments = await Payment.aggregate([
+        {
+          $match: {
+            patientId: p.patientId,
+            status: "success",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalPay: { $sum: "$amount" },
+          },
+        },
+      ]);
+
+      const totalPay = payments.length ? payments[0].totalPay : 0;
+
+      const row = [
+        index++,
+        p.name,
+        p.email,
+        p.gender,
+        p.dateOfBirth
+          ? new Date(p.dateOfBirth).toLocaleDateString("en-IN")
+          : "",
+        p.totalAppointments,
+        totalPay,
+      ];
+
+      drawRow(row, patientWidths);
+    }
+
+    y += 30;
+    checkPageBreak();
+
+    // ================================
+    // COMMISSION HISTORY
+    // ================================
+
+    doc
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .text("Commission History", startX, y);
+
+    y += 20;
+
+    const commissionHeaders = [
+      "No",
+      "Commission %",
+      "Start Date",
+      "End Date",
+      "Appointments",
+      "Total Fee",
+      "Total Commission",
+    ];
+
+    const commissionWidths = [30, 80, 90, 90, 80, 70, 75];
+
+    drawRow(commissionHeaders, commissionWidths, true);
+
+    const history = doctor.commissionHistory || [];
+
+    let cIndex = 1;
+
+    for (let i = 0; i < history.length; i++) {
+      checkPageBreak();
+
+      const startDate = history[i].changedAt;
+      const endDate = i + 1 < history.length ? history[i + 1].changedAt : null;
+
+      const commissionPercent = history[i].commission;
+
+      const matchStage = {
+        doctorId,
+        isDeleted: false,
+        status: { $in: ["confirmed", "completed"] },
+        createdAt: { $gte: startDate },
+      };
+
+      if (endDate) matchStage.createdAt.$lt = endDate;
+
+      const apps = await Appointment.find(matchStage);
+
+      let totalFee = 0;
+      let totalCommission = 0;
+
+      for (const a of apps) {
+        totalFee += a.consultationFee;
+        totalCommission += (a.consultationFee * commissionPercent) / 100;
+      }
+
+      const row = [
+        cIndex++,
+        commissionPercent + "%",
+        startDate.toLocaleDateString("en-IN"),
+        endDate ? endDate.toLocaleDateString("en-IN") : "Present",
+        apps.length,
+        totalFee,
+        totalCommission,
+      ];
+
+      drawRow(row, commissionWidths);
+    }
+
+    doc.end();
   } catch (error) {
     next(error);
   }

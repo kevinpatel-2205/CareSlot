@@ -12,9 +12,11 @@ import {
   fetchUpcomingAppointments,
   fetchDoctorPatients,
   exportDoctorExcel,
+  exportDoctorPDF,
 } from "../../store/doctor";
 
 import { formatDate, formatMoney, statusTone } from "../../lib/format.js";
+import { useState } from "react";
 
 function DoctorDashboardPage() {
   const dispatch = useDispatch();
@@ -22,6 +24,8 @@ function DoctorDashboardPage() {
   const { dashboard, upcomingAppointments, patients } = useSelector(
     (state) => state.doctor,
   );
+
+  const [showDownload, setShowDownload] = useState(false);
 
   useEffect(() => {
     dispatch(fetchDoctorDashboard());
@@ -45,20 +49,45 @@ function DoctorDashboardPage() {
           Doctor Dashboard
         </h2>
 
-        <button
-          onClick={() => dispatch(exportDoctorExcel())}
-          className="group flex items-center justify-center gap-2  rounded-2xl border border-[#d8e4ff] bg-white/50 backdrop-blur-md px-3 py-3 sm:px-5 text-[#1a3f7b] shadow-sm transition-all duration-300 hover:bg-green-100 hover:border-green-300 hover:shadow-md active:scale-95"
-        >
-          <FileSpreadsheet
-            size={20}
-            className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
-          />
+        <div className="relative">
+          <button
+            onClick={() => setShowDownload(!showDownload)}
+            className="group flex items-center justify-center gap-2 rounded-2xl border border-[#d8e4ff] bg-white/50 backdrop-blur-md px-3 py-3 sm:px-5 text-[#1a3f7b] shadow-sm transition-all duration-300 hover:bg-green-100 hover:border-green-300 hover:shadow-md active:scale-95"
+          >
+            <FileSpreadsheet
+              size={20}
+              className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
+            />
 
-          {/* Hide text on mobile */}
-          <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
-            Export Excel
-          </span>
-        </button>
+            <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
+              Export
+            </span>
+          </button>
+
+          {showDownload && (
+            <div className="absolute right-0 mt-2 w-44 rounded-xl border border-[#d8e4ff] bg-white shadow-lg overflow-hidden z-20">
+              <button
+                onClick={() => {
+                  dispatch(exportDoctorExcel());
+                  setShowDownload(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-green-50"
+              >
+                Download Excel
+              </button>
+
+              <button
+                onClick={() => {
+                  dispatch(exportDoctorPDF());
+                  setShowDownload(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-blue-50"
+              >
+                Download PDF
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
