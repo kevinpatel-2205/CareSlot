@@ -361,7 +361,10 @@ export const bookAppointment = async (req, res, next) => {
 
 export const getAppointments = async (req, res, next) => {
   try {
-    const { status } = req.query;
+    const { status, page = 1, limit = 5 } = req.query;
+
+    const currentPage = Number(page);
+    const perPage = Number(limit);
 
     const patient = await Patient.findOne({
       userId: req.user._id,
@@ -382,6 +385,8 @@ export const getAppointments = async (req, res, next) => {
       filter.status = status;
     }
 
+    const total = await Appointment.countDocuments(filter);
+
     const appointments = await Appointment.find(filter)
       .populate({
         path: "doctorId",
@@ -392,6 +397,8 @@ export const getAppointments = async (req, res, next) => {
         },
       })
       .sort({ appointmentDate: -1 })
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage)
       .lean();
 
     const formattedAppointments = appointments.map((apt) => ({
@@ -410,8 +417,10 @@ export const getAppointments = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      count: formattedAppointments.length,
       data: formattedAppointments,
+      currentPage,
+      totalPages: Math.ceil(total / perPage),
+      totalItems: total,
     });
   } catch (error) {
     next(error);

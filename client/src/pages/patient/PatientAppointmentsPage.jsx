@@ -14,14 +14,17 @@ import { RAZORPAY_KEY_ID, VITE_API_BASE_URL } from "../../lib/env.js";
 function PatientAppointmentsPage() {
   const dispatch = useDispatch();
 
-  const { appointments } = useSelector((state) => state.patient);
+  const { appointments, currentPage, totalPages } = useSelector(
+    (state) => state.patient,
+  );
 
   const [statusFilter, setStatusFilter] = useState("");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(fetchPatientAppointments(statusFilter));
-  }, [dispatch, statusFilter]);
+    dispatch(fetchPatientAppointments({ status: statusFilter, page }));
+  }, [dispatch, statusFilter, page]);
 
   const filtered = useMemo(
     () =>
@@ -127,7 +130,10 @@ function PatientAppointmentsPage() {
         <select
           className="soft-input"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
         >
           <option value="">All Status</option>
           <option value="pending">Pending</option>
@@ -229,6 +235,29 @@ function PatientAppointmentsPage() {
             ) : null}
           </tbody>
         </table>
+      </div>
+      <div className="mt-4 flex items-center justify-center gap-2">
+        {/* Previous Button */}
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setPage(currentPage - 1)}
+          className="rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Prev
+        </button>
+
+        {/* Page Numbers */}
+        <span className="text-sm font-medium text-[#2e4f86]">
+          {currentPage} of {totalPages}
+        </span>
+        {/* Next Button */}
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setPage(currentPage + 1)}
+          className="rounded border px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

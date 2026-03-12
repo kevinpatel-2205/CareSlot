@@ -9,6 +9,8 @@ const initialState = {
   appointments: [],
   profile: null,
   loading: false,
+  currentPage: 1,
+  totalPages: 1,
 };
 
 export const fetchPatientDashboard = createAsyncThunk(
@@ -66,11 +68,16 @@ export const bookAppointment = createAsyncThunk(
 
 export const fetchPatientAppointments = createAsyncThunk(
   "patient/fetchAppointments",
-  async (status, { rejectWithValue }) => {
+  async ({ status, page = 1 }, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get("/patient/myAppointments", {
-        params: status ? { status } : {},
+        params: {
+          status,
+          page,
+          limit: 5,
+        },
       });
+
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message);
@@ -225,6 +232,8 @@ const patientSlice = createSlice({
       .addCase(fetchPatientAppointments.fulfilled, (state, action) => {
         state.loading = false;
         state.appointments = action.payload.data;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(fetchPatientAppointments.rejected, (state, action) => {
         state.loading = false;
