@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, FileSpreadsheet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -6,6 +6,8 @@ import {
   createRazorpayOrder,
   verifyRazorpayPayment,
   markRazorpayPaymentFailed,
+  downloadAppointmentsPDF,
+  downloadAppointmentsExcel,
 } from "../../store/patient";
 import { formatDate, formatMoney, statusTone } from "../../lib/format.js";
 import { toast } from "react-toastify";
@@ -22,6 +24,7 @@ function PatientAppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [showDownload, setShowDownload] = useState(false);
 
   useEffect(() => {
     dispatch(fetchPatientAppointments({ status: statusFilter, page }));
@@ -110,9 +113,51 @@ function PatientAppointmentsPage() {
 
   return (
     <div className="space-y-5">
-      <h2 className="font-['Averia_Serif_Libre'] text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-        My Appointments
-      </h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="font-['Averia_Serif_Libre'] text-5xl font-semibold tracking-tight text-[#1a3f7b]">
+          My Appointments
+        </h2>
+
+        <div className="relative">
+          <button
+            onClick={() => setShowDownload(!showDownload)}
+            className="group flex items-center justify-center gap-2 rounded-2xl border border-[#d8e4ff] bg-white/50 backdrop-blur-md px-3 py-3 sm:px-5 text-[#1a3f7b] shadow-sm transition-all duration-300 hover:bg-green-100 hover:border-green-300 hover:shadow-md active:scale-95"
+          >
+            <FileSpreadsheet
+              size={20}
+              className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
+            />
+
+            <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
+              Export
+            </span>
+          </button>
+
+          {showDownload && (
+            <div className="absolute right-0 mt-2 w-44 rounded-xl border border-[#d8e4ff] bg-white shadow-lg overflow-hidden z-20">
+              <button
+                onClick={() => {
+                  dispatch(downloadAppointmentsExcel({ status: statusFilter }));
+                  setShowDownload(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-green-50"
+              >
+                Download Excel
+              </button>
+
+              <button
+                onClick={() => {
+                  dispatch(downloadAppointmentsPDF({ status: statusFilter }));
+                  setShowDownload(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-blue-50"
+              >
+                Download PDF
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_220px]">
         <label className="relative">

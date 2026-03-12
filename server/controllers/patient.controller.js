@@ -10,6 +10,8 @@ import crypto from "crypto";
 import { sendAppointmentBookedEmailToDoctor } from "../utils/sendEmail.js";
 import { checkReviewWithAI } from "../utils/aiModeration.js";
 import mongoose from "mongoose";
+import { generatePDFReport } from "../utils/generatePDFReport .js";
+import { generateExcelReport } from "../utils/generateExcelReport.js";
 
 export const getPatientDashboard = async (req, res, next) => {
   try {
@@ -844,6 +846,138 @@ export const createReview = async (req, res, next) => {
         : "Review submitted and waiting for admin approval",
       data: review,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// its For Generate PDF Or Excel
+
+export const exportAppointmentsPDF = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+
+    const patient = await Patient.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!patient) {
+      res.status(404);
+      throw new Error("Patient profile not found");
+    }
+
+    const filter = {
+      patientId: patient._id,
+      isDeleted: false,
+    };
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const appointments = await Appointment.find(filter)
+      .populate({
+        path: "doctorId",
+        select: "specialization",
+        populate: {
+          path: "userId",
+          select: "name email",
+        },
+      })
+      .sort({ appointmentDate: -1 })
+      .lean();
+
+    const headers = [
+      "No",
+      "Doctor Name",
+      "Doctor Email",
+      "Specialization",
+      "Date",
+      "Time",
+      "Status",
+      "Payment",
+      "Fee",
+    ];
+
+    const rows = appointments.map((apt, i) => [
+      i + 1,
+      apt.doctorId?.userId?.name || "",
+      apt.doctorId?.userId?.email || "",
+      apt.doctorId?.specialization || "",
+      new Date(apt.appointmentDate).toLocaleDateString("en-IN"),
+      apt.timeSlot,
+      apt.status,
+      apt.paymentStatus,
+      apt.consultationFee,
+    ]);
+
+    generatePDFReport(res, "Appointments Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportAppointmentsExcel = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+
+    const patient = await Patient.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!patient) {
+      res.status(404);
+      throw new Error("Patient profile not found");
+    }
+
+    const filter = {
+      patientId: patient._id,
+      isDeleted: false,
+    };
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const appointments = await Appointment.find(filter)
+      .populate({
+        path: "doctorId",
+        select: "specialization",
+        populate: {
+          path: "userId",
+          select: "name email",
+        },
+      })
+      .sort({ appointmentDate: -1 })
+      .lean();
+
+    const headers = [
+      "No",
+      "Doctor Name",
+      "Doctor Email",
+      "Specialization",
+      "Date",
+      "Time",
+      "Status",
+      "Payment",
+      "Fee",
+    ];
+
+    const rows = appointments.map((apt, i) => [
+      i + 1,
+      apt.doctorId?.userId?.name || "",
+      apt.doctorId?.userId?.email || "",
+      apt.doctorId?.specialization || "",
+      new Date(apt.appointmentDate).toLocaleDateString("en-IN"),
+      apt.timeSlot,
+      apt.status,
+      apt.paymentStatus,
+      apt.consultationFee,
+    ]);
+
+    await generateExcelReport(res, "Appointments Report", headers, rows);
   } catch (error) {
     next(error);
   }

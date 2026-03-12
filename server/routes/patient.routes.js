@@ -11,6 +11,8 @@ import {
   verifyRazorpay,
   markRazorpayFailed,
   createReview,
+  exportAppointmentsPDF,
+  exportAppointmentsExcel,
 } from "../controllers/patient.controller.js";
 import { downloadPrescription } from "../controllers/prescriptionDownload.controller.js";
 
@@ -28,5 +30,8 @@ router.post("/verify-payment", verifyRazorpay);
 router.post("/payment-failed", markRazorpayFailed);
 router.post("/reviews", createReview);
 router.get("/prescription/:appointmentId", downloadPrescription);
+
+router.get("/appointments/export/pdf", exportAppointmentsPDF);
+router.get("/appointments/export/excel", exportAppointmentsExcel);
 
 export default router;

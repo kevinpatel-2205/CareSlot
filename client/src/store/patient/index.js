@@ -168,6 +168,61 @@ export const createDoctorReview = createAsyncThunk(
   },
 );
 
+export const downloadAppointmentsPDF = createAsyncThunk(
+  "patient/downloadAppointmentsPDF",
+  async ({ status }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/patient/appointments/export/pdf", {
+        params: { status },
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "appointments-report.pdf");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const downloadAppointmentsExcel = createAsyncThunk(
+  "patient/downloadAppointmentsExcel",
+  async ({ status }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get(
+        "/patient/appointments/export/excel",
+        {
+          params: { status },
+          responseType: "blob",
+        },
+      );
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "appointments-report.xlsx");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
 const patientSlice = createSlice({
   name: "patient",
   initialState,
@@ -331,6 +386,30 @@ const patientSlice = createSlice({
         toast.success(action.payload.message);
       })
       .addCase(createDoctorReview.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(downloadAppointmentsPDF.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadAppointmentsPDF.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("PDF downloaded successfully");
+      })
+      .addCase(downloadAppointmentsPDF.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(downloadAppointmentsExcel.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadAppointmentsExcel.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Excel downloaded successfully");
+      })
+      .addCase(downloadAppointmentsExcel.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       });
