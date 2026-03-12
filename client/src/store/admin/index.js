@@ -12,6 +12,8 @@ const initialState = {
   totalAppointments: 0,
   loading: false,
   reviews: [],
+  currentPage: 1,
+  totalPages: 1,
 };
 
 export const getAdminDashboard = createAsyncThunk(
@@ -28,9 +30,11 @@ export const getAdminDashboard = createAsyncThunk(
 
 export const getAllDoctors = createAsyncThunk(
   "admin/getDoctors",
-  async (_, { rejectWithValue }) => {
+  async (page = 1, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("/admin/allDoctors");
+      const res = await axiosInstance.get("/admin/allDoctors", {
+        params: { page, limit: 5 },
+      });
       return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
@@ -80,11 +84,17 @@ export const deleteDoctor = createAsyncThunk(
 );
 
 export const getAllPatients = createAsyncThunk(
-  "admin/getPatients",
-  async (_, { rejectWithValue }) => {
+  "admin/getAllPatients",
+  async (page = 1, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("/admin/allPatients");
-      return res.data;
+      const { data } = await axiosInstance.get("/admin/allPatients", {
+        params: {
+          page,
+          limit: 5,
+        },
+      });
+
+      return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
     }
@@ -107,10 +117,16 @@ export const deletePatient = createAsyncThunk(
 
 export const getAllAppointments = createAsyncThunk(
   "admin/getAppointments",
-  async (status, { rejectWithValue }) => {
+  async ({ status, page = 1 }, { rejectWithValue }) => {
     try {
       const query = status ? `?status=${status}` : "";
-      const res = await axiosInstance.get(`/admin/allAppointments${query}`);
+      const res = await axiosInstance.get("/admin/allAppointments", {
+        params: {
+          status,
+          page,
+          limit: 10,
+        },
+      });
       return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
@@ -146,9 +162,14 @@ export const exportAdminExcel = createAsyncThunk(
 
 export const getPendingReviews = createAsyncThunk(
   "admin/getPendingReviews",
-  async (_, { rejectWithValue }) => {
+  async (page = 1, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get("/admin/reviews");
+      const res = await axiosInstance.get("/admin/pendingReviews", {
+        params: {
+          page,
+          limit: 5,
+        },
+      });
       return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
@@ -220,6 +241,8 @@ const adminSlice = createSlice({
         state.loading = false;
         state.doctors = action.payload.data;
         state.totalDoctors = action.payload.total;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(getAllDoctors.rejected, (state, action) => {
         state.loading = false;
@@ -272,6 +295,8 @@ const adminSlice = createSlice({
         state.loading = false;
         state.patients = action.payload.data;
         state.totalPatients = action.payload.total;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(getAllPatients.rejected, (state, action) => {
         state.loading = false;
@@ -296,6 +321,8 @@ const adminSlice = createSlice({
       .addCase(getAllAppointments.fulfilled, (state, action) => {
         state.loading = false;
         state.appointments = action.payload.data;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
         state.totalAppointments = action.payload.total;
       })
       .addCase(getAllAppointments.rejected, (state, action) => {
@@ -321,6 +348,8 @@ const adminSlice = createSlice({
       .addCase(getPendingReviews.fulfilled, (state, action) => {
         state.loading = false;
         state.reviews = action.payload.data;
+        state.currentPage = action.payload.currentPage;
+        state.totalPages = action.payload.totalPages;
       })
       .addCase(getPendingReviews.rejected, (state, action) => {
         state.loading = false;

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getAllDoctors,
@@ -9,11 +9,15 @@ import {
 
 function AdminDoctorsPage() {
   const dispatch = useDispatch();
-  const { doctors, loading } = useSelector((state) => state.admin);
+  const { doctors, loading, currentPage, totalPages } = useSelector(
+    (state) => state.admin,
+  );
+
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(getAllDoctors());
-  }, [dispatch]);
+    dispatch(getAllDoctors(page));
+  }, [dispatch, page]);
 
   const handleToggleStatus = (doctorId, nextActive) => {
     dispatch(toggleDoctorStatus({ doctorId, isActive: nextActive }));
@@ -145,6 +149,27 @@ function AdminDoctorsPage() {
             )}
           </tbody>
         </table>
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((prev) => prev - 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-medium text-[#2e4f86]">
+          {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={page >= totalPages}
+          onClick={() => setPage((prev) => prev + 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

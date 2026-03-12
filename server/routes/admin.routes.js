@@ -27,7 +27,7 @@ router.get("/allPatients", getAllPatients);
 router.delete("/deletePatient/:patientId", deletePatient);
 router.get("/allAppointments", getAllAppointments);
 router.get("/export-excel", exportAdminDataToExcel);
-router.get("/reviews", getPendingReviews);
+router.get("/pendingReviews", getPendingReviews);
 router.patch("/reviews/:reviewId", approveReview);
 router.delete("/reviews/:reviewId", deleteReview);
 router.put("/commission/:doctorId", updateDoctorCommission);

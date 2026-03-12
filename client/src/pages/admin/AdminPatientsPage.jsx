@@ -1,14 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllPatients, deletePatient } from "../../store/admin";
 
 function AdminPatientsPage() {
   const dispatch = useDispatch();
-  const { patients, loading } = useSelector((state) => state.admin);
+  const { patients, loading, currentPage, totalPages } = useSelector(
+    (state) => state.admin,
+  );
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(getAllPatients());
-  }, [dispatch]);
+    dispatch(getAllPatients(page));
+  }, [dispatch, page]);
 
   const handleDeletePatient = (patientId) => {
     const ok = window.confirm("Delete this patient and related data?");
@@ -90,6 +93,27 @@ function AdminPatientsPage() {
             )}
           </tbody>
         </table>
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((prev) => prev - 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-semibold text-[#2e4f86]">
+          {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={page >= totalPages}
+          onClick={() => setPage((prev) => prev + 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

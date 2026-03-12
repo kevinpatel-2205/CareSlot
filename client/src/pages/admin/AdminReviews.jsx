@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getPendingReviews,
@@ -9,11 +9,15 @@ import {
 const AdminReviews = () => {
   const dispatch = useDispatch();
 
-  const { reviews, loading } = useSelector((state) => state.admin);
+  const { reviews, loading, currentPage, totalPages } = useSelector(
+    (state) => state.admin,
+  );
+
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(getPendingReviews());
-  }, [dispatch]);
+    dispatch(getPendingReviews(page));
+  }, [dispatch, page]);
 
   const handleApprove = (reviewId) => {
     dispatch(approveReview(reviewId));
@@ -106,6 +110,27 @@ const AdminReviews = () => {
           </table>
         </div>
       )}
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((prev) => prev - 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-semibold text-gray-700">
+          {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={page >= totalPages}
+          onClick={() => setPage((prev) => prev + 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

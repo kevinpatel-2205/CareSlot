@@ -372,7 +372,12 @@ export const createDoctor = async (req, res, next) => {
 
 export const getAllDoctors = async (req, res, next) => {
   try {
+    const { page = 1, limit = 5 } = req.query;
+    const skip = (page - 1) * limit;
+
     const doctors = await Doctor.find({ isDeleted: false })
+      .skip(skip)
+      .limit(Number(limit))
       .populate({
         path: "userId",
         select: "name email phone image isActive",
@@ -412,10 +417,14 @@ export const getAllDoctors = async (req, res, next) => {
       totalCommission: commissionMap[doc._id.toString()] || 0,
     }));
 
+    const totalDoctors = await Doctor.countDocuments({ isDeleted: false });
+
     res.status(200).json({
       success: true,
-      total: formattedDoctors.length,
       data: formattedDoctors,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalDoctors / limit),
+      total: totalDoctors,
     });
   } catch (error) {
     next(error);
@@ -505,7 +514,17 @@ export const deleteDoctor = async (req, res, next) => {
 
 export const getAllPatients = async (req, res, next) => {
   try {
+    const { page = 1, limit = 5 } = req.query;
+
+    const skip = (page - 1) * limit;
+
+    const totalPatients = await Patient.countDocuments({
+      isDeleted: false,
+    });
+
     const patients = await Patient.find({ isDeleted: false })
+      .skip(skip)
+      .limit(Number(limit))
       .populate({
         path: "userId",
         select: "name email image",
@@ -544,8 +563,10 @@ export const getAllPatients = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      total: formattedPatients.length,
       data: formattedPatients,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalPatients / limit),
+      total: totalPatients,
     });
   } catch (error) {
     next(error);
@@ -602,7 +623,9 @@ export const deletePatient = async (req, res, next) => {
 
 export const getAllAppointments = async (req, res, next) => {
   try {
-    const { status } = req.query;
+    const { status, page = 1, limit = 10 } = req.query;
+
+    const skip = (page - 1) * limit;
 
     const filter = { isDeleted: false };
 
@@ -611,6 +634,8 @@ export const getAllAppointments = async (req, res, next) => {
     }
 
     const appointments = await Appointment.find(filter)
+      .skip(skip)
+      .limit(Number(limit))
       .populate({
         path: "patientId",
         select: "userId",
@@ -632,6 +657,8 @@ export const getAllAppointments = async (req, res, next) => {
       )
       .sort({ appointmentDate: -1, timeSlot: 1 });
 
+    const totalAppointments = await Appointment.countDocuments(filter);
+
     const formattedAppointments = appointments.map((appt) => ({
       appointmentId: appt._id,
       patientName: appt.patientId?.userId?.name,
@@ -645,8 +672,10 @@ export const getAllAppointments = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      total: formattedAppointments.length,
+      total: totalAppointments,
       data: formattedAppointments,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalAppointments / limit),
     });
   } catch (error) {
     next(error);
@@ -960,7 +989,17 @@ export const exportAdminDataToExcel = async (req, res, next) => {
 
 export const getPendingReviews = async (req, res, next) => {
   try {
-    const reviews = await Review.find({ isApprove: false, isDeleted: false })
+    const { page = 1, limit = 5 } = req.query;
+
+    const filter = { isApprove: false, isDeleted: false };
+
+    const skip = (page - 1) * limit;
+
+    const totalReviews = await Review.countDocuments(filter);
+
+    const reviews = await Review.find(filter)
+      .skip(skip)
+      .limit(Number(limit))
       .populate({
         path: "patientId",
         populate: {
@@ -979,8 +1018,10 @@ export const getPendingReviews = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      total: reviews.length,
       data: reviews,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalReviews / limit),
+      total: totalReviews,
     });
   } catch (error) {
     next(error);

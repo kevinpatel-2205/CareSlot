@@ -6,13 +6,16 @@ import { VITE_API_BASE_URL } from "../../lib/env.js";
 
 function AdminAppointmentsPage() {
   const dispatch = useDispatch();
-  const { appointments } = useSelector((state) => state.admin);
+  const { appointments, currentPage, totalPages } = useSelector(
+    (state) => state.admin,
+  );
 
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    dispatch(getAllAppointments(statusFilter));
-  }, [dispatch, statusFilter]);
+    dispatch(getAllAppointments({ status: statusFilter, page }));
+  }, [dispatch, statusFilter, page]);
 
   const downloadPrescription = (appointmentId) => {
     window.open(
@@ -106,6 +109,27 @@ function AdminAppointmentsPage() {
             ) : null}
           </tbody>
         </table>
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((prev) => prev - 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm font-semibold text-[#2e4f86]">
+          {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={page >= totalPages}
+          onClick={() => setPage((prev) => prev + 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
