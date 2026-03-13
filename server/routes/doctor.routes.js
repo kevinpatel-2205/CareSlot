@@ -22,6 +22,7 @@ import {
   exportPatientsExcel,
   exportReviewsPDF,
   exportReviewsExcel,
+  addBulkAvailableSlots,
 } from "../controllers/doctor.controller.js";
 import { downloadPrescription } from "../controllers/prescriptionDownload.controller.js";
 
@@ -36,6 +37,7 @@ router.get("/patients", getDoctorPatients);
 router.get("/patients/:patientId", getDoctorPatientDetails);
 router.get("/availableSlots", getAvailableSlots);
 router.post("/addAvailableSlots", addAvailableSlots);
+router.post("/addBulkAvailableSlots", addBulkAvailableSlots);
 router.get("/profile", getDoctorProfile);
 router.put("/updateProfile", updateDoctorProfile);
 router.delete("/slots/:date", deleteAvailableSlot);

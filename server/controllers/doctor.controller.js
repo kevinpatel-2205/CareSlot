@@ -550,7 +550,24 @@ export const getAvailableSlots = async (req, res, next) => {
       throw new Error("Doctor not found");
     }
 
-    const slots = doctor.availableSlots || [];
+    let slots = doctor.availableSlots || [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const validSlots = slots.filter((slot) => {
+      const slotDate = new Date(slot.date);
+      slotDate.setHours(0, 0, 0, 0);
+
+      return slotDate >= today;
+    });
+
+    if (validSlots.length !== slots.length) {
+      doctor.availableSlots = validSlots;
+      await doctor.save();
+    }
+
+    slots = validSlots;
 
     const start = (page - 1) * limit;
     const end = start + Number(limit);
@@ -635,6 +652,132 @@ export const addAvailableSlots = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Available slots added successfully",
+      data: doctor.availableSlots,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addBulkAvailableSlots = async (req, res, next) => {
+  try {
+    let { startDate, endDate, startTime, endTime, interval } = req.body;
+
+    if (!startDate || !endDate || !interval) {
+      res.status(400);
+      throw new Error("Start date, end date and interval are required");
+    }
+
+    // Default Times
+    startTime = startTime || "10:00 AM";
+    endTime = endTime || "05:00 PM";
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (start < today || end < today) {
+      res.status(400);
+      throw new Error("Dates cannot be less than today");
+    }
+
+    if (end < start) {
+      res.status(400);
+      throw new Error("End date must be greater than start date");
+    }
+
+    // 1 Month limit
+    const maxEnd = new Date(start);
+    maxEnd.setMonth(maxEnd.getMonth() + 1);
+
+    if (end > maxEnd) {
+      res.status(400);
+      throw new Error("Doctor cannot create slots for more than 1 month");
+    }
+
+    const timeRegex = /^(0[1-9]|1[0-2]):([0-5][0-9])\s?(AM|PM)$/i;
+
+    if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+      res.status(400);
+      throw new Error("Time must be in format like 09:00 AM");
+    }
+
+    if (interval <= 0) {
+      res.status(400);
+      throw new Error("Interval must be greater than 0");
+    }
+
+    const convertTo24 = (time) => {
+      let [timePart, period] = time.split(" ");
+      let [hour, min] = timePart.split(":").map(Number);
+
+      if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
+      if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
+
+      return hour * 60 + min;
+    };
+
+    const convertTo12 = (minutes) => {
+      let h = Math.floor(minutes / 60);
+      let m = minutes % 60;
+
+      const period = h >= 12 ? "PM" : "AM";
+      h = h % 12 || 12;
+
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
+    };
+
+    const startMinutes = convertTo24(startTime);
+    const endMinutes = convertTo24(endTime);
+
+    const doctor = await Doctor.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    const generatedTimes = [];
+
+    for (let t = startMinutes; t < endMinutes; t += interval) {
+      generatedTimes.push(convertTo12(t));
+    }
+
+    let current = new Date(start);
+
+    while (current <= end) {
+      const dateString = current.toDateString();
+
+      const existingSlot = doctor.availableSlots.find(
+        (slot) => new Date(slot.date).toDateString() === dateString,
+      );
+
+      if (existingSlot) {
+        const uniqueTimes = generatedTimes.filter(
+          (time) => !existingSlot.times.includes(time),
+        );
+
+        existingSlot.times.push(...uniqueTimes);
+      } else {
+        doctor.availableSlots.push({
+          date: new Date(current),
+          times: generatedTimes,
+        });
+      }
+
+      current.setDate(current.getDate() + 1);
+    }
+
+    await doctor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Bulk slots created successfully",
       data: doctor.availableSlots,
     });
   } catch (error) {

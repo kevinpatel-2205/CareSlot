@@ -404,6 +404,21 @@ export const downloadReviewsExcel = createAsyncThunk(
   },
 );
 
+export const addBulkAvailableSlots = createAsyncThunk(
+  "doctor/addBulkSlots",
+  async (slotData, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.post(
+        "/doctor/addBulkAvailableSlots",
+        slotData,
+      );
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
 const doctorSlice = createSlice({
   name: "doctor",
   initialState,
@@ -535,6 +550,19 @@ const doctorSlice = createSlice({
         toast.success(action.payload.message);
       })
       .addCase(addAvailableSlots.rejected, (state, action) => {
+        state.loading = false;
+        toast.error(action.payload);
+      })
+
+      .addCase(addBulkAvailableSlots.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(addBulkAvailableSlots.fulfilled, (state, action) => {
+        state.loading = false;
+        state.availableSlots = action.payload.data;
+        toast.success(action.payload.message);
+      })
+      .addCase(addBulkAvailableSlots.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
       })
