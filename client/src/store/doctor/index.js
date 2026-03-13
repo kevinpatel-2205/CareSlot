@@ -304,6 +304,106 @@ export const downloadAppointmentsExcel = createAsyncThunk(
   },
 );
 
+export const downloadPatientsPDF = createAsyncThunk(
+  "doctor/downloadPatientsPDF",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/doctor/patients/export/pdf", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "patients-report.pdf");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const downloadPatientsExcel = createAsyncThunk(
+  "doctor/downloadPatientExcel",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/doctor/patients/export/excel", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "patients-report.xlsx");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const downloadReviewsPDF = createAsyncThunk(
+  "doctor/downloadReviewsPDF",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/doctor/reviews/export/pdf", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "reviews-report.pdf");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const downloadReviewsExcel = createAsyncThunk(
+  "doctor/downloadReviewsExcel",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/doctor/reviews/export/excel", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "reviews-report.xlsx");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
 const doctorSlice = createSlice({
   name: "doctor",
   initialState,
@@ -536,7 +636,11 @@ const doctorSlice = createSlice({
       })
       .addCase(downloadAppointmentsPDF.rejected, (state, action) => {
         state.loading = false;
-        toast.error(action.payload);
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
       })
 
       .addCase(downloadAppointmentsExcel.pending, (state) => {
@@ -548,7 +652,75 @@ const doctorSlice = createSlice({
       })
       .addCase(downloadAppointmentsExcel.rejected, (state, action) => {
         state.loading = false;
-        toast.error(action.payload);
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
+      })
+
+      .addCase(downloadPatientsPDF.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadPatientsPDF.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("PDF downloaded successfully");
+      })
+      .addCase(downloadPatientsPDF.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
+      })
+
+      .addCase(downloadPatientsExcel.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadPatientsExcel.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Excel downloaded successfully");
+      })
+      .addCase(downloadPatientsExcel.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
+      })
+
+      .addCase(downloadReviewsPDF.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadReviewsPDF.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("PDF downloaded successfully");
+      })
+      .addCase(downloadReviewsPDF.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
+      })
+
+      .addCase(downloadReviewsExcel.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadReviewsExcel.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Excel downloaded successfully");
+      })
+      .addCase(downloadReviewsExcel.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
       });
   },
 });

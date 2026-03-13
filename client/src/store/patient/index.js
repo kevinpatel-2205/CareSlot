@@ -399,7 +399,11 @@ const patientSlice = createSlice({
       })
       .addCase(downloadAppointmentsPDF.rejected, (state, action) => {
         state.loading = false;
-        toast.error(action.payload);
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
       })
 
       .addCase(downloadAppointmentsExcel.pending, (state) => {
@@ -411,7 +415,11 @@ const patientSlice = createSlice({
       })
       .addCase(downloadAppointmentsExcel.rejected, (state, action) => {
         state.loading = false;
-        toast.error(action.payload);
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
       });
   },
 });

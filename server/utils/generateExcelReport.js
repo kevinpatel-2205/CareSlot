@@ -1,6 +1,10 @@
 import ExcelJS from "exceljs";
 
 export const generateExcelReport = async (res, title, headers, rows) => {
+  if (!rows || rows.length === 0) {
+    throw new Error("No data found");
+  }
+
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet(title);
 

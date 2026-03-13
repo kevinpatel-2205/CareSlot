@@ -18,6 +18,10 @@ import {
   exportDoctorPDF,
   exportAppointmentsPDF,
   exportAppointmentsExcel,
+  exportPatientsPDF,
+  exportPatientsExcel,
+  exportReviewsPDF,
+  exportReviewsExcel,
 } from "../controllers/doctor.controller.js";
 import { downloadPrescription } from "../controllers/prescriptionDownload.controller.js";
 
@@ -43,4 +47,9 @@ router.get("/export-pdf", exportDoctorPDF);
 
 router.get("/appointments/export/pdf", exportAppointmentsPDF);
 router.get("/appointments/export/excel", exportAppointmentsExcel);
+router.get("/patients/export/pdf", exportPatientsPDF);
+router.get("/patients/export/excel", exportPatientsExcel);
+router.get("/reviews/export/pdf", exportReviewsPDF);
+router.get("/reviews/export/excel", exportReviewsExcel);
+
 export default router;

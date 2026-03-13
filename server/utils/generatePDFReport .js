@@ -1,6 +1,10 @@
 import PDFDocument from "pdfkit";
 
 export const generatePDFReport = (res, title, headers, rows) => {
+  if (!rows || rows.length === 0) {
+    throw new Error("No data found");
+  }
+
   const doc = new PDFDocument({
     size: "A4",
     margin: 40,
@@ -12,7 +16,6 @@ export const generatePDFReport = (res, title, headers, rows) => {
   doc.pipe(res);
 
   const startX = 40;
-  const rowHeight = 22;
   const pageWidth = 515;
   const bottomLimit = 760;
 
@@ -31,13 +34,22 @@ export const generatePDFReport = (res, title, headers, rows) => {
   const drawRow = (row, isHeader = false) => {
     let x = startX;
 
+    const heights = row.map((cell) =>
+      doc.heightOfString(String(cell), {
+        width: columnWidth - 8,
+        align: "center",
+      }),
+    );
+
+    const maxHeight = Math.max(...heights) + 10;
+
     row.forEach((cell) => {
-      doc.rect(x, y, columnWidth, rowHeight).stroke();
+      doc.rect(x, y, columnWidth, maxHeight).stroke();
 
       doc
         .font(isHeader ? "Helvetica-Bold" : "Helvetica")
         .fontSize(9)
-        .text(String(cell), x + 4, y + 6, {
+        .text(String(cell), x + 4, y + 5, {
           width: columnWidth - 8,
           align: "center",
         });
@@ -45,7 +57,7 @@ export const generatePDFReport = (res, title, headers, rows) => {
       x += columnWidth;
     });
 
-    y += rowHeight;
+    y += maxHeight;
   };
 
   const drawHeader = () => {

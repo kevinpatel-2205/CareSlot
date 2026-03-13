@@ -1675,3 +1675,223 @@ export const exportAppointmentsExcel = async (req, res, next) => {
     next(error);
   }
 };
+
+export const exportPatientsPDF = async (req, res, next) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+    const doctorId = doctor._id;
+
+    const patients = await Appointment.aggregate([
+      {
+        $match: {
+          doctorId,
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$patientId",
+          totalAppointments: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "patients",
+          localField: "_id",
+          foreignField: "_id",
+          as: "patient",
+        },
+      },
+      { $unwind: "$patient" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "patient.userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+
+      {
+        $project: {
+          patientId: "$_id",
+          totalAppointments: 1,
+          name: "$user.name",
+          email: "$user.email",
+          phone: "$user.phone",
+          image: "$user.image",
+        },
+      },
+    ]);
+
+    const headers = ["No", "Name", "Email", "Phone", "Total Appointments"];
+    const rows = patients.map((p, i) => [
+      i + 1,
+      p.name,
+      p.email,
+      p.phone,
+      p.totalAppointments,
+    ]);
+    generatePDFReport(res, "Patients Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportPatientsExcel = async (req, res, next) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+    const doctorId = doctor._id;
+
+    const patients = await Appointment.aggregate([
+      {
+        $match: {
+          doctorId,
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$patientId",
+          totalAppointments: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "patients",
+          localField: "_id",
+          foreignField: "_id",
+          as: "patient",
+        },
+      },
+      { $unwind: "$patient" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "patient.userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+
+      {
+        $project: {
+          patientId: "$_id",
+          totalAppointments: 1,
+          name: "$user.name",
+          email: "$user.email",
+          phone: "$user.phone",
+          image: "$user.image",
+        },
+      },
+    ]);
+
+    const headers = ["No", "Name", "Email", "Phone", "Total Appointments"];
+    const rows = patients.map((p, i) => [
+      i + 1,
+      p.name,
+      p.email,
+      p.phone,
+      p.totalAppointments,
+    ]);
+    await generateExcelReport(res, "Patients Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportReviewsPDF = async (req, res, next) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    const reviews = await Review.find({
+      doctorId: doctor._id,
+      isApprove: true,
+      isDeleted: false,
+    })
+      .populate({
+        path: "patientId",
+        populate: {
+          path: "userId",
+          select: "name image email",
+        },
+      })
+      .select("rating comment createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const headers = [
+      "No",
+      "Patient Name",
+      "Email",
+      "Rating",
+      "Comment",
+      "Date",
+    ];
+    const rows = reviews.map((rev, i) => [
+      i + 1,
+      rev.patientId?.userId?.name || "",
+      rev.patientId?.userId?.email || "",
+      rev.rating,
+      rev.comment,
+      new Date(rev.createdAt).toLocaleDateString("en-IN"),
+    ]);
+    generatePDFReport(res, "Reviews Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportReviewsExcel = async (req, res, next) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user._id });
+
+    if (!doctor) {
+      res.status(404);
+      throw new Error("Doctor not found");
+    }
+
+    const reviews = await Review.find({
+      doctorId: doctor._id,
+      isApprove: true,
+      isDeleted: false,
+    })
+      .populate({
+        path: "patientId",
+        populate: {
+          path: "userId",
+          select: "name image email",
+        },
+      })
+      .select("rating comment createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const headers = [
+      "No",
+      "Patient Name",
+      "Email",
+      "Rating",
+      "Comment",
+      "Date",
+    ];
+    const rows = reviews.map((rev, i) => [
+      i + 1,
+      rev.patientId?.userId?.name || "",
+      rev.patientId?.userId?.email || "",
+      rev.rating,
+      rev.comment,
+      new Date(rev.createdAt).toLocaleDateString("en-IN"),
+    ]);
+    generateExcelReport(res, "Reviews Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
