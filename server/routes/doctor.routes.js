@@ -16,6 +16,8 @@ import {
   getDoctorReviews,
   addPrescription,
   exportDoctorPDF,
+  exportAppointmentsPDF,
+  exportAppointmentsExcel,
 } from "../controllers/doctor.controller.js";
 import { downloadPrescription } from "../controllers/prescriptionDownload.controller.js";
 
@@ -39,4 +41,6 @@ router.post("/prescription/:appointmentId", addPrescription);
 router.get("/prescription/:appointmentId", downloadPrescription);
 router.get("/export-pdf", exportDoctorPDF);
 
+router.get("/appointments/export/pdf", exportAppointmentsPDF);
+router.get("/appointments/export/excel", exportAppointmentsExcel);
 export default router;
