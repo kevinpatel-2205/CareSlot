@@ -241,6 +241,56 @@ export const exportAdminPDF = createAsyncThunk(
   },
 );
 
+export const downloadDoctorsPDF = createAsyncThunk(
+  "doctor/downloadDoctorPDF",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/admin/doctors/export/pdf", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "doctors-report.pdf");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const downloadDoctorsExcel = createAsyncThunk(
+  "doctor/downloadDoctorExcel",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/admin/doctors/export/excel", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "doctors-report.xlsx");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState,
@@ -447,6 +497,38 @@ const adminSlice = createSlice({
       .addCase(updateDoctorCommission.rejected, (state, action) => {
         state.loading = false;
         toast.error(action.payload);
+      })
+
+      .addCase(downloadDoctorsPDF.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadDoctorsPDF.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("PDF downloaded successfully");
+      })
+      .addCase(downloadDoctorsPDF.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
+      })
+
+      .addCase(downloadDoctorsExcel.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadDoctorsExcel.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Excel downloaded successfully");
+      })
+      .addCase(downloadDoctorsExcel.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
       });
   },
 });

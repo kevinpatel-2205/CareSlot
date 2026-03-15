@@ -8,6 +8,8 @@ import Prescription from "../models/prescription.model.js";
 import { sendDoctorEmail } from "../utils/sendEmail.js";
 import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
+import { generatePDFReport } from "../utils/generatePDFReport .js";
+import { generateExcelReport } from "../utils/generateExcelReport.js";
 
 export const getAdminDashboard = async (req, res, next) => {
   try {
@@ -1562,6 +1564,122 @@ export const exportAdminDataToPDF = async (req, res, next) => {
     );
 
     doc.end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// its For Generate PDF Or Excel
+
+export const exportDoctorsPDF = async (req, res, next) => {
+  try {
+    const doctors = await Doctor.find({ isDeleted: false })
+      .populate({
+        path: "userId",
+        select: "name email phone isActive",
+      })
+      .select("specialization experience aCommission");
+
+    const commissionData = await Appointment.aggregate([
+      {
+        $match: {
+          status: { $in: ["confirmed", "completed"] },
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$doctorId",
+          totalCommission: { $sum: "$adminCommission" },
+        },
+      },
+    ]);
+
+    const commissionMap = {};
+    commissionData.forEach((item) => {
+      commissionMap[item._id.toString()] = item.totalCommission;
+    });
+
+    const headers = [
+      "No",
+      "Name",
+      "Email",
+      "Phone",
+      "IsActive",
+      "Specialization",
+      "Experience",
+      "Admin Commission",
+    ];
+
+    const rows = doctors.map((doc, index) => [
+      index + 1,
+      doc.userId?.name,
+      doc.userId?.email,
+      doc.userId?.phone,
+      doc.userId?.isActive ? "Yes" : "No",
+      doc.specialization,
+      doc.experience,
+      doc.aCommission + "%",
+    ]);
+
+    generatePDFReport(res, "Doctors Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportDoctorsExcel = async (req, res, next) => {
+  try {
+    const doctors = await Doctor.find({ isDeleted: false })
+      .populate({
+        path: "userId",
+        select: "name email phone isActive",
+      })
+      .select("specialization experience aCommission");
+
+    const commissionData = await Appointment.aggregate([
+      {
+        $match: {
+          status: { $in: ["confirmed", "completed"] },
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$doctorId",
+          totalCommission: { $sum: "$adminCommission" },
+        },
+      },
+    ]);
+
+    const commissionMap = {};
+    commissionData.forEach((item) => {
+      commissionMap[item._id.toString()] = item.totalCommission;
+    });
+
+    const headers = [
+      "No",
+      "Name",
+      "Email",
+      "Phone",
+      "IsActive",
+      "Specialization",
+      "Experience",
+      "Admin Commission",
+    ];
+
+    const rows = doctors.map((doc, index) => [
+      index + 1,
+      doc.userId?.name,
+      doc.userId?.email,
+      doc.userId?.phone,
+      doc.userId?.isActive ? "Yes" : "No",
+      doc.specialization,
+      doc.experience,
+      doc.aCommission + "%",
+    ]);
+
+    generateExcelReport(res, "Doctors Report", headers, rows);
   } catch (error) {
     next(error);
   }

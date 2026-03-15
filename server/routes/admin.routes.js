@@ -14,6 +14,8 @@ import {
   deleteReview,
   updateDoctorCommission,
   exportAdminDataToPDF,
+  exportDoctorsExcel,
+  exportDoctorsPDF,
 } from "../controllers/admin.controller.js";
 import { downloadPrescription } from "../controllers/prescriptionDownload.controller.js";
 
@@ -35,4 +37,6 @@ router.put("/commission/:doctorId", updateDoctorCommission);
 router.get("/prescription/:appointmentId", downloadPrescription);
 router.get("/export-pdf", exportAdminDataToPDF);
 
+router.get("/doctors/export/pdf", exportDoctorsPDF);
+router.get("/doctors/export/excel", exportDoctorsExcel);
 export default router;
