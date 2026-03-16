@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+
+  server:
+    build: ./server
+    container_name: careslot-server
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+
+  client:
+    build: ./client
+    container_name: careslot-client
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
