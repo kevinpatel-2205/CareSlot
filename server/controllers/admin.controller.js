@@ -1684,3 +1684,240 @@ export const exportDoctorsExcel = async (req, res, next) => {
     next(error);
   }
 };
+
+export const exportPatientsPDF = async (req, res, next) => {
+  try {
+    const patients = await Patient.find({ isDeleted: false })
+      .populate({
+        path: "userId",
+        select: "name email image",
+      })
+      .lean();
+
+    const patientIds = patients.map((p) => p._id);
+
+    const bookingCounts = await Appointment.aggregate([
+      {
+        $match: {
+          patientId: { $in: patientIds },
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$patientId",
+          totalBookings: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const bookingMap = {};
+    bookingCounts.forEach((item) => {
+      bookingMap[item._id.toString()] = item.totalBookings;
+    });
+
+    const headers = ["No", "Name", "Email", "Total Bookings"];
+    const rows = patients.map((p, index) => [
+      index + 1,
+      p.userId?.name,
+      p.userId?.email,
+      bookingMap[p._id.toString()] || 0,
+    ]);
+
+    generatePDFReport(res, "Patients Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportPatientsExcel = async (req, res, next) => {
+  try {
+    const patients = await Patient.find({ isDeleted: false })
+      .populate({
+        path: "userId",
+        select: "name email image",
+      })
+      .lean();
+
+    const patientIds = patients.map((p) => p._id);
+
+    const bookingCounts = await Appointment.aggregate([
+      {
+        $match: {
+          patientId: { $in: patientIds },
+          isDeleted: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$patientId",
+          totalBookings: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const bookingMap = {};
+    bookingCounts.forEach((item) => {
+      bookingMap[item._id.toString()] = item.totalBookings;
+    });
+
+    const headers = ["No", "Name", "Email", "Total Bookings"];
+    const rows = patients.map((p, index) => [
+      index + 1,
+      p.userId?.name,
+      p.userId?.email,
+      bookingMap[p._id.toString()] || 0,
+    ]);
+
+    generateExcelReport(res, "Patients Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportAppointmentsPDF = async (req, res, next) => {
+  try {
+    let { status } = req.query;
+
+    const filter = { isDeleted: false };
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const appointments = await Appointment.find(filter)
+      .sort({ appointmentDate: -1, timeSlot: 1 })
+      .select(
+        "appointmentDate timeSlot status adminCommission prescriptionAdded patientId doctorId notes consultationFee",
+      )
+      .populate({
+        path: "patientId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "doctorId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          select: "name email",
+        },
+      })
+      .lean();
+
+    const headers = [
+      "No",
+      "Doctor Name",
+      "Doctor Email",
+      "Patient Name",
+      "Patient Email",
+      "Date",
+      "Time",
+      "Status",
+      "Note",
+      "Fee",
+      "Commission %",
+      "Commission",
+    ];
+    const rows = appointments.map((a, index) => {
+      const commissionPercent =
+        a.consultationFee > 0
+          ? ((a.adminCommission / a.consultationFee) * 100).toFixed(2)
+          : 0;
+      return [
+        index + 1,
+        a.doctorId?.userId?.name,
+        a.doctorId?.userId?.email,
+        a.patientId?.userId?.name,
+        a.patientId?.userId?.email,
+        new Date(a.appointmentDate).toLocaleDateString("en-IN"),
+        a.timeSlot,
+        a.status,
+        a.notes,
+        a.consultationFee,
+        commissionPercent + "%",
+        a.adminCommission,
+      ];
+    });
+
+    generatePDFReport(res, "Appointments Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportAppointmentsExcel = async (req, res, next) => {
+  try {
+    let { status } = req.query;
+
+    const filter = { isDeleted: false };
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const appointments = await Appointment.find(filter)
+      .sort({ appointmentDate: -1, timeSlot: 1 })
+      .select(
+        "appointmentDate timeSlot status adminCommission prescriptionAdded patientId doctorId notes consultationFee",
+      )
+      .populate({
+        path: "patientId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          select: "name email",
+        },
+      })
+      .populate({
+        path: "doctorId",
+        select: "userId",
+        populate: {
+          path: "userId",
+          select: "name email",
+        },
+      })
+      .lean();
+
+    const headers = [
+      "No",
+      "Doctor Name",
+      "Doctor Email",
+      "Patient Name",
+      "Patient Email",
+      "Date",
+      "Time",
+      "Status",
+      "Note",
+      "Fee",
+      "Commission %",
+      "Commission",
+    ];
+    const rows = appointments.map((a, index) => {
+      const commissionPercent =
+        a.consultationFee > 0
+          ? ((a.adminCommission / a.consultationFee) * 100).toFixed(2)
+          : 0;
+      return [
+        index + 1,
+        a.doctorId?.userId?.name,
+        a.doctorId?.userId?.email,
+        a.patientId?.userId?.name,
+        a.patientId?.userId?.email,
+        new Date(a.appointmentDate).toLocaleDateString("en-IN"),
+        a.timeSlot,
+        a.status,
+        a.notes,
+        a.consultationFee,
+        commissionPercent + "%",
+        a.adminCommission,
+      ];
+    });
+    generateExcelReport(res, "Appointments Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};

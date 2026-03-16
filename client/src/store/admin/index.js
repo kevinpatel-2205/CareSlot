@@ -291,6 +291,108 @@ export const downloadDoctorsExcel = createAsyncThunk(
   },
 );
 
+export const downloadPatientsPDF = createAsyncThunk(
+  "patient/downloadPatientsPDF",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/admin/patients/export/pdf", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "patients-report.pdf");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const downloadPatientsExcel = createAsyncThunk(
+  "patient/downloadPatientsExcel",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/admin/patients/export/excel", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "patients-report.xlsx");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const downloadAppointmentsPDF = createAsyncThunk(
+  "admin/downloadAppointmentsPDF",
+  async ({ status }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/admin/appointments/export/pdf", {
+        params: { status },
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "appointments-report.pdf");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
+export const downloadAppointmentsExcel = createAsyncThunk(
+  "admin/downloadAppointmentsExcel",
+  async ({ status }, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/admin/appointments/export/excel", {
+        params: { status },
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.setAttribute("download", "appointments-report.xlsx");
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState,
@@ -523,6 +625,70 @@ const adminSlice = createSlice({
         toast.success("Excel downloaded successfully");
       })
       .addCase(downloadDoctorsExcel.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
+      })
+
+      .addCase(downloadPatientsPDF.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadPatientsPDF.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("PDF downloaded successfully");
+      })
+      .addCase(downloadPatientsPDF.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
+      })
+
+      .addCase(downloadPatientsExcel.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadPatientsExcel.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Excel downloaded successfully");
+      })
+      .addCase(downloadPatientsExcel.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
+      })
+
+      .addCase(downloadAppointmentsPDF.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadAppointmentsPDF.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("PDF downloaded successfully");
+      })
+      .addCase(downloadAppointmentsPDF.rejected, (state, action) => {
+        state.loading = false;
+        if (action.error.message === "Rejected") {
+          toast.error("No Data Found");
+        } else {
+          toast.error(action.payload);
+        }
+      })
+
+      .addCase(downloadAppointmentsExcel.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(downloadAppointmentsExcel.fulfilled, (state) => {
+        state.loading = false;
+        toast.success("Excel downloaded successfully");
+      })
+      .addCase(downloadAppointmentsExcel.rejected, (state, action) => {
         state.loading = false;
         if (action.error.message === "Rejected") {
           toast.error("No Data Found");

@@ -16,6 +16,10 @@ import {
   exportAdminDataToPDF,
   exportDoctorsExcel,
   exportDoctorsPDF,
+  exportPatientsPDF,
+  exportPatientsExcel,
+  exportAppointmentsPDF,
+  exportAppointmentsExcel,
 } from "../controllers/admin.controller.js";
 import { downloadPrescription } from "../controllers/prescriptionDownload.controller.js";
 
@@ -39,4 +43,9 @@ router.get("/export-pdf", exportAdminDataToPDF);
 
 router.get("/doctors/export/pdf", exportDoctorsPDF);
 router.get("/doctors/export/excel", exportDoctorsExcel);
+router.get("/patients/export/pdf", exportPatientsPDF);
+router.get("/patients/export/excel", exportPatientsExcel);
+router.get("/appointments/export/pdf", exportAppointmentsPDF);
+router.get("/appointments/export/excel", exportAppointmentsExcel);
+
 export default router;
