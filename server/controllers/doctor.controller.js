@@ -244,7 +244,9 @@ export const getAllAppointments = async (req, res, next) => {
     }
 
     const appointments = await Appointment.find(filter)
-      .select("appointmentDate timeSlot paymentMethod patientId status")
+      .select(
+        "appointmentDate timeSlot paymentMethod patientId status prescriptionAdded",
+      )
       .populate({
         path: "patientId",
         select: "userId",

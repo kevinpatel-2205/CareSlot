@@ -18,9 +18,9 @@ A full-stack **MERN** based web application that simplifies and digitizes the co
 
 It provides three main user roles:
 
-* 👤 Patient
-* 👨‍⚕️ Doctor
-* 👨‍💼 Admin
+- 👤 Patient
+- 👨‍⚕️ Doctor
+- 👨‍💼 Admin
 
 The system replaces manual appointment booking with a centralized, secure, and real-time digital platform.
 
@@ -28,12 +28,12 @@ The system replaces manual appointment booking with a centralized, secure, and r
 
 # 🎯 Key Objectives
 
-* Digitize appointment scheduling
-* Prevent booking conflicts
-* Enable secure online payments
-* Track doctor earnings
-* Provide real-time dashboards & analytics
-* Centralized monitoring through admin panel
+- Digitize appointment scheduling
+- Prevent booking conflicts
+- Enable secure online payments
+- Track doctor earnings
+- Provide real-time dashboards & analytics
+- Centralized monitoring through admin panel
 
 ---
 
@@ -47,22 +47,22 @@ User → React Frontend → Express API → MongoDB Database
 
 ### 1️⃣ Frontend
 
-* React.js (SPA)
-* Tailwind CSS
-* Chart.js
-* Redux Toolkit
+- React.js (SPA)
+- Tailwind CSS
+- Chart.js
+- Redux Toolkit
 
 ### 2️⃣ Backend
 
-* Node.js
-* Express.js
-* REST API
-* JWT Authentication
+- Node.js
+- Express.js
+- REST API
+- JWT Authentication
 
 ### 3️⃣ Database
 
-* MongoDB
-* Mongoose ODM
+- MongoDB
+- Mongoose ODM
 
 ---
 
@@ -70,26 +70,26 @@ User → React Frontend → Express API → MongoDB Database
 
 ### ✅ Dashboard
 
-* Total bookings
-* Upcoming bookings
-* Completed bookings
-* Cancelled bookings
-* Sorted upcoming appointments list
+- Total bookings
+- Upcoming bookings
+- Completed bookings
+- Cancelled bookings
+- Sorted upcoming appointments list
 
 ### ✅ Doctor Listing
 
-* View all doctors
-* Search & filter by specialization
-* See availability status
+- View all doctors
+- Search & filter by specialization
+- See availability status
 
 ### ✅ Doctor Details
 
-* Name
-* Experience
-* About
-* Specialization
-* Consultation fee
-* Available time slots
+- Name
+- Experience
+- About
+- Specialization
+- Consultation fee
+- Available time slots
 
 ### ✅ Appointment Booking Flow
 
@@ -103,20 +103,19 @@ User → React Frontend → Express API → MongoDB Database
 
 ### ✅ Appointment Management
 
-* View appointments
-* Filter by:
-
-  * Pending
-  * Confirmed
-  * Completed
-  * Cancelled
+- View appointments
+- Filter by:
+  - Pending
+  - Confirmed
+  - Completed
+  - Cancelled
 
 ### ✅ Profile Management
 
-* Update name
-* Email
-* Phone
-* Password
+- Update name
+- Email
+- Phone
+- Password
 
 ---
 
@@ -124,31 +123,31 @@ User → React Frontend → Express API → MongoDB Database
 
 ### ✅ Dashboard
 
-* Total earnings (Confirmed appointments)
-* Appointment statistics
-* Monthly earnings chart
-* Payment type distribution (Cash vs Razorpay)
+- Total earnings (Confirmed appointments)
+- Appointment statistics
+- Monthly earnings chart
+- Payment type distribution (Cash vs Razorpay)
 
 ### ✅ Appointment Management
 
-* Confirm appointment
-* Cancel appointment
-* Mark as completed
+- Confirm appointment
+- Cancel appointment
+- Mark as completed
 
 ### ✅ Patient Management
 
-* View patient list
-* View patient details
+- View patient list
+- View patient details
 
 ### ✅ Available Slots
 
-* Add available slots
-* View existing slots
+- Add available slots
+- View existing slots
 
 ### ✅ Profile Control
 
-* Update profile
-* Activate / Deactivate account
+- Update profile
+- Activate / Deactivate account
 
 ---
 
@@ -156,29 +155,29 @@ User → React Frontend → Express API → MongoDB Database
 
 ### ✅ Dashboard
 
-* Total doctors
-* Total patients
-* Analytics charts
-* Top 5 highest earning doctors
-* Top 5 most booked doctors
-* Show its Commission
+- Total doctors
+- Total patients
+- Analytics charts
+- Top 5 highest earning doctors
+- Top 5 most booked doctors
+- Show its Commission
 
 ### ✅ Doctor Management
 
-* Add doctor
-* Activate/Deactivate
-* Delete doctor
+- Add doctor
+- Activate/Deactivate
+- Delete doctor
 
 ### ✅ Patient Management
 
-* View all patients
-* Delete patients
+- View all patients
+- Delete patients
 
 ### ✅ Appointment Monitoring
 
-* View all appointments
-* Filter by status
-* Monitor patient & doctor details
+- View all appointments
+- Filter by status
+- Monitor patient & doctor details
 
 ---
 
@@ -186,14 +185,13 @@ User → React Frontend → Express API → MongoDB Database
 
 Integrated with **Razorpay** for secure online transactions:
 
-* Appointment payment processing
-* Order creation
-* Payment verification
-* Payment status tracking
-* Supports:
-
-  * Cash
-  * Razorpay
+- Appointment payment processing
+- Order creation
+- Payment verification
+- Payment status tracking
+- Supports:
+  - Cash
+  - Razorpay
 
 ---
 
@@ -201,18 +199,19 @@ Integrated with **Razorpay** for secure online transactions:
 
 Integrated using **Nodemailer**:
 
-* Doctor account creation email (sent to doctor with login credentials or Dashboard link)
-* Appointment booking email (sent to Doctor after successful booking)
+- Doctor account creation email (sent to doctor with login credentials or Dashboard link)
+- Appointment booking email (sent to Doctor after successful booking)
+
 ---
 
 # 🔐 Security Features
 
-* JWT-based authentication
-* Role-based access control
-* Password hashing with Bcrypt
-* Protected admin routes
-* Express rate limiting
-* Secure API structure
+- JWT-based authentication
+- Role-based access control
+- Password hashing with Bcrypt
+- Protected admin routes
+- Express rate limiting
+- Secure API structure
 
 ---
 
@@ -220,20 +219,20 @@ Integrated using **Nodemailer**:
 
 Using Chart.js:
 
-* Monthly earnings graph
-* Appointment status distribution
-* Payment method distribution
-* Admin analytics overview
+- Monthly earnings graph
+- Appointment status distribution
+- Payment method distribution
+- Admin analytics overview
 
 ---
 
 # 🗂️ Database Collections
 
-* Users
-* Doctors
-* Patients
-* Appointments
-* Payments
+- Users
+- Doctors
+- Patients
+- Appointments
+- Payments
 
 Each stored as structured MongoDB documents.
 
@@ -241,12 +240,12 @@ Each stored as structured MongoDB documents.
 
 # 🚀 Future Enhancements
 
-* SMS reminders
-* Video consultation
-* Prescription uploads
-* Multi-language support
-* Mobile application
-* AI-based doctor recommendation
+- SMS reminders
+- Video consultation
+- Prescription uploads
+- Multi-language support
+- Mobile application
+- AI-based doctor recommendation
 
 ---
 
@@ -275,6 +274,8 @@ EMAIL_PASS=your_email_password
 
 RAZORPAY_KEY_ID=your_razorpay_key
 RAZORPAY_KEY_SECRET=your_razorpay_secret
+
+GROQ_API_KEY=your_groq_API_Key
 
 CURRENCY=INR
 ```
@@ -355,31 +356,31 @@ http://localhost:5173
 
 ### Frontend
 
-* React.js
-* Redux Toolkit
-* Tailwind CSS
-* Chart.js
-* Axios
+- React.js
+- Redux Toolkit
+- Tailwind CSS
+- Chart.js
+- Axios
 
 ### Backend
 
-* Node.js
-* Express.js
-* MongoDB
-* Mongoose
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
 
 ### Authentication
 
-* JWT
-* Bcrypt
+- JWT
+- Bcrypt
 
 ### Payment
 
-* Razorpay
+- Razorpay
 
 ### Email
 
-* Nodemailer
+- Nodemailer
 
 ---
 
@@ -387,13 +388,13 @@ http://localhost:5173
 
 CareSlot is a complete real-world scalable system that demonstrates:
 
-* Clean modular architecture
-* Secure authentication
-* Payment gateway integration
-* Email automation
-* Role-based access control
-* Advanced analytics
-* Production-ready structure
+- Clean modular architecture
+- Secure authentication
+- Payment gateway integration
+- Email automation
+- Role-based access control
+- Advanced analytics
+- Production-ready structure
 
 ---
 

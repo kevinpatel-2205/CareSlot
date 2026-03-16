@@ -12,9 +12,12 @@ import {
 import { formatDate, statusTone } from "../../lib/format.js";
 import Pagination from "../../components/Pagination.jsx";
 import { FileSpreadsheet, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { VITE_API_BASE_URL } from "../../lib/env.js";
 
 function DoctorAppointmentsPage() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const { appointments, currentPage, totalPages } = useSelector(
     (state) => state.doctor,
@@ -45,6 +48,13 @@ function DoctorAppointmentsPage() {
 
   const cancelAppt = (appointmentId) => {
     dispatch(cancelAppointment(appointmentId));
+  };
+
+  const downloadPrescription = (appointmentId) => {
+    window.open(
+      `${VITE_API_BASE_URL}/doctor/prescription/${appointmentId}`,
+      "_blank",
+    );
   };
 
   return (
@@ -166,18 +176,45 @@ function DoctorAppointmentsPage() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => changeStatus(item._id)}
-                      className="rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-xs font-semibold text-[#345eaa]"
-                    >
-                      Change Status
-                    </button>
-                    <button
-                      onClick={() => cancelAppt(item._id)}
-                      className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700"
-                    >
-                      Cancel
-                    </button>
+                    {item.status !== "completed" ? (
+                      <>
+                        <button
+                          onClick={() => changeStatus(item._id)}
+                          className="rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-xs font-semibold text-[#345eaa]"
+                        >
+                          Change Status
+                        </button>
+
+                        <button
+                          onClick={() => cancelAppt(item._id)}
+                          className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {item.prescriptionAdded ? (
+                          <button
+                            onClick={() => downloadPrescription(item._id)}
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg"
+                          >
+                            Download Rx
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              navigate(
+                                `/doctor/prescription/${item.patientId._id}/${item._id}`,
+                              )
+                            }
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                          >
+                            Create Rx
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>
