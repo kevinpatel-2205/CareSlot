@@ -11,6 +11,7 @@ import { protect } from "./middleware/auth.middleware.js";
 import { authorizeRoles } from "./middleware/role.middleware.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import { CLIENT_URL, PORT } from "./utils/env.js";
+import { getHomeData } from "./controllers/home.controller.js";
 
 connectDB();
 
@@ -32,6 +33,7 @@ app.get("/", (req, res) => {
 });
 
 // Routes
+app.get("/api/home", getHomeData);
 app.use("/api/auth", authRoutes);
 app.use("/api/patient", protect, authorizeRoles("patient"), patientRoutes);
 app.use("/api/doctor", protect, authorizeRoles("doctor"), doctorRoutes);

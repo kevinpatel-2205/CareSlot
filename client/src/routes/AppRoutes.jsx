@@ -10,13 +10,15 @@ import RoleProtectedRoute from "../components/RoleProtectedRoute";
 import DashboardLayout from "../components/DashboardLayout.jsx";
 import { adminNav, doctorNav, patientNav } from "../config/navigation.js";
 
-// Admin Pages
+import Home from "../pages/Home.jsx";
+
 import AdminDashboard from "../pages/admin/Dashboard.jsx";
 import AdminProfilePage from "../pages/admin/AdminProfilePage.jsx";
 import AdminAddDoctorPage from "../pages/admin/AdminAddDoctorPage.jsx";
 import AdminDoctorsPage from "../pages/admin/AdminDoctorsPage.jsx";
 import AdminPatientsPage from "../pages/admin/AdminPatientsPage.jsx";
 import AdminAppointmentsPage from "../pages/admin/AdminAppointmentsPage.jsx";
+import AdminReviews from "../pages/admin/AdminReviews.jsx";
 
 // Doctor Pages
 import DoctorDashboard from "../pages/doctor/Dashboard.jsx";
@@ -25,6 +27,8 @@ import DoctorAppointmentsPage from "../pages/doctor/DoctorAppointmentsPage.jsx";
 import DoctorPatientsPage from "../pages/doctor/DoctorPatientsPage.jsx";
 import DoctorPatientDetailPage from "../pages/doctor/DoctorPatientDetailPage.jsx";
 import DoctorSlotsPage from "../pages/doctor/DoctorSlotsPage.jsx";
+import DoctorReviews from "../pages/doctor/DoctorReviews.jsx";
+import DoctorAddPrescriptionPage from "../pages/doctor/DoctorAddPrescriptionPage.jsx";
 
 // Patient Pages
 import PatientDashboard from "../pages/patient/Dashboard.jsx";
@@ -32,9 +36,6 @@ import PatientBookDoctorsPage from "../pages/patient/PatientBookDoctorsPage.jsx"
 import PatientAppointmentsPage from "../pages/patient/PatientAppointmentsPage.jsx";
 import PatientDoctorDetailPage from "../pages/patient/PatientDoctorDetailPage.jsx";
 import PatientProfilePage from "../pages/patient/PatientProfilePage.jsx";
-import DoctorReviews from "../pages/doctor/DoctorReviews.jsx";
-import AdminReviews from "../pages/admin/AdminReviews.jsx";
-import DoctorAddPrescriptionPage from "../pages/doctor/DoctorAddPrescriptionPage.jsx";
 
 const AppRoutes = () => {
   const { user, isLoading } = useSelector((state) => state.auth);
@@ -45,13 +46,7 @@ const AppRoutes = () => {
     <Routes>
       <Route
         path="/"
-        element={
-          user ? (
-            <Navigate to="/redirect" replace />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={user ? <Navigate to="/redirect" replace /> : <Home />}
       />
 
       <Route
