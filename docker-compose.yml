@@ -1,41 +1,38 @@
-# version: "3.9"
-
-# services:
-
-#   server:
-#     build: ./server
-#     container_name: careslot-server
-#     ports:
-#       - "5000:5000"
-#     env_file:
-#       - ./server/.env
-
-#   client:
-#     build: ./client
-#     container_name: careslot-client
-#     ports:
-#       - "5173:5173"
-#     depends_on:
-#       - server
-
-
-
 version: "3.9"
 
 services:
 
+  mongodb:
+    image: mongo:7
+    command: ["--quiet"]
+    container_name: careslot-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
   server:
     build: ./server
     container_name: careslot-server
+    restart: always
     ports:
       - "5000:5000"
+    depends_on:
+      - mongodb
     env_file:
       - ./server/.env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/careslot
 
   nginx:
     build: ./client
     container_name: careslot-nginx
+    restart: always
     ports:
       - "80:80"
     depends_on:
       - server
+
+volumes:
+  mongo-data:
