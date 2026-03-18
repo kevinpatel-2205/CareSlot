@@ -16,7 +16,7 @@ export const sendDoctorEmail = async ({ doctorName, email, password }) => {
     .replace("{{doctorName}}", doctorName)
     .replace("{{email}}", email)
     .replace("{{password}}", password)
-    .replace("{{dashboardLink}}", "http://localhost:5173/login")
+    .replace("{{dashboardLink}}", "https://careslot-ql85.onrender.com/login")
     .replace("{{year}}", new Date().getFullYear());
 
   await transporter.sendMail({
@@ -53,10 +53,13 @@ export const sendAppointmentBookedEmailToDoctor = async ({
     .replace("{{timeSlot}}", timeSlot)
     .replace("{{reason}}", reason || "N/A")
     .replace("{{medicalHistory}}", medicalHistory || "N/A")
-    .replace("{{dashboardLink}}", "http://localhost:5173/doctor/appointments")
+    .replace(
+      "{{dashboardLink}}",
+      "https://careslot-ql85.onrender.com/doctor/appointments",
+    )
     .replace("{{year}}", new Date().getFullYear());
 
-   transporter.sendMail({
+  transporter.sendMail({
     from: `"CareSlot" <${EMAIL_USER}>`,
     to: doctorEmail,
     subject: "New Appointment Booked - CareSlot",
