@@ -15,16 +15,25 @@ export const formatDate = (value) => {
 };
 
 export const statusTone = (status) => {
-  switch ((status || "").toLowerCase()) {
+  const normalizedStatus = (status || "").toLowerCase();
+
+  switch (normalizedStatus) {
     case "completed":
-      return "bg-teal-100 text-teal-700 border-teal-200";
+      return "bg-cyan-50 text-cyan-700 border-cyan-100";
+
     case "confirmed":
-      return "bg-emerald-100 text-emerald-700 border-emerald-200";
+      return "bg-emerald-50 text-emerald-700 border-emerald-100";
+
     case "pending":
-      return "bg-amber-100 text-amber-700 border-amber-200";
+      return "bg-amber-50 text-amber-700 border-amber-100";
+
     case "cancelled":
-      return "bg-rose-100 text-rose-700 border-rose-200";
+      return "bg-rose-50 text-rose-700 border-rose-100";
+
+    case "active":
+      return "bg-blue-50 text-blue-700 border-blue-100";
+
     default:
-      return "bg-slate-100 text-slate-600 border-slate-200";
+      return "bg-slate-50 text-slate-600 border-slate-200";
   }
 };

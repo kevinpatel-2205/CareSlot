@@ -1,4 +1,15 @@
-import { DollarSign, FileSpreadsheet, NotebookTabs, Users } from "lucide-react";
+import {
+  DollarSign,
+  FileSpreadsheet,
+  NotebookTabs,
+  Users,
+  Calendar,
+  ChevronDown,
+  Download,
+  UserPlus,
+  ArrowUpRight,
+  CloudDownload,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,6 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import StatCard from "../../components/StatCard.jsx";
 import EarningsLineChart from "../../components/charts/EarningsLineChart.jsx";
 import StatusDonutChart from "../../components/charts/StatusDonutChart.jsx";
+import PageLoader from "../../components/PageLoader.jsx";
 
 import {
   fetchDoctorDashboard,
@@ -20,7 +32,7 @@ import { formatDate, formatMoney, statusTone } from "../../lib/format.js";
 function DoctorDashboardPage() {
   const dispatch = useDispatch();
 
-  const { dashboard, upcomingAppointments, patients } = useSelector(
+  const { dashboard, upcomingAppointments, patients, loading } = useSelector(
     (state) => state.doctor,
   );
 
@@ -69,240 +81,300 @@ function DoctorDashboardPage() {
     );
   }, [appointmentCounts]);
 
-  const upcomingList = useMemo(() => {
-    return upcomingAppointments.slice(0, 7);
-  }, [upcomingAppointments]);
+  const upcomingList = useMemo(
+    () => upcomingAppointments.slice(0, 7),
+    [upcomingAppointments],
+  );
+  const recentPatients = useMemo(() => patients.slice(0, 5), [patients]);
 
-  const recentPatients = useMemo(() => {
-    return patients.slice(0, 5);
-  }, [patients]);
+  if (loading) return <PageLoader label="Synchronizing Clinic Data..." />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-['Averia_Serif_Libre'] text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-          Doctor Dashboard
-        </h2>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      {/* ================= HEADER & EXPORT ================= */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-black tracking-tight text-blue-900">
+            Clinic Dashboard
+          </h2>
+          <p className="text-slate-500 font-medium mt-1 italic">
+            Welcome back, Dr. {dashboard?.name || "Practitioner"}.
+          </p>
+        </div>
 
         <div className="relative">
           <button
             onClick={() => setShowDownload(!showDownload)}
-            className="group flex items-center justify-center gap-2 rounded-2xl border border-[#d8e4ff] bg-white/50 backdrop-blur-md px-3 py-3 sm:px-5 text-[#1a3f7b] shadow-sm transition-all duration-300 hover:bg-green-100 hover:border-green-300 hover:shadow-md active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all active:scale-95"
           >
-            <FileSpreadsheet
-              size={20}
-              className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
+            <CloudDownload size={18} className="text-blue-700" /> Export Records
+            <ChevronDown
+              size={16}
+              className={`transition-transform duration-300 ${showDownload ? "rotate-180" : ""}`}
             />
-
-            <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
-              Export
-            </span>
           </button>
 
           {showDownload && (
-            <div className="absolute right-0 mt-2 w-44 rounded-xl border border-[#d8e4ff] bg-white shadow-lg overflow-hidden z-20">
+            <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-2xl shadow-2xl z-30 overflow-hidden animate-in zoom-in-95 duration-200">
               <button
                 onClick={() => {
                   dispatch(exportDoctorExcel());
                   setShowDownload(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-green-50"
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
               >
-                Download Excel
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <FileSpreadsheet size={16} />
+                </div>
+                Excel Spreadsheet
               </button>
-
               <button
                 onClick={() => {
                   dispatch(exportDoctorPDF());
                   setShowDownload(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-blue-50"
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
               >
-                Download PDF
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Download size={16} />
+                </div>
+                PDF Document
               </button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+      {/* ================= VITAL STATS ================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
         <StatCard
           icon={Users}
-          title="Total Patients"
+          title="My Patients"
           value={patients.length}
-          note="Unique patients"
+          note="Unique Profiles"
           tone="blue"
         />
-
         <StatCard
           icon={NotebookTabs}
-          title="Total Appointments"
+          title="Incoming"
           value={pendingConfirmedAppointments}
-          note="Pending + Confirmed"
+          note="Pending Slots"
           tone="mint"
         />
-
         <StatCard
-          icon={NotebookTabs}
-          title="Completed Appointments"
+          icon={Calendar}
+          title="Completed"
           value={appointmentCounts.completed || 0}
-          note="Completed visits"
+          note="Total Visits"
           tone="violet"
         />
-
         <StatCard
           icon={DollarSign}
-          title="Total Earnings"
+          title="Net Income"
           value={formatMoney(dashboard?.totalEarnings || 0)}
-          note="All time"
+          note="After Comm."
           tone="amber"
         />
-
         <StatCard
           icon={DollarSign}
-          title="Admin Commission"
+          title="Platform Fee"
           value={formatMoney(dashboard?.totalAdminCommission || 0)}
-          note="All time"
+          note="Commission"
           tone="rose"
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
-        <section className="glass-card p-4 sm:p-5">
-          <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
-            Monthly Earnings
-          </h3>
-
-          <div className="mt-4 h-80">
+      {/* ================= ANALYTICS SECTION ================= */}
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[2fr_1fr]">
+        <section className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm relative">
+          <div className="flex items-center justify-between mb-8 px-2">
+            <div>
+              <h3 className="text-2xl font-black text-blue-900 tracking-tight">
+                Revenue Analytics
+              </h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                Cash vs Online Performance
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">
+                  Cash
+                </p>
+                <p className="text-sm font-black text-blue-600">
+                  {formatMoney(totalCash)}
+                </p>
+              </div>
+              <div className="text-right border-l pl-4 border-slate-100">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">
+                  Online
+                </p>
+                <p className="text-sm font-black text-emerald-600">
+                  {formatMoney(totalRazorpay)}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="h-80">
             <EarningsLineChart
               labels={monthly.labels}
               cash={monthly.cash}
               razorpay={monthly.razorpay}
             />
           </div>
-
-          <div className="mt-6 space-y-1 text-sm text-[#4d6da3]">
-            <span className="font-semibold">
-              Total Cash: {formatMoney(totalCash)}
-            </span>
-            <br />
-            <span className="font-semibold">
-              Total Razorpay: {formatMoney(totalRazorpay)}
-            </span>
-          </div>
         </section>
 
-        <section className="glass-card p-4 sm:p-5">
-          <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
-            Appointment Overview
-          </h3>
-
-          <div className="mt-4 h-80">
+        <section className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm">
+          <div className="mb-8 text-center">
+            <h3 className="text-2xl font-black text-blue-900 tracking-tight">
+              Visit Ratios
+            </h3>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+              Status Distribution
+            </p>
+          </div>
+          <div className="h-64">
             <StatusDonutChart
               completed={appointmentCounts.completed || 0}
               pending={appointmentCounts.pending || 0}
               cancelled={appointmentCounts.cancelled || 0}
             />
           </div>
-
-          <div className="mt-4 text-sm font-semibold text-[#4d6da3]">
-            Total Appointments: {totalAppointments}
+          <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center px-4">
+            <span className="text-sm font-bold text-slate-500">Volume</span>
+            <span className="bg-blue-50 text-blue-700 px-4 py-1 rounded-full font-black text-sm">
+              {totalAppointments} Total
+            </span>
           </div>
         </section>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
-        <section className="glass-card overflow-hidden">
-          <div className="border-b border-[#d9e3fa] px-4 py-3">
-            <h4 className="font-['Averia_Serif_Libre'] text-2xl text-[#1a3f7b]">
-              Upcoming Appointments
+      {/* ================= UPCOMING & PATIENTS ================= */}
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[2fr_1fr]">
+        {/* TABLE: UPCOMING */}
+        <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <h4 className="text-xl font-black text-blue-900 tracking-tight">
+              Priority Appointments
             </h4>
+            <Link
+              to="/doctor/appointments"
+              className="text-xs font-bold text-blue-600 hover:underline"
+            >
+              View Schedule →
+            </Link>
           </div>
 
-          <div className="max-h-[48vh] overflow-auto">
+          <div className="max-h-[500px] overflow-auto custom-v-scroll">
             <table className="min-w-full text-left">
-              <thead className="sticky top-0 bg-[#eff4ff] text-[#5f7db2]">
+              <thead className="sticky top-0 bg-white shadow-sm z-10">
                 <tr>
-                  <th className="px-4 py-3">Patient</th>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">Payment Method</th>
-                  <th className="px-4 py-3">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Patient
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Date/Time
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Method
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Status
+                  </th>
                 </tr>
               </thead>
-
-              <tbody>
+              <tbody className="divide-y divide-slate-50">
                 {upcomingList.map((item) => (
-                  <tr key={item._id} className="border-t border-[#e0e8fc]">
-                    <td className="px-4 py-3 text-[#1c3f7a]">
-                      {item.patientId?.userId?.name || "--"}
+                  <tr
+                    key={item._id}
+                    className="group hover:bg-blue-50/20 transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <p className="font-black text-slate-900 text-sm">
+                        {item.patientId?.userId?.name || "--"}
+                      </p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">
+                        {item.patientId?.userId?.email?.split("@")[0]}
+                      </p>
                     </td>
-
-                    <td className="px-4 py-3 text-[#46659b]">
-                      {formatDate(item.appointmentDate)}
+                    <td className="px-6 py-4">
+                      <p className="text-xs font-bold text-slate-700">
+                        {formatDate(item.appointmentDate)}
+                      </p>
+                      <p className="text-[10px] font-black text-blue-500 uppercase">
+                        {item.timeSlot}
+                      </p>
                     </td>
-
-                    <td className="px-4 py-3 text-[#46659b]">
-                      {item.timeSlot}
+                    <td className="px-6 py-4">
+                      <span className="text-[10px] font-black uppercase tracking-tighter px-2 py-1 bg-slate-100 rounded-lg text-slate-600">
+                        {item.paymentMethod || "CASH"}
+                      </span>
                     </td>
-
-                    <td className="px-4 py-3 capitalize text-[#46659b]">
-                      {item.paymentMethod || "--"}
-                    </td>
-
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${statusTone(
-                          item.status,
-                        )}`}
+                        className={`px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest shadow-sm ${statusTone(item.status)}`}
                       >
                         {item.status}
                       </span>
                     </td>
                   </tr>
                 ))}
-
-                {!upcomingAppointments.length && (
-                  <tr>
-                    <td className="px-4 py-5 text-[#6985b8]" colSpan={5}>
-                      No upcoming appointments.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
+            {!upcomingAppointments.length && (
+              <div className="py-20 text-center">
+                <Calendar size={40} className="mx-auto text-slate-200 mb-2" />
+                <p className="text-sm font-bold text-slate-400">
+                  No scheduled sessions for today.
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
-        <section className="glass-card p-4">
-          <h4 className="font-['Averia_Serif_Libre'] text-2xl text-[#1a3f7b]">
-            Recent Patients
-          </h4>
+        {/* RECENT PATIENTS CARDS */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <h4 className="text-xl font-black text-blue-900 tracking-tight">
+              Recent Patients
+            </h4>
+            <UserPlus size={20} className="text-blue-500" />
+          </div>
 
-          <div className="mt-3 space-y-3">
+          <div className="space-y-4">
             {recentPatients.map((item) => (
               <article
                 key={item.patientId}
-                className="rounded-xl border border-[#d7e2fb] bg-white/70 p-3 text-[#36598f]"
+                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm group hover:border-blue-200 transition-all"
               >
-                <p className="font-bold text-[#1d3f80]">{item.name}</p>
-                <p className="text-sm">{item.email}</p>
-
-                <p className="mt-1 text-xs font-semibold text-[#6381b7]">
-                  Total appointments: {item.totalAppointments}
-                </p>
-
-                <Link
-                  to={`/doctor/patients/${item.patientId}`}
-                  className="mt-2 inline-block text-sm font-semibold text-[#2d7cf2]"
-                >
-                  View Details
-                </Link>
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="font-black text-slate-900 leading-tight">
+                      {item.name}
+                    </p>
+                    <p className="text-xs font-medium text-slate-400">
+                      {item.email}
+                    </p>
+                  </div>
+                  <Link
+                    to={`/doctor/patients/${item.patientId}`}
+                    className="p-2 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                  >
+                    <ArrowUpRight size={16} />
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2 pt-3 border-t border-slate-50">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    {item.totalAppointments} Lifetime Visits
+                  </p>
+                </div>
               </article>
             ))}
-
             {!patients.length && (
-              <p className="text-sm text-[#6381b7]">No patients found.</p>
+              <p className="text-center py-10 text-slate-400 italic text-sm">
+                No recent interactions.
+              </p>
             )}
           </div>
         </section>

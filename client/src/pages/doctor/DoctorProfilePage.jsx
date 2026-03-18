@@ -1,4 +1,16 @@
-import { Building2, Mail, Phone } from "lucide-react";
+import {
+  Building2,
+  Mail,
+  Phone,
+  Camera,
+  Award,
+  IndianRupee,
+  History,
+  Lock,
+  KeyRound,
+  Save,
+  Activity,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDoctorProfile, updateDoctorProfile } from "../../store/doctor";
@@ -6,6 +18,7 @@ import { updateProfileImage, updatePassword } from "../../store/auth";
 import { SPECIALIZATIONS } from "../../config/specializations.js";
 import { formatMoney } from "../../lib/format.js";
 import { toast } from "react-toastify";
+import PageLoader from "../../components/PageLoader.jsx";
 
 function DoctorProfilePage() {
   const dispatch = useDispatch();
@@ -51,24 +64,17 @@ function DoctorProfilePage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-
     const payload = {
-      name: form.name,
-      phone: form.phone,
-      specialization: form.specialization,
+      ...form,
       experience: Number(form.experience),
-      about: form.about,
       consultationFee: Number(form.consultationFee),
-      isActive: form.isActive,
     };
-
     dispatch(updateDoctorProfile(payload));
   };
 
   const onImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     dispatch(updateProfileImage(file));
     e.target.value = "";
   };
@@ -79,26 +85,20 @@ function DoctorProfilePage() {
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
-
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
-
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error("All password fields are required");
       return;
     }
-
     if (newPassword.length < 8) {
       toast.error("New password must be at least 8 characters");
       return;
     }
-
     if (newPassword !== confirmPassword) {
-      toast.error("New password and confirm password do not match");
+      toast.error("Passwords do not match");
       return;
     }
-
     dispatch(updatePassword(passwordForm));
-
     setPasswordForm({
       currentPassword: "",
       newPassword: "",
@@ -106,26 +106,37 @@ function DoctorProfilePage() {
     });
   };
 
-  return (
-    <div className="space-y-5">
-      <h2 className="font-['Averia_Serif_Libre'] text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-        Doctor Profile
-      </h2>
+  if (loading && !profile)
+    return <PageLoader label="Loading Profile Details..." />;
 
-      <section className="glass-card grid grid-cols-1 gap-4 p-5 xl:grid-cols-[1.4fr_1fr]">
-        <article className="rounded-2xl border border-[#d8e2fb] bg-white/70 p-5">
-          <div className="mb-4 flex items-center gap-3">
-            <img
-              src={
-                user?.image ||
-                "https://placehold.co/88x88/e6efff/2e5fae?text=DR"
-              }
-              alt={profile?.name || "Doctor"}
-              className="h-16 w-16 rounded-full border border-[#d7e2fb] object-cover"
-            />
-            {!profile?.doctorId ? (
-              <label className="inline-flex cursor-pointer items-center rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-sm font-semibold text-[#345eaa]">
-                {isLoading ? "Uploading..." : "Change Image"}
+  return (
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+      {/* HEADER */}
+      <div className="px-2">
+        <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-black tracking-tight text-blue-900">
+          Professional Profile
+        </h2>
+        <p className="text-slate-500 font-medium mt-1 italic">
+          Manage your clinical identity and visibility status.
+        </p>
+      </div>
+
+      {/* HERO SECTION */}
+      <section className="bg-white rounded-[2.5rem] border border-blue-100 shadow-sm overflow-hidden relative">
+        <div className="h-40 bg-gradient-to-r from-blue-600 to-indigo-500"></div>
+        <div className="px-8 pb-10">
+          <div className="flex flex-col md:flex-row items-end gap-8 -mt-16 mb-12">
+            <div className="relative group">
+              <img
+                src={
+                  user?.image ||
+                  `https://ui-avatars.com/api/?name=${profile?.name}&background=dbeafe&color=2563eb&size=128`
+                }
+                className="h-40 w-40 rounded-[2.5rem] border-4 border-white shadow-2xl object-cover"
+                alt="Doctor"
+              />
+              <label className="absolute bottom-2 right-2 bg-blue-600 p-3 rounded-2xl text-white cursor-pointer hover:bg-blue-700 transition-all shadow-lg active:scale-90">
+                <Camera size={22} />
                 <input
                   type="file"
                   accept="image/*"
@@ -134,241 +145,303 @@ function DoctorProfilePage() {
                   disabled={isLoading}
                 />
               </label>
-            ) : null}
+            </div>
+
+            <div className="pb-2 flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <span
+                  className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-2 ${form.isActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"}`}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${form.isActive ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`}
+                  />
+                  {form.isActive ? "Online & Active" : "Offline / Inactive"}
+                </span>
+                <span className="bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest px-4 py-1 rounded-full border border-blue-100">
+                  {profile?.specialization || "General Practitioner"}
+                </span>
+              </div>
+              <h3 className="text-4xl font-black text-blue-900 tracking-tight">
+                {profile?.name || "--"}
+              </h3>
+              <div className="flex flex-wrap gap-4 mt-3 text-slate-400 font-bold text-sm">
+                <p className="flex items-center gap-1.5">
+                  <Mail size={16} className="text-blue-400" /> {profile?.email}
+                </p>
+                <p className="flex items-center gap-1.5">
+                  <Phone size={16} className="text-blue-400" /> {profile?.phone}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <h3 className="font-['Averia_Serif_Libre'] text-4xl font-semibold text-[#1a3f7b]">
-            {profile?.name || "--"}
-          </h3>
-          <p className="mt-2 text-lg font-semibold text-[#5f7db2]">
-            {profile?.specialization || "--"}
-          </p>
-
-          <div className="mt-5 space-y-3 text-[#36598f]">
-            <p className="flex items-center gap-2">
-              <Mail size={16} /> {profile?.email || "--"}
-            </p>
-            <p className="flex items-center gap-2">
-              <Phone size={16} /> {profile?.phone || "--"}
-            </p>
-            <p className="flex items-center gap-2">
-              <Building2 size={16} /> Experience: {profile?.experience ?? "--"}{" "}
-              years
-            </p>
-          </div>
-        </article>
-
-        <article className="rounded-2xl border border-[#d8e2fb] bg-white/70 p-5">
-          <h4 className="font-['Averia_Serif_Libre'] text-2xl font-semibold text-[#1a3f7b]">
-            About Doctor
-          </h4>
-          <p className="mt-3 leading-8 text-[#48679e]">
-            {profile?.about || "No description available."}
-          </p>
-          <p className="mt-4 rounded-xl bg-[#edf3ff] px-3 py-2 text-sm font-semibold text-[#305ea9]">
-            Consultation Fee: {formatMoney(profile?.consultationFee || 0)}
-          </p>
-          <p className="mt-4 rounded-xl bg-[#edf3ff] px-3 py-2 text-sm font-semibold text-[#305ea9]">
-            Admin Commission: {profile?.aCommission || 0}%
-          </p>
-          {profile?.commissionHistory?.length > 0 && (
-            <div className="mt-4">
-              <p className="mb-2 text-sm font-semibold text-[#305ea9]">
-                Commission History
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                  <Award size={20} />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Experience
+                </p>
+              </div>
+              <p className="text-2xl font-black text-blue-900">
+                {profile?.experience} Years{" "}
+                <span className="text-sm font-medium text-slate-400">
+                  Clinical practice
+                </span>
               </p>
+            </div>
 
-              <div className="max-h-40 overflow-y-auto rounded-xl border border-[#d8e2fb] bg-[#f6f9ff] p-3 space-y-2">
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl">
+                  <IndianRupee size={20} />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Consultation Fee
+                </p>
+              </div>
+              <p className="text-2xl font-black text-blue-900">
+                {formatMoney(profile?.consultationFee || 0)}{" "}
+                <span className="text-sm font-medium text-slate-400">
+                  Per Session
+                </span>
+              </p>
+            </div>
+
+            <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+                  <History size={20} />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                  Platform Share
+                </p>
+              </div>
+              <p className="text-2xl font-black text-indigo-900">
+                {profile?.aCommission}%{" "}
+                <span className="text-sm font-medium text-indigo-300">
+                  Admin Commission
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8">
+        {/* EDIT SECTION */}
+        <section className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg">
+                <Activity size={20} />
+              </div>
+              <h3 className="text-xl font-black text-blue-900 tracking-tight">
+                Clinic Settings
+              </h3>
+            </div>
+          </div>
+
+          <form onSubmit={onSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Practice Visibility
+                </label>
+                <select
+                  className={`w-full px-5 py-4 border rounded-2xl outline-none font-bold transition-all ${form.isActive ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-500"}`}
+                  value={String(form.isActive)}
+                  onChange={(e) =>
+                    onChange("isActive", e.target.value === "true")
+                  }
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Full Doctor Name
+                </label>
+                <input
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                  value={form.name}
+                  onChange={(e) => onChange("name", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Phone Number
+                </label>
+                <input
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                  value={form.phone}
+                  onChange={(e) => onChange("phone", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Specialization
+                </label>
+                <select
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                  value={form.specialization}
+                  onChange={(e) => onChange("specialization", e.target.value)}
+                >
+                  <option value="">Select Specialty</option>
+                  {SPECIALIZATIONS.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Years Experience
+                </label>
+                <input
+                  type="number"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                  value={form.experience}
+                  onChange={(e) => onChange("experience", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Consultation Fee (₹)
+                </label>
+                <input
+                  type="number"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                  value={form.consultationFee}
+                  onChange={(e) => onChange("consultationFee", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Biography / About
+              </label>
+              <textarea
+                className="w-full p-6 bg-slate-50 border border-slate-200 rounded-3xl focus:ring-2 focus:ring-blue-500 outline-none font-medium text-slate-700 min-h-[150px]"
+                value={form.about}
+                onChange={(e) => onChange("about", e.target.value)}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-100 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+            >
+              <Save size={18} />{" "}
+              {loading ? "Updating Records..." : "Save Professional Profile"}
+            </button>
+          </form>
+        </section>
+
+        {/* SECURITY SECTION */}
+        <aside className="space-y-6">
+          <section className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
+                <Lock size={20} />
+              </div>
+              <h3 className="text-xl font-black text-blue-900 tracking-tight">
+                Security
+              </h3>
+            </div>
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400 font-bold"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) =>
+                    handlePasswordChange("currentPassword", e.target.value)
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  New Access Key
+                </label>
+                <input
+                  type="password"
+                  placeholder="8+ Characters"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400 font-bold"
+                  value={passwordForm.newPassword}
+                  onChange={(e) =>
+                    handlePasswordChange("newPassword", e.target.value)
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Verify Key
+                </label>
+                <input
+                  type="password"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400 font-bold"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) =>
+                    handlePasswordChange("confirmPassword", e.target.value)
+                  }
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-4 bg-blue-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:bg-blue-950 transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <KeyRound size={16} /> Sync Security
+              </button>
+            </form>
+          </section>
+
+          {/* COMMISSION HISTORY CARD - Fixed Mutation Error */}
+          {profile?.commissionHistory?.length > 0 && (
+            <div className="bg-slate-50 rounded-[2rem] p-6 border border-slate-100">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                <History size={14} /> Fee History
+              </p>
+              <div className="space-y-3">
                 {[...profile.commissionHistory]
                   .sort((a, b) => new Date(b.changedAt) - new Date(a.changedAt))
-                  .map((item, index) => {
-                    const date = new Date(item.changedAt).toLocaleDateString();
-
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between text-sm text-[#36598f]"
+                  .slice(0, 3)
+                  .map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex justify-between items-center text-xs"
+                    >
+                      <span className="font-bold text-slate-500">
+                        {new Date(item.changedAt).toLocaleDateString()}
+                      </span>
+                      <span
+                        className={`font-black ${idx === 0 ? "text-blue-600" : "text-slate-400"}`}
                       >
-                        <span>{date}</span>
-
-                        <span
-                          className={`font-semibold ${
-                            index === 0 ? "text-green-600" : ""
-                          }`}
-                        >
-                          {item.commission}% {index === 0 && "(Current)"}
-                        </span>
-                      </div>
-                    );
-                  })}
+                        {item.commission}% {idx === 0 && " (Current)"}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </div>
           )}
-        </article>
-      </section>
-
-      {!profile?.doctorId ? (
-        <form onSubmit={onSubmit} className="glass-card p-5">
-          <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
-            Edit Profile
-          </h3>
-
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <label className="space-y-1">
-              <span className="text-sm font-semibold text-[#4f6ea5]">Name</span>
-              <input
-                className="soft-input"
-                value={form.name}
-                onChange={(e) => onChange("name", e.target.value)}
-              />
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-semibold text-[#4f6ea5]">
-                Phone
-              </span>
-              <input
-                className="soft-input"
-                value={form.phone}
-                onChange={(e) => onChange("phone", e.target.value)}
-              />
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-semibold text-[#4f6ea5]">
-                Specialization
-              </span>
-              <select
-                className="soft-input"
-                value={form.specialization}
-                onChange={(e) => onChange("specialization", e.target.value)}
-              >
-                <option value="">Select specialization</option>
-                {SPECIALIZATIONS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-semibold text-[#4f6ea5]">
-                Experience
-              </span>
-              <input
-                type="number"
-                min="0"
-                className="soft-input"
-                value={form.experience}
-                onChange={(e) => onChange("experience", e.target.value)}
-              />
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-semibold text-[#4f6ea5]">
-                Consultation Fee
-              </span>
-              <input
-                type="number"
-                min="0"
-                className="soft-input"
-                value={form.consultationFee}
-                onChange={(e) => onChange("consultationFee", e.target.value)}
-              />
-            </label>
-
-            <label className="space-y-1">
-              <span className="text-sm font-semibold text-[#4f6ea5]">
-                Active Status
-              </span>
-              <select
-                className="soft-input"
-                value={String(form.isActive)}
-                onChange={(e) =>
-                  onChange("isActive", e.target.value === "true")
-                }
-              >
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
-            </label>
-          </div>
-
-          <label className="mt-3 block space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">About</span>
-            <textarea
-              className="min-h-28 w-full rounded-xl border border-[#cfdbf8] bg-white/80 p-3 text-[#1d3f80] placeholder:text-[#7a94c6] focus:border-[#4d88ff] focus:outline-none"
-              value={form.about}
-              onChange={(e) => onChange("about", e.target.value)}
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-4 h-12 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white disabled:opacity-60"
-          >
-            {loading ? "Saving..." : "Save Profile"}
-          </button>
-        </form>
-      ) : null}
-      <form onSubmit={handlePasswordSubmit} className="glass-card p-5 mt-5">
-        <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
-          Change Password
-        </h3>
-
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Current Password
-            </span>
-            <input
-              type="password"
-              className="soft-input"
-              value={passwordForm.currentPassword}
-              onChange={(e) =>
-                handlePasswordChange("currentPassword", e.target.value)
-              }
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              New Password
-            </span>
-            <input
-              type="password"
-              className="soft-input"
-              value={passwordForm.newPassword}
-              onChange={(e) =>
-                handlePasswordChange("newPassword", e.target.value)
-              }
-            />
-          </label>
-
-          <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Confirm Password
-            </span>
-            <input
-              type="password"
-              className="soft-input"
-              value={passwordForm.confirmPassword}
-              onChange={(e) =>
-                handlePasswordChange("confirmPassword", e.target.value)
-              }
-            />
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="mt-4 h-12 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white disabled:opacity-60"
-        >
-          {isLoading ? "Updating..." : "Update Password"}
-        </button>
-      </form>
+        </aside>
+      </div>
     </div>
   );
 }

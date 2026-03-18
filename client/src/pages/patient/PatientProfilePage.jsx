@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  User,
+  Phone,
+  Calendar,
+  Mail,
+  MapPin,
+  Activity,
+  Camera,
+  Lock,
+  CheckCircle2,
+  Save,
+  KeyRound,
+} from "lucide-react";
 import PageLoader from "../../components/PageLoader.jsx";
 import { updateProfileImage, updatePassword } from "../../store/auth";
 import { formatDate } from "../../lib/format.js";
@@ -57,49 +70,28 @@ function PatientProfilePage() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-
-    dispatch(
-      updatePatientProfile({
-        name: form.name,
-        phone: form.phone,
-        dateOfBirth: form.dateOfBirth || undefined,
-        gender: form.gender || undefined,
-        address: form.address,
-        medicalHistory: form.medicalHistory,
-      }),
-    );
+    dispatch(updatePatientProfile(form));
   };
 
-  if (loading && !profile) {
-    return <PageLoader label="Loading profile..." />;
-  }
-
-  const handlePasswordChange = (key, value) => {
+  const handlePasswordChange = (key, value) =>
     setPasswordForm((prev) => ({ ...prev, [key]: value }));
-  };
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
-
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
-
     if (!currentPassword || !newPassword || !confirmPassword) {
       toast.error("All password fields are required");
       return;
     }
-
     if (newPassword.length < 8) {
-      toast.error("New password must be at least 8 characters");
+      toast.error("Password must be at least 8 characters");
       return;
     }
-
     if (newPassword !== confirmPassword) {
-      toast.error("New password and confirm password do not match");
+      toast.error("Passwords do not match");
       return;
     }
-
     dispatch(updatePassword(passwordForm));
-
     setPasswordForm({
       currentPassword: "",
       newPassword: "",
@@ -107,192 +99,269 @@ function PatientProfilePage() {
     });
   };
 
+  if (loading && !profile)
+    return <PageLoader label="Fetching your profile..." />;
+
   return (
-    <div className="space-y-5">
-      <h2 className="font-['Averia_Serif_Libre'] text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-        Patient Profile
-      </h2>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      {/* ================= HEADER SECTION ================= */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-bold tracking-tight text-[#1a3f7b]">
+            My Account
+          </h2>
+          <p className="text-slate-500 mt-1 font-medium italic">
+            Manage your personal information and security.
+          </p>
+        </div>
+      </div>
 
-      <section className="glass-card w-full p-5">
-        <div className="flex flex-wrap items-center gap-4">
-          <img
-            src={
-              user?.image || "https://placehold.co/96x96/e6efff/2e5fae?text=PT"
-            }
-            alt={profile?.name || "Patient"}
-            className="h-24 w-24 rounded-full border border-[#d7e2fb] object-cover"
-          />
-          <div className="space-y-2 text-[#2d4f88]">
-            <p>
-              <span className="font-semibold text-[#1c3f7a]">Name:</span>{" "}
-              {profile?.name || "--"}
-            </p>
-            <p>
-              <span className="font-semibold text-[#1c3f7a]">Role:</span>{" "}
-              <span className="capitalize">
-                {profile?.role || user?.role || "--"}
-              </span>
-            </p>
-            <p>
-              <span className="font-semibold text-[#1c3f7a]">Email:</span>{" "}
-              {profile?.email || "--"}
-            </p>
-            <p>
-              <span className="font-semibold text-[#1c3f7a]">DOB:</span>{" "}
-              {profile?.dateOfBirth ? formatDate(profile.dateOfBirth) : "--"}
-            </p>
-            <label className="inline-flex cursor-pointer items-center rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-sm font-semibold text-[#345eaa]">
-              {isLoading ? "Uploading..." : "Change Image"}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={onImageChange}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8">
+        <div className="space-y-8">
+          {/* ================= MAIN PROFILE FORM ================= */}
+          <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-400 h-24 w-full"></div>
+            <div className="px-8 pb-10">
+              <div className="flex flex-col md:flex-row items-end gap-6 -mt-12 mb-8">
+                <div className="relative group">
+                  <img
+                    src={
+                      user?.image ||
+                      `https://ui-avatars.com/api/?name=${profile?.name}&background=dbeafe&color=2563eb&size=128`
+                    }
+                    alt="Avatar"
+                    className="h-32 w-32 rounded-3xl border-4 border-white shadow-xl object-cover"
+                  />
+                  <label className="absolute bottom-2 right-2 bg-blue-600 p-2 rounded-xl text-white cursor-pointer hover:bg-blue-700 transition-all shadow-lg active:scale-90">
+                    <Camera size={18} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={onImageChange}
+                      disabled={isLoading}
+                    />
+                  </label>
+                </div>
+                <div className="flex-1 space-y-1 pb-2">
+                  <h3 className="text-2xl font-black text-slate-900 leading-none">
+                    {profile?.name || "Patient User"}
+                  </h3>
+                  <div className="flex items-center gap-2 text-blue-600 font-bold text-sm uppercase tracking-wider">
+                    <CheckCircle2 size={16} /> {profile?.role || user?.role}{" "}
+                    Account
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={onSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Name */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                      Full Name
+                    </label>
+                    <div className="relative group">
+                      <User
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                        size={18}
+                      />
+                      <input
+                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
+                        value={form.name}
+                        onChange={(e) => onChange("name", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                      Phone Number
+                    </label>
+                    <div className="relative group">
+                      <Phone
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                        size={18}
+                      />
+                      <input
+                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
+                        value={form.phone}
+                        onChange={(e) => onChange("phone", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Date of Birth */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                      Date of Birth
+                    </label>
+                    <div className="relative group">
+                      <Calendar
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                        size={18}
+                      />
+                      <input
+                        type="date"
+                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
+                        value={form.dateOfBirth}
+                        onChange={(e) =>
+                          onChange("dateOfBirth", e.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Gender */}
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                      Gender
+                    </label>
+                    <select
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700 appearance-none"
+                      value={form.gender}
+                      onChange={(e) => onChange("gender", e.target.value)}
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  {/* Address */}
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                      Residential Address
+                    </label>
+                    <div className="relative group">
+                      <MapPin
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                        size={18}
+                      />
+                      <input
+                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
+                        value={form.address}
+                        onChange={(e) => onChange("address", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Medical History */}
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                      Medical History
+                    </label>
+                    <div className="relative group">
+                      <Activity
+                        className="absolute left-4 top-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                        size={18}
+                      />
+                      <textarea
+                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700 min-h-[120px]"
+                        placeholder="Briefly describe your medical history..."
+                        value={form.medicalHistory}
+                        onChange={(e) =>
+                          onChange("medicalHistory", e.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full md:w-auto px-10 py-4 bg-blue-600 text-white rounded-[2rem] font-black text-lg transition-all active:scale-[0.98] shadow-xl shadow-blue-100 flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  <Save size={20} />{" "}
+                  {loading ? "Saving Changes..." : "Save Profile"}
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+
+        {/* ================= SIDEBAR: SECURITY ================= */}
+        <aside className="space-y-8">
+          <section className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-slate-900 p-2.5 rounded-xl text-white">
+                <Lock size={20} />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                Security
+              </h3>
+            </div>
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) =>
+                    handlePasswordChange("currentPassword", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="Min 8 characters"
+                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
+                  value={passwordForm.newPassword}
+                  onChange={(e) =>
+                    handlePasswordChange("newPassword", e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-bold"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) =>
+                    handlePasswordChange("confirmPassword", e.target.value)
+                  }
+                />
+              </div>
+
+              <button
+                type="submit"
                 disabled={isLoading}
-              />
-            </label>
+                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-slate-200 disabled:opacity-50"
+              >
+                <KeyRound size={18} />{" "}
+                {isLoading ? "Updating..." : "Update Password"}
+              </button>
+            </form>
+          </section>
+
+          {/* Quick Info Card */}
+          <div className="bg-blue-50 rounded-[2.5rem] p-8 border border-blue-100">
+            <h4 className="text-blue-900 font-bold mb-2">Account Privacy</h4>
+            <p className="text-blue-700 text-xs leading-relaxed opacity-80">
+              Your medical data is encrypted and only shared with the doctors
+              you book appointments with.
+            </p>
           </div>
-        </div>
-      </section>
-
-      <form onSubmit={onSubmit} className="glass-card w-full p-5">
-        <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
-          Update Profile
-        </h3>
-
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">Name</span>
-            <input
-              className="soft-input"
-              value={form.name}
-              onChange={(e) => onChange("name", e.target.value)}
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">Phone</span>
-            <input
-              className="soft-input"
-              value={form.phone}
-              onChange={(e) => onChange("phone", e.target.value)}
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Date of Birth
-            </span>
-            <input
-              type="date"
-              className="soft-input"
-              value={form.dateOfBirth}
-              onChange={(e) => onChange("dateOfBirth", e.target.value)}
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">Gender</span>
-            <select
-              className="soft-input"
-              value={form.gender}
-              onChange={(e) => onChange("gender", e.target.value)}
-            >
-              <option value="">Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-          </label>
-
-          <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Address
-            </span>
-            <input
-              className="soft-input"
-              value={form.address}
-              onChange={(e) => onChange("address", e.target.value)}
-            />
-          </label>
-
-          <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Medical History
-            </span>
-            <textarea
-              className="min-h-28 w-full rounded-xl border border-[#cfdbf8] bg-white/80 p-3 text-[#1d3f80] placeholder:text-[#7a94c6] focus:border-[#4d88ff] focus:outline-none"
-              value={form.medicalHistory}
-              onChange={(e) => onChange("medicalHistory", e.target.value)}
-            />
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-4 h-12 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white disabled:opacity-60"
-        >
-          {loading ? "Saving..." : "Update Profile"}
-        </button>
-      </form>
-      <form onSubmit={handlePasswordSubmit} className="glass-card p-5 mt-5">
-        <h3 className="font-['Averia_Serif_Libre'] text-3xl font-semibold text-[#1a3f7b]">
-          Change Password
-        </h3>
-
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Current Password
-            </span>
-            <input
-              type="password"
-              className="soft-input"
-              value={passwordForm.currentPassword}
-              onChange={(e) =>
-                handlePasswordChange("currentPassword", e.target.value)
-              }
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              New Password
-            </span>
-            <input
-              type="password"
-              className="soft-input"
-              value={passwordForm.newPassword}
-              onChange={(e) =>
-                handlePasswordChange("newPassword", e.target.value)
-              }
-            />
-          </label>
-
-          <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Confirm Password
-            </span>
-            <input
-              type="password"
-              className="soft-input"
-              value={passwordForm.confirmPassword}
-              onChange={(e) =>
-                handlePasswordChange("confirmPassword", e.target.value)
-              }
-            />
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="mt-4 h-12 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white disabled:opacity-60"
-        >
-          {isLoading ? "Updating..." : "Update Password"}
-        </button>
-      </form>
+        </aside>
+      </div>
     </div>
   );
 }

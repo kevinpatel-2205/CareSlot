@@ -1,5 +1,21 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  FileSpreadsheet,
+  Search,
+  Download,
+  ChevronDown,
+  User,
+  Mail,
+  Calendar,
+  Clock,
+  RefreshCcw,
+  XCircle,
+  FilePlus,
+  FileCheck,
+  CloudDownload,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import {
   fetchAllAppointments,
@@ -11,15 +27,13 @@ import {
 
 import { formatDate, statusTone } from "../../lib/format.js";
 import Pagination from "../../components/Pagination.jsx";
-import { FileSpreadsheet, Search } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { VITE_API_BASE_URL } from "../../lib/env.js";
 
 function DoctorAppointmentsPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { appointments, currentPage, totalPages } = useSelector(
+  const { appointments, currentPage, totalPages, loading } = useSelector(
     (state) => state.doctor,
   );
 
@@ -47,7 +61,10 @@ function DoctorAppointmentsPage() {
   };
 
   const cancelAppt = (appointmentId) => {
-    dispatch(cancelAppointment(appointmentId));
+    const ok = window.confirm(
+      "Are you sure you want to cancel this appointment?",
+    );
+    if (ok) dispatch(cancelAppointment(appointmentId));
   };
 
   const downloadPrescription = (appointmentId) => {
@@ -58,177 +75,265 @@ function DoctorAppointmentsPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="font-['Averia_Serif_Libre'] text-4xl sm:text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-          All Appointments
-        </h2>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      {/* ================= HEADER & EXPORT ================= */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-black tracking-tight text-blue-900">
+            Appointment Manager
+          </h2>
+          <p className="text-slate-500 font-medium mt-1 italic">
+            Track, update, and document patient consultations.
+          </p>
+        </div>
 
         <div className="relative">
           <button
             onClick={() => setShowDownload(!showDownload)}
-            className="group flex items-center justify-center gap-2 rounded-2xl border border-[#d8e4ff] bg-white/50 backdrop-blur-md px-3 py-3 sm:px-5 text-[#1a3f7b] shadow-sm transition-all duration-300 hover:bg-green-100 hover:border-green-300 hover:shadow-md active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all active:scale-95"
           >
-            <FileSpreadsheet
-              size={20}
-              className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
+            <CloudDownload size={18} className="text-blue-700" /> Export
+            Schedule
+            <ChevronDown
+              size={16}
+              className={`transition-transform duration-300 ${showDownload ? "rotate-180" : ""}`}
             />
-
-            <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
-              Export
-            </span>
           </button>
 
           {showDownload && (
-            <div className="absolute right-0 mt-2 w-44 rounded-xl border border-[#d8e4ff] bg-white shadow-lg overflow-hidden z-20">
+            <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-2xl shadow-2xl z-30 overflow-hidden animate-in zoom-in-95 duration-200">
               <button
                 onClick={() => {
                   dispatch(downloadAppointmentsExcel({ status: statusFilter }));
                   setShowDownload(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-green-50"
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
               >
-                Download Excel
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <FileSpreadsheet size={16} />
+                </div>
+                Excel Format
               </button>
-
               <button
                 onClick={() => {
                   dispatch(downloadAppointmentsPDF({ status: statusFilter }));
                   setShowDownload(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-blue-50"
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
               >
-                Download PDF
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Download size={16} />
+                </div>
+                PDF Document
               </button>
             </div>
           )}
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_220px]">
-        <label className="relative">
+
+      {/* ================= CONTROLS: SEARCH & FILTER ================= */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-4">
+        <div className="relative group">
           <Search
             size={18}
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7f98c6]"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
           />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="soft-input !pl-14"
-            placeholder="Search by Patient..."
+            className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700 shadow-sm"
+            placeholder="Search by Patient Name..."
           />
-        </label>
+        </div>
 
-        <select
-          className="soft-input"
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div className="relative">
+          <select
+            className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer shadow-sm"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <ChevronDown
+            size={18}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+          />
+        </div>
       </div>
-      <div className="glass-card overflow-auto">
-        <table className="min-w-full text-left">
-          <thead className="bg-[#eff4ff] text-[#5f7db2]">
-            <tr>
-              <th className="px-4 py-3">Patient</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Time</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Payment</th>
-              <th className="px-4 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((item) => (
-              <tr
-                key={item._id}
-                className="border-t border-[#e0e8fc] text-[#2e4f86]"
-              >
-                <td className="px-4 py-3">
-                  {item.patientId?.userId?.name || "--"}
-                </td>
-                <td className="px-4 py-3">
-                  {item.patientId?.userId?.email || "--"}
-                </td>
-                <td className="px-4 py-3">
-                  {formatDate(item.appointmentDate)}
-                </td>
-                <td className="px-4 py-3">{item.timeSlot || "--"}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${statusTone(
-                      item.status,
-                    )}`}
-                  >
-                    {item.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 capitalize">
-                  {item.paymentMethod || "--"}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    {item.status !== "completed" ? (
-                      <>
-                        <button
-                          onClick={() => changeStatus(item._id)}
-                          className="rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-xs font-semibold text-[#345eaa]"
-                        >
-                          Change Status
-                        </button>
 
-                        <button
-                          onClick={() => cancelAppt(item._id)}
-                          className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        {item.prescriptionAdded ? (
-                          <button
-                            onClick={() => downloadPrescription(item._id)}
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg"
-                          >
-                            Download Rx
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() =>
-                              navigate(
-                                `/doctor/prescription/${item.patientId._id}/${item._id}`,
-                              )
-                            }
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-                          >
-                            Create Rx
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {!appointments.length ? (
+      {/* ================= APPOINTMENTS TABLE ================= */}
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left border-collapse">
+            <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
-                <td className="px-4 py-5 text-[#6b87b8]" colSpan={7}>
-                  No appointments found.
-                </td>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Patient
+                </th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Date & Time
+                </th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Status
+                </th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Payment
+                </th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
+                  Actions
+                </th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" />
+                      <p className="text-sm font-bold text-slate-400 animate-pulse uppercase tracking-widest">
+                        Updating Ledger...
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filtered.length > 0 ? (
+                filtered.map((item) => (
+                  <tr
+                    key={item._id}
+                    className="group hover:bg-blue-50/30 transition-colors"
+                  >
+                    {/* Patient Column */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-blue-50 p-2 rounded-xl text-blue-600">
+                          <User size={16} />
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-900 text-sm">
+                            {item.patientId?.userId?.name || "--"}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-400 lowercase">
+                            {item.patientId?.userId?.email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Schedule Column */}
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-slate-700 font-bold text-xs">
+                          <Calendar size={14} className="text-blue-400" />
+                          {formatDate(item.appointmentDate)}
+                        </div>
+                        <div className="flex items-center gap-2 text-blue-600 font-black text-[10px] uppercase tracking-wider">
+                          <Clock size={14} />
+                          {item.timeSlot || "--"}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Status Column */}
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest shadow-sm ${statusTone(item.status)}`}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+
+                    {/* Payment Column */}
+                    <td className="px-6 py-4">
+                      <span className="text-[10px] font-black uppercase tracking-tight px-3 py-1 bg-slate-100 rounded-lg text-slate-600 border border-slate-200">
+                        {item.paymentMethod || "CASH"}
+                      </span>
+                    </td>
+
+                    {/* Actions Column */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        {item.status !== "completed" &&
+                        item.status !== "cancelled" ? (
+                          <>
+                            <button
+                              onClick={() => changeStatus(item._id)}
+                              className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 hover:bg-blue-600 hover:text-white transition-all font-bold text-[10px] uppercase tracking-widest active:scale-95 shadow-sm"
+                            >
+                              <RefreshCcw size={14} />
+                              Status
+                            </button>
+
+                            <button
+                              onClick={() => cancelAppt(item._id)}
+                              className="p-2.5 bg-rose-50 text-rose-500 rounded-xl border border-rose-100 hover:bg-rose-500 hover:text-white transition-all group active:scale-95"
+                              title="Cancel Appointment"
+                            >
+                              <XCircle size={16} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {item.status === "completed" &&
+                              (item.prescriptionAdded ? (
+                                <button
+                                  onClick={() => downloadPrescription(item._id)}
+                                  className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all font-black text-[10px] uppercase tracking-widest shadow-sm"
+                                >
+                                  <FileCheck size={14} />
+                                  Get Rx
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() =>
+                                    navigate(
+                                      `/doctor/prescription/${item.patientId._id}/${item._id}`,
+                                    )
+                                  }
+                                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100"
+                                >
+                                  <FilePlus size={14} />
+                                  Write Rx
+                                </button>
+                              ))}
+                            {item.status === "cancelled" && (
+                              <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">
+                                Archived
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-6 py-20 text-center">
+                    <div className="max-w-xs mx-auto">
+                      <div className="bg-slate-50 h-20 w-20 rounded-3xl flex items-center justify-center mx-auto mb-4 text-slate-300">
+                        <Calendar size={40} />
+                      </div>
+                      <p className="font-bold text-slate-400 uppercase tracking-widest text-xs">
+                        No matching appointments found.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* ================= PAGINATION ================= */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}

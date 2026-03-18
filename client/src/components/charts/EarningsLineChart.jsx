@@ -21,51 +21,101 @@ ChartJS.register(
 );
 
 function EarningsLineChart({ labels = [], cash = [], razorpay = [] }) {
-  return (
-    <Line
-      data={{
-        labels,
-        datasets: [
-          {
-            label: "Cash",
-            data: cash,
-            tension: 0.35,
-            fill: false,
-            pointRadius: 4,
-            borderColor: "#2e7df2",
-            backgroundColor: "#2e7df2",
-          },
-          {
-            label: "Razorpay",
-            data: razorpay,
-            tension: 0.35,
-            fill: false,
-            pointRadius: 4,
-            borderColor: "#22c55e",
-            backgroundColor: "#22c55e",
-          },
-        ],
-      }}
-      options={{
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true },
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: "Cash Payments",
+        data: cash,
+        tension: 0.4, // Smoother curves
+        fill: true,
+        borderColor: "#3b82f6", // Modern Blue
+        backgroundColor: (context) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+          gradient.addColorStop(0, "rgba(59, 130, 246, 0.2)");
+          gradient.addColorStop(1, "rgba(59, 130, 246, 0)");
+          return gradient;
         },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: "#6783b5" },
-          },
-          y: {
-            beginAtZero: true,
-            ticks: { color: "#6783b5" },
-            grid: { color: "#dde8ff" },
-          },
+        pointRadius: 0, // Hide points by default
+        pointHoverRadius: 6,
+        pointBackgroundColor: "#3b82f6",
+        borderWidth: 3,
+      },
+      {
+        label: "Online (Razorpay)",
+        data: razorpay,
+        tension: 0.4,
+        fill: true,
+        borderColor: "#10b981", // Modern Emerald
+        backgroundColor: (context) => {
+          const ctx = context.chart.ctx;
+          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+          gradient.addColorStop(0, "rgba(16, 185, 129, 0.2)");
+          gradient.addColorStop(1, "rgba(16, 185, 129, 0)");
+          return gradient;
         },
-      }}
-    />
-  );
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointBackgroundColor: "#10b981",
+        borderWidth: 3,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: "top",
+        align: "end",
+        labels: {
+          usePointStyle: true,
+          boxWidth: 6,
+          padding: 20,
+          font: { size: 12, weight: "600", family: "Inter" },
+          color: "#64748b",
+        },
+      },
+      tooltip: {
+        backgroundColor: "#1e293b",
+        padding: 12,
+        titleFont: { size: 14, weight: "bold" },
+        cornerRadius: 12,
+        usePointStyle: true,
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: {
+          color: "#94a3b8",
+          font: { size: 11, weight: "600" },
+          padding: 10,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        border: { display: false, dash: [4, 4] },
+        grid: { color: "#f1f5f9" },
+        ticks: {
+          color: "#94a3b8",
+          font: { size: 11, weight: "600" },
+          padding: 10,
+          callback: (value) => "₹" + value, // Format as currency
+        },
+      },
+    },
+  };
+
+  return <Line data={data} options={options} />;
 }
 
 export default EarningsLineChart;

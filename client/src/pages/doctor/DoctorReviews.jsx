@@ -6,7 +6,16 @@ import {
   fetchDoctorReviews,
 } from "../../store/doctor";
 import Pagination from "../../components/Pagination";
-import { FileSpreadsheet } from "lucide-react";
+import {
+  FileSpreadsheet,
+  Download,
+  Star,
+  Users,
+  MessageSquare,
+  ChevronDown,
+  CloudDownload,
+} from "lucide-react";
+import PageLoader from "../../components/PageLoader.jsx";
 
 const DoctorReviews = () => {
   const dispatch = useDispatch();
@@ -25,126 +34,202 @@ const DoctorReviews = () => {
   const totalReviews = review?.totalReviews || 0;
   const averageRating = review?.averageRating || 0;
 
-  const renderStars = (rating) => {
-    return "⭐".repeat(rating);
-  };
+  if (loading && reviews.length === 0)
+    return <PageLoader label="Analyzing Patient Feedback..." />;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-['Averia_Serif_Libre'] text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-          Doctor Reviews
-        </h2>
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+      {/* ================= HEADER & EXPORT ================= */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-black tracking-tight text-blue-900">
+            Patient Feedback
+          </h2>
+          <p className="text-slate-500 font-medium mt-1 italic">
+            Monitor your clinical reputation and patient satisfaction.
+          </p>
+        </div>
+
         <div className="relative">
           <button
             onClick={() => setShowDownload(!showDownload)}
-            className="group flex items-center justify-center gap-2 rounded-2xl border border-[#d8e4ff] bg-white/50 backdrop-blur-md px-3 py-3 sm:px-5 text-[#1a3f7b] shadow-sm transition-all duration-300 hover:bg-green-100 hover:border-green-300 hover:shadow-md active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all active:scale-95"
           >
-            <FileSpreadsheet
-              size={20}
-              className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
+            <CloudDownload size={18} className="text-blue-700" />
+            <span className="text-slate-700">Export Reviews</span>
+            <ChevronDown
+              size={16}
+              className={`text-slate-400 transition-transform duration-300 ${showDownload ? "rotate-180" : ""}`}
             />
-
-            <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
-              Export
-            </span>
           </button>
 
           {showDownload && (
-            <div className="absolute right-0 mt-2 w-44 rounded-xl border border-[#d8e4ff] bg-white shadow-lg overflow-hidden z-20">
+            <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-2xl shadow-2xl z-30 overflow-hidden animate-in zoom-in-95 duration-200">
               <button
                 onClick={() => {
                   dispatch(downloadReviewsExcel());
                   setShowDownload(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-green-50"
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
               >
-                Download Excel
+                <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                  <FileSpreadsheet size={16} />
+                </div>
+                Excel Format
               </button>
-
               <button
                 onClick={() => {
                   dispatch(downloadReviewsPDF());
                   setShowDownload(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-blue-50"
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
               >
-                Download PDF
+                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <Download size={16} />
+                </div>
+                PDF Document
               </button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-[#eef4ff] to-[#f7faff] border border-[#e3eafc] rounded-xl p-6 mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="text-4xl font-bold text-yellow-500">
-              {averageRating}
-            </div>
-
-            <div>
-              <div className="text-yellow-500 text-lg">
-                {"⭐".repeat(Math.round(averageRating))}
-              </div>
-              <p className="text-sm text-gray-600">Average Rating</p>
-            </div>
+      {/* ================= SUMMARY STATS ================= */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 bg-white rounded-[2.5rem] p-8 border border-blue-100 shadow-sm flex items-center justify-between overflow-hidden relative">
+          <div className="absolute -right-4 -bottom-4 text-blue-50 opacity-10">
+            <Star size={180} fill="currentColor" />
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="text-3xl font-bold text-[#45659d]">
-              {totalReviews}
+          <div className="relative z-10 flex items-center gap-8">
+            <div className="text-center">
+              <p className="text-6xl font-black text-blue-900 tracking-tighter">
+                {averageRating}
+              </p>
+              <div className="flex gap-1 mt-2 justify-center">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    size={16}
+                    fill={i < Math.round(averageRating) ? "#f59e0b" : "none"}
+                    className={
+                      i < Math.round(averageRating)
+                        ? "text-amber-500"
+                        : "text-slate-200"
+                    }
+                  />
+                ))}
+              </div>
             </div>
-            <p className="text-sm text-gray-600">Total Reviews</p>
+            <div className="h-16 w-px bg-slate-100 hidden sm:block" />
+            <div>
+              <h3 className="text-xl font-black text-slate-800">
+                Clinic Score
+              </h3>
+              <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">
+                Average Patient Rating
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="space-y-5">
-        {loading ? (
-          <p>Loading reviews...</p>
-        ) : reviews.length === 0 ? (
-          <p className="text-gray-500">No reviews available</p>
+        {/* Using Deep Indigo instead of Dark Slate/Black */}
+        <div className="bg-blue-600 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-900/20 flex flex-col justify-center relative overflow-hidden">
+          <div className="absolute right-6 top-6 bg-white/10 p-3 rounded-2xl">
+            <Users size={24} className="text-blue-300" />
+          </div>
+          <p className="text-4xl font-black text-white">{totalReviews}</p>
+          <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mt-2">
+            Verified Reviews
+          </p>
+        </div>
+      </section>
+
+      {/* ================= REVIEWS LIST ================= */}
+      <div className="space-y-6">
+        {reviews.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-slate-200">
+            <MessageSquare size={48} className="mx-auto text-slate-200 mb-4" />
+            <p className="font-bold text-slate-400">
+              No public feedback recorded yet.
+            </p>
+          </div>
         ) : (
           reviews.map((rev) => (
-            <div
+            <article
               key={rev._id}
-              className="bg-white shadow rounded-lg p-5 flex gap-4 items-start"
+              className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm transition-all hover:shadow-md hover:border-blue-100 group"
             >
-              <img
-                src={
-                  rev?.patientImage ||
-                  "https://placehold.co/96x96/e6efff/2e5fae?text=AD"
-                }
-                alt="patient"
-                className="w-12 h-12 rounded-full object-cover"
-              />
+              <div className="flex flex-col sm:flex-row gap-6 items-start">
+                <div className="relative">
+                  <img
+                    src={
+                      rev?.patientImage ||
+                      `https://ui-avatars.com/api/?name=${rev?.patientName}&background=eff6ff&color=3b82f6`
+                    }
+                    alt="patient"
+                    className="h-16 w-16 rounded-2xl object-cover border-2 border-white shadow-lg group-hover:scale-105 transition-transform"
+                  />
+                  <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-1 rounded-lg border-2 border-white">
+                    <Users size={12} />
+                  </div>
+                </div>
 
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-800">
-                  {rev?.patientName || "Patient"}
-                </h4>
+                <div className="flex-1 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-lg font-black text-slate-900 leading-none">
+                        {rev?.patientName || "Anonymous Patient"}
+                      </h4>
+                      <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-1">
+                        {rev?.patientEmail}
+                      </p>
+                    </div>
+                    <div className="flex gap-0.5 px-3 py-1.5 bg-amber-50 rounded-xl border border-amber-100">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          size={12}
+                          fill={i < rev.rating ? "#f59e0b" : "none"}
+                          className={
+                            i < rev.rating ? "text-amber-500" : "text-slate-200"
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
 
-                <p className="text-xs text-gray-400 mt-2">
-                  {rev?.patientEmail}
-                </p>
+                  <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-50 relative">
+                    <p className="text-slate-700 font-medium italic leading-relaxed">
+                      "
+                      {rev?.comment ||
+                        "Consultation was completed without additional written notes."}
+                      "
+                    </p>
+                  </div>
 
-                <p className="text-sm text-yellow-500 mt-1">
-                  {renderStars(rev.rating)}
-                </p>
-
-                <p className="text-gray-600 text-sm mt-2">
-                  {rev?.comment || "No comment provided"}
-                </p>
-
-                <p className="text-xs text-gray-400 mt-2">
-                  {new Date(rev.createdAt).toLocaleDateString()}
-                </p>
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                        Verified Consultation
+                      </span>
+                    </div>
+                    <time className="text-[10px] font-bold text-slate-400 uppercase">
+                      {new Date(rev.createdAt).toLocaleDateString(undefined, {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </time>
+                  </div>
+                </div>
               </div>
-            </div>
+            </article>
           ))
         )}
       </div>
+
+      {/* ================= PAGINATION ================= */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}

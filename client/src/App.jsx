@@ -20,11 +20,24 @@ function App() {
         position="top-right"
         autoClose={3000}
         hideProgressBar={false}
-        newestOnTop
+        newestOnTop={false}
         closeOnClick
-        pauseOnHover
+        pauseOnFocusLoss
         draggable
-        theme="colored"
+        pauseOnHover
+        theme="light"
+        toastStyle={{
+          borderRadius: "1.2rem",
+          border: "1px solid #e2e8f0",
+          boxShadow:
+            "0 20px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.1)",
+        }}
+        bodyStyle={{
+          fontSize: "14px",
+          fontWeight: "700",
+          color: "#334155",
+          fontFamily: "Inter, sans-serif",
+        }}
       />
     </BrowserRouter>
   );

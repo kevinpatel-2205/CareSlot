@@ -6,13 +6,21 @@ import {
   downloadPatientsExcel,
   downloadPatientsPDF,
 } from "../../store/doctor";
-import { FileSpreadsheet, Info } from "lucide-react";
+import {
+  FileSpreadsheet,
+  Download,
+  UserRound,
+  ChevronDown,
+  ArrowUpRight,
+  Search,
+  CloudDownload,
+} from "lucide-react";
 import Pagination from "../../components/Pagination";
 
 function DoctorPatientsPage() {
   const dispatch = useDispatch();
 
-  const { patients, currentPage, totalPages } = useSelector(
+  const { patients, currentPage, totalPages, loading } = useSelector(
     (state) => state.doctor,
   );
   const [page, setPage] = useState(1);
@@ -23,108 +31,164 @@ function DoctorPatientsPage() {
   }, [page, dispatch]);
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-['Averia_Serif_Libre'] text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-          Patients
-        </h2>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+      {/* ================= HEADER & EXPORT ================= */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-black tracking-tight text-blue-900">
+            Patient Directory
+          </h2>
+          <p className="text-slate-500 font-medium mt-1 italic">
+            A complete list of patients under your consultation care.
+          </p>
+        </div>
 
         <div className="relative">
           <button
             onClick={() => setShowDownload(!showDownload)}
-            className="group flex items-center justify-center gap-2 rounded-2xl border border-[#d8e4ff] bg-white/50 backdrop-blur-md px-3 py-3 sm:px-5 text-[#1a3f7b] shadow-sm transition-all duration-300 hover:bg-green-100 hover:border-green-300 hover:shadow-md active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all active:scale-95"
           >
-            <FileSpreadsheet
-              size={20}
-              className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
+            <CloudDownload size={18} className="text-blue-700" /> Export
+            Registry
+            <ChevronDown
+              size={16}
+              className={`transition-transform duration-300 ${showDownload ? "rotate-180" : ""}`}
             />
-
-            <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
-              Export
-            </span>
           </button>
 
           {showDownload && (
-            <div className="absolute right-0 mt-2 w-44 rounded-xl border border-[#d8e4ff] bg-white shadow-lg overflow-hidden z-20">
+            <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-2xl shadow-2xl z-30 overflow-hidden animate-in zoom-in-95 duration-200">
               <button
                 onClick={() => {
                   dispatch(downloadPatientsExcel());
                   setShowDownload(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-green-50"
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
               >
-                Download Excel
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <FileSpreadsheet size={16} />
+                </div>
+                Excel Sheet
               </button>
-
               <button
                 onClick={() => {
                   dispatch(downloadPatientsPDF());
                   setShowDownload(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-[#1a3f7b] hover:bg-blue-50"
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
               >
-                Download PDF
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Download size={16} />
+                </div>
+                PDF Document
               </button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="glass-card max-h-[62vh] overflow-auto">
-        <table className="min-w-full text-left">
-          <thead className="sticky top-0 bg-[#eff4ff] text-[#5f7db2]">
-            <tr>
-              <th className="px-4 py-3">Patient</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Total Appointments</th>
-              <th className="px-4 py-3">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {patients.map((item) => (
-              <tr
-                key={item.patientId}
-                className="border-t border-[#e0e8fc] text-[#2e4f86]"
-              >
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={
-                        item.image ||
-                        "https://placehold.co/44x44/e6efff/2e5fae?text=PT"
-                      }
-                      alt={item.name}
-                      className="h-11 w-11 rounded-full border border-[#d7e2fb] object-cover"
-                    />
-                    <span className="font-semibold text-[#1c3f7a]">
-                      {item.name}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 py-3">{item.email}</td>
-                <td className="px-4 py-3">{item.totalAppointments}</td>
-                <td className="px-4 py-3">
-                  <Link
-                    to={`/doctor/patients/${item.patientId}`}
-                    className="inline-flex items-center gap-2 rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-sm font-semibold text-[#345eaa]"
-                  >
-                    View Details
-                    <Info className="w-4 h-4 text-[#345eaa]" />
-                  </Link>
-                </td>
-              </tr>
-            ))}
-
-            {!patients.length ? (
+      {/* ================= PATIENTS TABLE ================= */}
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left border-collapse">
+            <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
-                <td className="px-4 py-5 text-[#6b87b8]" colSpan={4}>
-                  No patients found.
-                </td>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  Patient Details
+                </th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
+                  Engagement
+                </th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">
+                  Medical File
+                </th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" />
+                      <p className="text-sm font-bold text-slate-400 animate-pulse uppercase tracking-widest">
+                        Compiling Records...
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : patients?.length ? (
+                patients.map((item) => (
+                  <tr
+                    key={item.patientId}
+                    className="group hover:bg-blue-50/20 transition-colors"
+                  >
+                    {/* Patient Column */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={
+                            item.image ||
+                            `https://ui-avatars.com/api/?name=${item.name}&background=eff6ff&color=3b82f6`
+                          }
+                          className="h-14 w-14 rounded-2xl object-cover border-2 border-white shadow-md group-hover:scale-105 transition-transform"
+                          alt={item.name}
+                        />
+                        <div>
+                          <p className="font-black text-slate-900 leading-tight">
+                            {item.name}
+                          </p>
+                          <p className="text-xs font-bold text-blue-500 mt-0.5">
+                            {item.email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Total Appointments Column */}
+                    <td className="px-6 py-4 text-center">
+                      <div className="inline-flex flex-col items-center justify-center px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+                        <span className="text-sm font-black text-slate-700">
+                          {item.totalAppointments || 0}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                          Total Visits
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Action Column */}
+                    <td className="px-6 py-4 text-right">
+                      <Link
+                        to={`/doctor/patients/${item.patientId}`}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 hover:bg-blue-600 hover:text-white transition-all font-black text-[11px] uppercase tracking-widest active:scale-95 shadow-sm"
+                      >
+                        File Details
+                        <ArrowUpRight size={14} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="px-6 py-20 text-center">
+                    <div className="max-w-xs mx-auto">
+                      <div className="bg-slate-50 h-20 w-20 rounded-3xl flex items-center justify-center mx-auto mb-4 text-slate-300">
+                        <UserRound size={40} />
+                      </div>
+                      <p className="font-bold text-slate-400 uppercase tracking-widest text-xs">
+                        No active patients found.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* ================= PAGINATION ================= */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}

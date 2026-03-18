@@ -2,7 +2,18 @@ import { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createDoctor } from "../../store/admin";
 import { SPECIALIZATIONS } from "../../config/specializations.js";
-import { UserPlus } from "lucide-react";
+import {
+  UserPlus,
+  Mail,
+  Phone,
+  Award,
+  DollarSign,
+  Info,
+  Calendar,
+  Plus,
+  Trash2,
+  CheckCircle2,
+} from "lucide-react";
 
 function AdminAddDoctorPage() {
   const dispatch = useDispatch();
@@ -55,7 +66,6 @@ function AdminAddDoctorPage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-
     if (!canSubmit) return;
 
     const availableSlots = slots
@@ -68,21 +78,7 @@ function AdminAddDoctorPage() {
       }))
       .filter((slot) => slot.date && slot.times.length > 0);
 
-    if (!availableSlots.length) return;
-
-    dispatch(
-      createDoctor({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        specialization: form.specialization,
-        experience: Number(form.experience),
-        aCommission: Number(form.aCommission),
-        about: form.about,
-        consultationFee: Number(form.consultationFee),
-        availableSlots,
-      }),
-    ).then((res) => {
+    dispatch(createDoctor({ ...form, availableSlots })).then((res) => {
       if (res.meta.requestStatus === "fulfilled") {
         setForm({
           name: "",
@@ -100,198 +96,268 @@ function AdminAddDoctorPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <h2 className="font-['Averia_Serif_Libre'] text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-        Add New Doctor
-      </h2>
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+      {/* Header */}
+      <div>
+        <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-black tracking-tight text-blue-900">
+          Onboard New Doctor
+        </h2>
+        <p className="text-slate-500 font-medium mt-1">
+          Add a new verified healthcare professional to the CareSlot network.
+        </p>
+      </div>
 
-      <form onSubmit={onSubmit} className="glass-card p-5">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Doctor Name *
-            </span>
-            <input
-              className="soft-input"
-              value={form.name}
-              onChange={(e) => onChange("name", e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Email *
-            </span>
-            <input
-              className="soft-input"
-              type="email"
-              value={form.email}
-              onChange={(e) => onChange("email", e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Phone *
-            </span>
-            <input
-              className="soft-input"
-              value={form.phone}
-              onChange={(e) => onChange("phone", e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Specialization *
-            </span>
-            <select
-              className="soft-input"
-              value={form.specialization}
-              onChange={(e) => onChange("specialization", e.target.value)}
-              required
-            >
-              <option value="">Select specialization</option>
-              {SPECIALIZATIONS.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Experience (Years) *
-            </span>
-            <input
-              className="soft-input"
-              type="number"
-              min="0"
-              value={form.experience}
-              onChange={(e) => onChange("experience", e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Admin Commission (%) *
-            </span>
-            <select
-              className="soft-input"
-              value={form.aCommission}
-              onChange={(e) => onChange("aCommission", e.target.value)}
-              required
-            >
-              {[5, 10, 15, 20, 25, 30, 35].map((val) => (
-                <option key={val} value={val}>
-                  {val}%
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="space-y-1 md:col-span-2">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              About Doctor *
-            </span>
-            <textarea
-              className="min-h-28 w-full rounded-xl border border-[#cfdbf8] bg-white/80 p-3 text-[#1d3f80] placeholder:text-[#7a94c6] focus:border-[#4d88ff] focus:outline-none"
-              value={form.about}
-              onChange={(e) => onChange("about", e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="space-y-1">
-            <span className="text-sm font-semibold text-[#4f6ea5]">
-              Consultation Fee *
-            </span>
-            <input
-              className="soft-input"
-              type="number"
-              min="0"
-              value={form.consultationFee}
-              onChange={(e) => onChange("consultationFee", e.target.value)}
-              required
-            />
-          </label>
-        </div>
-
-        <div className="mt-5 rounded-xl border border-[#d7e2fb] bg-white/70 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-['Averia_Serif_Libre'] text-2xl font-semibold text-[#1a3f7b]">
-              Available Slots (Date Wise)
+      <form onSubmit={onSubmit} className="space-y-8">
+        {/* SECTION 1: BASIC INFORMATION */}
+        <section className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-10"></div>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
+              <UserPlus size={20} />
+            </div>
+            <h3 className="text-xl font-black text-slate-800">
+              Basic Information
             </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Name */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Full Name
+              </label>
+              <div className="relative group">
+                <input
+                  className="w-full pl-5 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
+                  value={form.name}
+                  onChange={(e) => onChange("name", e.target.value)}
+                  required
+                  placeholder="Dr. John Doe"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Email Address
+              </label>
+              <div className="relative group">
+                <Mail
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                  size={18}
+                />
+                <input
+                  type="email"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
+                  value={form.email}
+                  onChange={(e) => onChange("email", e.target.value)}
+                  required
+                  placeholder="doctor@example.com"
+                />
+              </div>
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Phone Number
+              </label>
+              <div className="relative group">
+                <Phone
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                  size={18}
+                />
+                <input
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
+                  value={form.phone}
+                  onChange={(e) => onChange("phone", e.target.value)}
+                  required
+                  placeholder="+91 98765 43210"
+                />
+              </div>
+            </div>
+
+            {/* Specialization */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Specialization
+              </label>
+              <select
+                className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700 appearance-none"
+                value={form.specialization}
+                onChange={(e) => onChange("specialization", e.target.value)}
+                required
+              >
+                <option value="">Select Specialty</option>
+                {SPECIALIZATIONS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 2: PROFESSIONAL DETAILS */}
+        <section className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2.5 bg-emerald-600 rounded-xl text-white shadow-lg shadow-emerald-100">
+              <Award size={20} />
+            </div>
+            <h3 className="text-xl font-black text-slate-800">
+              Professional Details
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Years of Exp.
+              </label>
+              <input
+                type="number"
+                className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-bold text-slate-700"
+                value={form.experience}
+                onChange={(e) => onChange("experience", e.target.value)}
+                required
+                placeholder="5"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Consultation Fee
+              </label>
+              <div className="relative group">
+                <DollarSign
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500"
+                  size={18}
+                />
+                <input
+                  type="number"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-bold text-slate-700"
+                  value={form.consultationFee}
+                  onChange={(e) => onChange("consultationFee", e.target.value)}
+                  required
+                  placeholder="500"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                Platform Comm. %
+              </label>
+              <select
+                className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-slate-700 appearance-none"
+                value={form.aCommission}
+                onChange={(e) => onChange("aCommission", e.target.value)}
+                required
+              >
+                {[5, 10, 15, 20, 25, 30].map((val) => (
+                  <option key={val} value={val}>
+                    {val}%
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+              About Doctor
+            </label>
+            <div className="relative">
+              <Info
+                className="absolute left-4 top-4 text-slate-300"
+                size={18}
+              />
+              <textarea
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-3xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium text-slate-700 min-h-[120px]"
+                value={form.about}
+                onChange={(e) => onChange("about", e.target.value)}
+                required
+                placeholder="Professional summary and background..."
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 3: AVAILABILITY SLOTS */}
+        <section className="bg-slate-50 rounded-[3rem] p-8 border border-slate-200 shadow-inner">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg">
+                <Calendar size={20} />
+              </div>
+              <h3 className="text-xl font-black text-slate-800">
+                Weekly Availability
+              </h3>
+            </div>
             <button
               type="button"
               onClick={addSlotRow}
-              className="rounded-lg border border-[#c4d6fb] bg-white px-3 py-1.5 text-sm font-semibold text-[#345eaa]"
+              className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl text-blue-600 font-bold border border-blue-100 shadow-sm hover:bg-blue-600 hover:text-white transition-all active:scale-95"
             >
-              + Add Slot Row
+              <Plus size={18} /> Add Day
             </button>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {slots.map((slot, index) => (
               <div
                 key={index}
-                className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_2fr_auto]"
+                className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] items-end gap-4 bg-white p-6 rounded-[2rem] border border-blue-50 shadow-sm animate-in slide-in-from-left-2 duration-300"
               >
-                <label className="space-y-1">
-                  <span className="text-sm font-semibold text-[#4f6ea5]">
-                    Date *
-                  </span>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                    Date
+                  </label>
                   <input
                     type="date"
-                    className="soft-input"
-                    value={slot.date}
                     min={new Date().toISOString().split("T")[0]}
+                    className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-400"
+                    value={slot.date}
                     onChange={(e) =>
                       onSlotChange(index, "date", e.target.value)
                     }
                     required
                   />
-                </label>
-
-                <label className="space-y-1">
-                  <span className="text-sm font-semibold text-[#4f6ea5]">
-                    Times (comma separated) *
-                  </span>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                    Available Times (Comma Separated)
+                  </label>
                   <input
-                    className="soft-input"
-                    placeholder="09:00 AM, 10:30 AM"
+                    className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-400 placeholder:font-normal placeholder:text-slate-300"
+                    placeholder="09:00 AM, 11:30 AM, 04:00 PM"
                     value={slot.times}
                     onChange={(e) =>
                       onSlotChange(index, "times", e.target.value)
                     }
                     required
                   />
-                </label>
-
+                </div>
                 <button
                   type="button"
                   onClick={() => removeSlotRow(index)}
-                  className="self-end rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700"
+                  className="p-3.5 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-colors"
                 >
-                  Remove
+                  <Trash2 size={20} />
                 </button>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
+        {/* SUBMIT BUTTON */}
         <button
           type="submit"
           disabled={!canSubmit || loading}
-          className="mt-4 flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white disabled:opacity-60"
+          className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white rounded-[2.5rem] font-black text-xl transition-all active:scale-[0.98] shadow-2xl shadow-blue-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale"
         >
-          <UserPlus className="w-5 h-5 text-white" />
-          {loading ? "Creating..." : "Create Doctor"}
+          <CheckCircle2 size={28} />
+          {loading ? "Registering Doctor..." : "Register Doctor"}
         </button>
       </form>
     </div>

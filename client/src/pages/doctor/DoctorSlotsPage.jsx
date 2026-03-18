@@ -7,13 +7,22 @@ import {
   addBulkAvailableSlots,
 } from "../../store/doctor";
 import { formatDate } from "../../lib/format.js";
-import { CalendarPlus, ClockPlus } from "lucide-react";
+import {
+  CalendarPlus,
+  ClockPlus,
+  Trash2,
+  X,
+  Calendar as CalendarIcon,
+  Clock,
+  Layers,
+} from "lucide-react";
 import Pagination from "../../components/Pagination.jsx";
+import PageLoader from "../../components/PageLoader.jsx";
 
 function DoctorSlotsPage() {
   const dispatch = useDispatch();
 
-  const { availableSlots, currentPage, totalPages } = useSelector(
+  const { availableSlots, currentPage, totalPages, loading } = useSelector(
     (state) => state.doctor,
   );
 
@@ -33,30 +42,19 @@ function DoctorSlotsPage() {
 
   const addSlots = (e) => {
     e.preventDefault();
-
     const parsedTimes = times
       .split(",")
       .map((x) => x.trim())
       .filter(Boolean);
+    if (!date || !parsedTimes.length) return;
 
-    if (!date || !parsedTimes.length) {
-      return;
-    }
-
-    dispatch(
-      addAvailableSlots({
-        date,
-        times: parsedTimes,
-      }),
-    );
-
+    dispatch(addAvailableSlots({ date, times: parsedTimes }));
     setDate("");
     setTimes("");
   };
 
   const addBulkSlots = (e) => {
     e.preventDefault();
-
     if (!startDate || !endDate || !interval) return;
 
     dispatch(
@@ -68,200 +66,240 @@ function DoctorSlotsPage() {
         interval,
       }),
     );
-
     setStartDate("");
     setEndDate("");
     setInterval(30);
     setShowBulkModal(false);
   };
 
+  if (loading && availableSlots.length === 0)
+    return <PageLoader label="Fetching Schedule..." />;
+
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-['Averia_Serif_Libre'] text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-[#1a3f7b]">
-          Available Slots
-        </h2>
-
-        <div className="relative">
-          <button
-            onClick={() => setShowBulkModal(true)}
-            className="group flex items-center justify-center gap-2 rounded-2xl border border-[#d8e4ff] bg-white/50 backdrop-blur-md px-3 py-3 sm:px-5 text-[#1a3f7b] shadow-sm transition-all duration-300 hover:bg-green-100 hover:border-green-300 hover:shadow-md active:scale-95"
-          >
-            <CalendarPlus
-              size={20}
-              className="text-[#30579f] transition-colors duration-300 group-hover:text-green-700"
-            />
-
-            <span className="hidden sm:inline font-semibold transition-colors duration-300 group-hover:text-green-700">
-              Bulk Add
-            </span>
-          </button>
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
+        <div>
+          <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-black tracking-tight text-blue-900">
+            Clinical Availability
+          </h2>
+          <p className="text-slate-500 font-medium mt-1 italic">
+            Define your consulting hours and patient time slots.
+          </p>
         </div>
+
+        <button
+          onClick={() => setShowBulkModal(true)}
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-95"
+        >
+          <Layers size={18} />
+          Bulk Generate
+        </button>
       </div>
 
-      <form onSubmit={addSlots} className="glass-card p-5">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[220px_1fr_auto]">
-          <input
-            type="date"
-            className="soft-input"
-            value={date}
-            min={new Date().toISOString().split("T")[0]}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
+      {/* QUICK ADD BAR */}
+      <section className="bg-white rounded-[2.5rem] p-6 border border-blue-100 shadow-sm">
+        <form
+          onSubmit={addSlots}
+          className="grid grid-cols-1 md:grid-cols-[220px_1fr_auto] gap-4 items-end"
+        >
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+              Select Date
+            </label>
+            <input
+              type="date"
+              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+              value={date}
+              min={new Date().toISOString().split("T")[0]}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+          </div>
 
-          <input
-            className="soft-input"
-            placeholder="Times comma separated (e.g. 09:00 AM, 10:30 AM)"
-            value={times}
-            onChange={(e) => setTimes(e.target.value)}
-            required
-          />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+              Comma Separated Times
+            </label>
+            <input
+              className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700 placeholder:font-normal placeholder:text-slate-300"
+              placeholder="09:00 AM, 11:30 AM, 02:00 PM"
+              value={times}
+              onChange={(e) => setTimes(e.target.value)}
+              required
+            />
+          </div>
 
           <button
             type="submit"
-            className="flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2d7cf2] to-[#266fdf] px-6 font-bold text-white"
+            className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-2 active:scale-95"
           >
-            Add
-            <ClockPlus className="w-5 h-5 text-white" />
+            <ClockPlus size={18} />
+            Add Slots
           </button>
-        </div>
-      </form>
+        </form>
+      </section>
 
-      <div className="glass-card max-h-[56vh] overflow-auto p-4">
-        <div className="space-y-3">
-          {availableSlots.map((slot, idx) => (
-            <article
-              key={`${slot.date}-${idx}`}
-              className="rounded-xl border border-[#d7e2fb] bg-white/70 p-3"
-            >
-              <p className="font-semibold text-[#1d3f80]">
-                {formatDate(slot.date)}
-              </p>
-
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap gap-2">
-                  {(slot.times || []).map((time) => (
-                    <span
-                      key={time}
-                      className="rounded-full border border-[#c6d8fc] bg-[#eff4ff] px-3 py-1 text-xs font-semibold text-[#335eaa]"
-                    >
-                      {time}
-                    </span>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => dispatch(deleteAvailableSlot(slot.date))}
-                  className="whitespace-nowrap rounded-xl border border-[#f3b8c3] bg-white px-5 py-2 text-sm font-semibold text-[#d83b5a] shadow-sm hover:bg-[#fff7f9]"
-                >
-                  Delete
-                </button>
+      {/* SLOTS GRID */}
+      <div className="grid grid-cols-1 gap-4">
+        {availableSlots.map((slot, idx) => (
+          <article
+            key={`${slot.date}-${idx}`}
+            className="bg-white rounded-[2rem] border border-slate-100 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                <CalendarIcon size={24} />
               </div>
-            </article>
-          ))}
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Scheduled Date
+                </p>
+                <p className="text-xl font-black text-blue-900">
+                  {formatDate(slot.date)}
+                </p>
+              </div>
+            </div>
 
-          {!availableSlots.length ? (
-            <p className="text-[#6b87b8]">No slots available.</p>
-          ) : null}
-        </div>
+            <div className="flex-1 flex flex-wrap gap-2">
+              {(slot.times || []).map((time) => (
+                <span
+                  key={time}
+                  className="px-4 py-1.5 bg-slate-50 border border-slate-100 text-slate-600 rounded-xl text-[11px] font-black tracking-tight"
+                >
+                  {time}
+                </span>
+              ))}
+            </div>
+
+            <button
+              onClick={() => dispatch(deleteAvailableSlot(slot.date))}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-rose-50 text-rose-500 border border-rose-100 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-500 hover:text-white transition-all active:scale-95"
+            >
+              <Trash2 size={14} />
+              Clear Day
+            </button>
+          </article>
+        ))}
+
+        {availableSlots.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-[3rem] border border-dashed border-slate-200">
+            <Clock size={48} className="mx-auto text-slate-200 mb-4" />
+            <p className="font-bold text-slate-400">
+              No available slots published for your patients.
+            </p>
+          </div>
+        )}
       </div>
+
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         setPage={setPage}
       />
-      {showBulkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-[95%] max-w-lg rounded-2xl border border-[#d7e2fb] bg-white p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-xl font-semibold text-[#1a3f7b]">
-                Bulk Slot Generator
-              </h3>
 
+      {/* BULK GENERATOR MODAL */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-900/20 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-white rounded-[3rem] border border-blue-100 p-8 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-600 rounded-xl text-white shadow-lg shadow-emerald-100">
+                  <Layers size={20} />
+                </div>
+                <h3 className="text-2xl font-black text-blue-900 tracking-tight">
+                  Bulk Generator
+                </h3>
+              </div>
               <button
                 onClick={() => setShowBulkModal(false)}
-                className="text-gray-500 hover:text-red-500 font-bold"
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"
               >
-                ✕
+                <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={addBulkSlots} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-[#1a3f7b]">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  className="soft-input w-full"
-                  value={startDate}
-                  min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  required
-                />
+            <form onSubmit={addBulkSlots} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                    From Date
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                    value={startDate}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                    To Date
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                    value={endDate}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-[#1a3f7b]">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  className="soft-input w-full"
-                  value={endDate}
-                  min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                    Start Time
+                  </label>
+                  <input
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    placeholder="10:00 AM"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                    End Time
+                  </label>
+                  <input
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-700"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    placeholder="05:00 PM"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-[#1a3f7b]">
-                  Start Time
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Slot Duration (Min)
                 </label>
-                <input
-                  className="soft-input w-full"
-                  placeholder="Example: 10:00 AM"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-[#1a3f7b]">
-                  End Time
-                </label>
-                <input
-                  className="soft-input w-full"
-                  placeholder="Example: 05:00 PM"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-[#1a3f7b]">
-                  Slot Interval (Minutes)
-                </label>
-                <input
-                  type="number"
-                  className="soft-input w-full"
-                  placeholder="Example: 30"
-                  min={5}
-                  max={60}
-                  value={interval}
-                  onChange={(e) => setInterval(Number(e.target.value))}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-black text-slate-700"
+                    value={interval}
+                    min={5}
+                    max={60}
+                    onChange={(e) => setInterval(Number(e.target.value))}
+                    required
+                  />
+                  <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300 uppercase tracking-widest">
+                    Minutes
+                  </span>
+                </div>
               </div>
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-green-500 to-green-600 py-3 font-semibold text-white"
+                className="w-full py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-2xl shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
-                Generate Slots
-                <CalendarPlus className="w-5 h-5" />
+                <CalendarPlus size={20} />
+                Generate Schedule
               </button>
             </form>
           </div>

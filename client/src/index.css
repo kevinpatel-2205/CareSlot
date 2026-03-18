@@ -48,3 +48,29 @@ label {
 .soft-input {
   @apply h-12 w-full rounded-xl border border-[#cfdbf8] bg-white/80 px-4 text-[#1d3f80] placeholder:text-[#7a94c6] focus:border-[#4d88ff] focus:outline-none;
 }
+
+/* Custom Toast Progress Bar Colors */
+.Toastify__progress-bar--success {
+  background: #10b981 !important; /* Emerald 500 */
+}
+
+.Toastify__progress-bar--error {
+  background: #f43f5e !important; /* Rose 500 */
+}
+
+.Toastify__progress-bar--info {
+  background: #3b82f6 !important; /* Blue 600 */
+}
+
+/* Custom Icon Colors to match your theme */
+.Toastify__toast-icon svg {
+  fill: currentColor;
+}
+
+.Toastify__toast--success {
+  color: #047857 !important; /* Emerald 700 */
+}
+
+.Toastify__toast--error {
+  color: #be123c !important; /* Rose 700 */
+}
