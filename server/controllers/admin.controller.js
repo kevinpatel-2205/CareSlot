@@ -1921,3 +1921,94 @@ export const exportAppointmentsExcel = async (req, res, next) => {
     next(error);
   }
 };
+
+export const exportReviewsPDF = async (req, res, next) => {
+  try {
+    const filter = { isApprove: false, isDeleted: false };
+
+    const reviews = await Review.find(filter)
+      .populate({
+        path: "patientId",
+        populate: {
+          path: "userId",
+          select: "name image",
+        },
+      })
+      .populate({
+        path: "doctorId",
+        populate: {
+          path: "userId",
+          select: "name",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    const headers = [
+      "No",
+      "Patient Name",
+      "Doctor Name",
+      "Rating",
+      "Comment",
+      "aiReason",
+      "Created At",
+    ];
+    const rows = reviews.map((r, index) => [
+      index + 1,
+      r.patientId?.userId?.name,
+      r.doctorId?.userId?.name,
+      r.rating,
+      r.comment,
+      r.aiReason,
+      new Date(r.createdAt).toLocaleDateString("en-IN"),
+    ]);
+    generatePDFReport(res, "Reviews Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportReviewsExcel = async (req, res, next) => {
+  try {
+    const filter = { isApprove: false, isDeleted: false };
+    const totalReviews = await Review.countDocuments(filter);
+
+    const reviews = await Review.find(filter)
+      .populate({
+        path: "patientId",
+        populate: {
+          path: "userId",
+          select: "name image",
+        },
+      })
+      .populate({
+        path: "doctorId",
+        populate: {
+          path: "userId",
+          select: "name",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    const headers = [
+      "No",
+      "Patient Name",
+      "Doctor Name",
+      "Rating",
+      "Comment",
+      "aiReason",
+      "Created At",
+    ];
+    const rows = reviews.map((r, index) => [
+      index + 1,
+      r.patientId?.userId?.name,
+      r.doctorId?.userId?.name,
+      r.rating,
+      r.comment,
+      r.aiReason,
+      new Date(r.createdAt).toLocaleDateString("en-IN"),
+    ]);
+    generateExcelReport(res, "Reviews Report", headers, rows);
+  } catch (error) {
+    next(error);
+  }
+};

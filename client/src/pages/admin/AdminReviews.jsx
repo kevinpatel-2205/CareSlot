@@ -4,6 +4,8 @@ import {
   getPendingReviews,
   approveReview,
   deleteReview,
+  downloadReviewsExcel,
+  downloadReviewsPDF,
 } from "../../store/admin";
 import Pagination from "../../components/Pagination";
 import {
@@ -15,6 +17,10 @@ import {
   AlertCircle,
   ShieldCheck,
   MessageSquareOff,
+  FileSpreadsheet,
+  Download,
+  CloudDownload,
+  ChevronDown,
 } from "lucide-react";
 
 const AdminReviews = () => {
@@ -25,6 +31,7 @@ const AdminReviews = () => {
   );
 
   const [page, setPage] = useState(1);
+  const [showDownload, setShowDownload] = useState(false);
 
   useEffect(() => {
     dispatch(getPendingReviews(page));
@@ -42,13 +49,56 @@ const AdminReviews = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       {/* ================= HEADER ================= */}
-      <div>
-        <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-black tracking-tight text-blue-900">
-          Review Moderation
-        </h2>
-        <p className="text-slate-500 font-medium mt-1 italic">
-          Verify patient feedback and manage system integrity.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-['Averia_Serif_Libre'] text-4xl md:text-5xl font-black tracking-tight text-blue-900">
+            Review Moderation
+          </h2>
+          <p className="text-slate-500 font-medium mt-1 italic">
+            Verify patient feedback and manage system integrity.
+          </p>
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => setShowDownload(!showDownload)}
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+          >
+            <CloudDownload size={18} className="text-blue-700" /> Export Data
+            <ChevronDown
+              size={16}
+              className={`transition-transform duration-300 ${showDownload ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {showDownload && (
+            <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-2xl shadow-2xl z-30 overflow-hidden animate-in zoom-in-95 duration-200">
+              <button
+                onClick={() => {
+                  dispatch(downloadReviewsExcel());
+                  setShowDownload(false);
+                }}
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+              >
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <FileSpreadsheet size={16} />
+                </div>
+                Excel Format
+              </button>
+              <button
+                onClick={() => {
+                  dispatch(downloadReviewsPDF());
+                  setShowDownload(false);
+                }}
+                className="w-full flex items-center gap-3 px-5 py-4 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+              >
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Download size={16} />
+                </div>
+                PDF Format
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ================= REVIEWS TABLE ================= */}
