@@ -382,21 +382,38 @@ function PatientDoctorDetailPage() {
           {/* REVIEW SUBMIT */}
           <section className="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-200 shadow-sm">
             <h4 className="text-lg font-bold text-slate-900 mb-4 text-center">
-              Post Review
+              Post Your Review
             </h4>
             <div className="flex gap-2 mb-6 justify-center">
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star
                   key={s}
-                  className={`cursor-pointer transition-all hover:scale-125 ${s <= rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300"}`}
+                  className={`cursor-pointer transition-all hover:scale-125 ${
+                    s <= rating
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-slate-300"
+                  }`}
                   onClick={() => setRating(s)}
                   size={32}
                 />
               ))}
             </div>
+
+            <div className="space-y-3 mb-8">
+              <label className="text-sm font-black uppercase tracking-widest text-slate-500 ml-2">
+                Share your experience
+              </label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Review comment..."
+                className="w-full p-6 bg-white border-2 border-slate-200 rounded-[1.5rem] text-md font-medium text-black focus:border-black focus:ring-0 outline-none transition-all min-h-[150px] placeholder:text-slate-400"
+              />
+            </div>
+
             <button
               onClick={submitReview}
-              disabled={!rating}
+              disabled={!rating || !reviewComment.trim()}
               className="w-full py-3 bg-white border border-slate-200 text-slate-800 rounded-2xl font-bold hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50 shadow-sm"
             >
               Submit Review

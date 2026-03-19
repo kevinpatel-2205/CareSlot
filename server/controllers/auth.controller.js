@@ -122,7 +122,7 @@ export const loginUser = async (req, res, next) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "none",
+      sameSite: NODE_ENV === "production" ? "none" : "strict",
       secure: NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     });
@@ -235,9 +235,7 @@ export const updatePassword = async (req, res, next) => {
 
     if (!currentPassword || !newPassword) {
       res.status(400);
-      throw new Error(
-        "Current password, new password is required",
-      );
+      throw new Error("Current password, new password is required");
     }
 
     if (newPassword.length < 8) {
