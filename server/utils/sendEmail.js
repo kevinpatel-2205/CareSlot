@@ -16,15 +16,22 @@ export const sendDoctorEmail = async ({ doctorName, email, password }) => {
     .replace("{{doctorName}}", doctorName)
     .replace("{{email}}", email)
     .replace("{{password}}", password)
-    .replace("{{dashboardLink}}", "https://careslot-ql85.onrender.com/login")
+    .replace("{{dashboardLink}}", "https://careslot-ql85.onrender.com")
     .replace("{{year}}", new Date().getFullYear());
 
-  await transporter.sendMail({
-    from: `"CareSlot" <${EMAIL_USER}>`,
-    to: email,
-    subject: "Welcome to CareSlot - Doctor Account Created",
-    html,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: `"CareSlot" <${EMAIL_USER}>`,
+      to: email,
+      subject: "Welcome to CareSlot - Doctor Account Created",
+      html,
+    });
+
+    console.log("✅ Email sent:", info.response);
+  } catch (err) {
+    console.error("❌ Email failed:", err);
+    throw new Error("Failed to send welcome email to doctor");
+  }
 };
 
 export const sendAppointmentBookedEmailToDoctor = async ({
@@ -53,16 +60,19 @@ export const sendAppointmentBookedEmailToDoctor = async ({
     .replace("{{timeSlot}}", timeSlot)
     .replace("{{reason}}", reason || "N/A")
     .replace("{{medicalHistory}}", medicalHistory || "N/A")
-    .replace(
-      "{{dashboardLink}}",
-      "https://careslot-ql85.onrender.com/doctor/appointments",
-    )
+    .replace("{{dashboardLink}}", "https://careslot-ql85.onrender.com")
     .replace("{{year}}", new Date().getFullYear());
 
-  transporter.sendMail({
-    from: `"CareSlot" <${EMAIL_USER}>`,
-    to: doctorEmail,
-    subject: "New Appointment Booked - CareSlot",
-    html,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: `"CareSlot" <${EMAIL_USER}>`,
+      to: doctorEmail,
+      subject: "New Appointment Booked - CareSlot",
+      html,
+    });
+    console.log("✅ Email sent:", info.response);
+  } catch (err) {
+    console.error("❌ Email failed:", err);
+    throw new Error("Failed to send appointment booked email to doctor");
+  }
 };
