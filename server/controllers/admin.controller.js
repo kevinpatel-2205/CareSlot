@@ -374,7 +374,6 @@ export const createDoctor = async (req, res, next) => {
         },
       });
     } catch (err) {
-      await User.findByIdAndDelete(user._id);
       throw err;
     }
   } catch (error) {
