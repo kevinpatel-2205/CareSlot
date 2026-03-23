@@ -10,9 +10,22 @@ import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
 import { generatePDFReport } from "../utils/generatePDFReport .js";
 import { generateExcelReport } from "../utils/generateExcelReport.js";
+import redisClient from "../config/redis.js";
 
 export const getAdminDashboard = async (req, res, next) => {
   try {
+    const cacheKey = "admin_dashboard";
+
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        data: JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
+
     const [
       totalDoctors,
       totalPatients,
@@ -21,13 +34,9 @@ export const getAdminDashboard = async (req, res, next) => {
       monthlyAppointments,
       commissionData,
     ] = await Promise.all([
-      Doctor.countDocuments({
-        isDeleted: false,
-      }),
+      Doctor.countDocuments({ isDeleted: false }),
 
-      Patient.countDocuments({
-        isDeleted: false,
-      }),
+      Patient.countDocuments({ isDeleted: false }),
 
       Appointment.aggregate([
         {
@@ -151,16 +160,23 @@ export const getAdminDashboard = async (req, res, next) => {
 
     const totalCommission = commissionData?.[0]?.totalCommission || 0;
 
+    const dashboardData = {
+      totalDoctors,
+      totalPatients,
+      topEarningDoctors,
+      topBookedDoctors,
+      monthlyAppointments,
+      totalCommission,
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(dashboardData), {
+      EX: 300,
+    });
+
     res.status(200).json({
       success: true,
-      data: {
-        totalDoctors,
-        totalPatients,
-        topEarningDoctors,
-        topBookedDoctors,
-        monthlyAppointments,
-        totalCommission,
-      },
+      data: dashboardData,
+      source: "mongodb",
     });
   } catch (error) {
     next(error);
@@ -359,6 +375,11 @@ export const createDoctor = async (req, res, next) => {
         password,
       });
 
+      const doctorKeys = await redisClient.keys("doctors:page:*");
+      if (doctorKeys.length) await redisClient.del(doctorKeys);
+
+      await redisClient.del("admin:dashboard");
+
       res.status(201).json({
         success: true,
         message: "Doctor created successfully",
@@ -385,6 +406,13 @@ export const getAllDoctors = async (req, res, next) => {
   try {
     const { page = 1, limit = 5 } = req.query;
     const skip = (page - 1) * limit;
+
+    const cacheKey = `doctors:page:${page}:limit:${limit}`;
+
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(JSON.parse(cachedData));
+    }
 
     const doctors = await Doctor.find({ isDeleted: false })
       .skip(skip)
@@ -430,13 +458,17 @@ export const getAllDoctors = async (req, res, next) => {
 
     const totalDoctors = await Doctor.countDocuments({ isDeleted: false });
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       data: formattedDoctors,
       currentPage: Number(page),
       totalPages: Math.ceil(totalDoctors / limit),
       total: totalDoctors,
-    });
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 300);
+
+    res.status(200).json(responseData);
   } catch (error) {
     next(error);
   }
@@ -466,6 +498,13 @@ export const toggleDoctorStatus = async (req, res, next) => {
 
     user.isActive = isActive;
     await user.save();
+
+    const doctorKeys = await redisClient.keys("doctors:page:*");
+    if (doctorKeys.length > 0) {
+      await redisClient.del(doctorKeys);
+    }
+
+    await redisClient.del("admin:dashboard");
 
     res.status(200).json({
       success: true,
@@ -513,6 +552,14 @@ export const deleteDoctor = async (req, res, next) => {
       { isDeleted: true },
     );
 
+    const doctorKeys = await redisClient.keys("doctors:page:*");
+    if (doctorKeys.length) await redisClient.del(doctorKeys);
+
+    const appointmentKeys = await redisClient.keys("appointments:page:*");
+    if (appointmentKeys.length) await redisClient.del(appointmentKeys);
+
+    await redisClient.del("admin:dashboard");
+
     res.status(200).json({
       success: true,
       message: "Doctor and related data deleted successfully",
@@ -526,8 +573,14 @@ export const deleteDoctor = async (req, res, next) => {
 export const getAllPatients = async (req, res, next) => {
   try {
     const { page = 1, limit = 5 } = req.query;
-
     const skip = (page - 1) * limit;
+
+    const cacheKey = `patients:page:${page}:limit:${limit}`;
+
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(JSON.parse(cachedData));
+    }
 
     const totalPatients = await Patient.countDocuments({
       isDeleted: false,
@@ -572,13 +625,17 @@ export const getAllPatients = async (req, res, next) => {
       totalBookings: bookingMap[p._id.toString()] || 0,
     }));
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       data: formattedPatients,
       currentPage: Number(page),
       totalPages: Math.ceil(totalPatients / limit),
       total: totalPatients,
-    });
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 300);
+
+    res.status(200).json(responseData);
   } catch (error) {
     next(error);
   }
@@ -622,6 +679,14 @@ export const deletePatient = async (req, res, next) => {
       { isDeleted: true },
     );
 
+    const patientKeys = await redisClient.keys("patients:page:*");
+    if (patientKeys.length) await redisClient.del(patientKeys);
+
+    const appointmentKeys = await redisClient.keys("appointments:page:*");
+    if (appointmentKeys.length) await redisClient.del(appointmentKeys);
+
+    await redisClient.del("admin:dashboard");
+
     res.status(200).json({
       success: true,
       message: "Patient and related data deleted successfully",
@@ -634,15 +699,21 @@ export const deletePatient = async (req, res, next) => {
 
 export const getAllAppointments = async (req, res, next) => {
   try {
-    let { status, page = 1, limit = 10 } = req.query;
+    let { status = "all", page = 1, limit = 10 } = req.query;
     page = Number(page);
     limit = Number(limit);
 
-    const skip = (page - 1) * limit;
+    const cacheKey = `appointments:page:${page}:limit:${limit}:status:${status}`;
 
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(JSON.parse(cachedData));
+    }
+
+    const skip = (page - 1) * limit;
     const filter = { isDeleted: false };
 
-    if (status) {
+    if (status !== "all") {
       filter.status = status;
     }
 
@@ -686,13 +757,17 @@ export const getAllAppointments = async (req, res, next) => {
       prescriptionAdded: appt.prescriptionAdded,
     }));
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       total: totalAppointments,
       data: formattedAppointments,
       currentPage: Number(page),
       totalPages: Math.ceil(totalAppointments / limit),
-    });
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 300);
+
+    res.status(200).json(responseData);
   } catch (error) {
     next(error);
   }
