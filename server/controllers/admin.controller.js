@@ -466,7 +466,9 @@ export const getAllDoctors = async (req, res, next) => {
       total: totalDoctors,
     };
 
-    await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 300);
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
+    });
 
     res.status(200).json(responseData);
   } catch (error) {
@@ -633,7 +635,9 @@ export const getAllPatients = async (req, res, next) => {
       total: totalPatients,
     };
 
-    await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 300);
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
+    });
 
     res.status(200).json(responseData);
   } catch (error) {
@@ -699,7 +703,7 @@ export const deletePatient = async (req, res, next) => {
 
 export const getAllAppointments = async (req, res, next) => {
   try {
-    let { status = "all", page = 1, limit = 10 } = req.query;
+    let { status, page = 1, limit = 10 } = req.query;
     page = Number(page);
     limit = Number(limit);
 
@@ -713,7 +717,7 @@ export const getAllAppointments = async (req, res, next) => {
     const skip = (page - 1) * limit;
     const filter = { isDeleted: false };
 
-    if (status !== "all") {
+    if (status) {
       filter.status = status;
     }
 
@@ -765,7 +769,9 @@ export const getAllAppointments = async (req, res, next) => {
       totalPages: Math.ceil(totalAppointments / limit),
     };
 
-    await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 300);
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
+    });
 
     res.status(200).json(responseData);
   } catch (error) {

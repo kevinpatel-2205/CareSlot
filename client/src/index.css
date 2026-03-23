@@ -24,6 +24,7 @@ body {
     var(--bg-1) 45%,
     var(--bg-2) 100%
   );
+  transition: none !important;
 }
 
 button,

@@ -21,4 +21,9 @@ export const EMAIL_PASS = process.env.EMAIL_PASS;
 export const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
 export const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
-export const GROQ_API_KEY= process.env.GROQ_API_KEY;
+export const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+export const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+export const REDIS_HOST = process.env.REDIS_HOST;
+export const REDIS_PORT = process.env.REDIS_PORT;
