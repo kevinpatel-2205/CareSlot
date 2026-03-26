@@ -15,7 +15,7 @@ import {
   Calendar,
   ClipboardList,
   CreditCard,
-  DollarSign,
+  IndianRupee,
   FileText,
   RefreshCcw,
   XCircle,

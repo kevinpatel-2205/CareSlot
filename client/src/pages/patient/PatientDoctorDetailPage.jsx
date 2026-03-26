@@ -9,8 +9,9 @@ import {
   CheckCircle2,
   Stethoscope,
   Briefcase,
-  DollarSign,
+  IndianRupee,
   ChevronDown,
+  Mail,
 } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -142,6 +143,10 @@ function PatientDoctorDetailPage() {
                 <p className="text-blue-600 font-bold flex items-center gap-2 text-lg italic">
                   <Stethoscope size={20} /> {doctor?.specialization || "--"}
                 </p>
+                <p className="text-slate-500 font-semibold flex items-center gap-2 text-sm break-all">
+                  <Mail size={16} className="text-blue-500" />
+                  {doctor?.email || "no-email@example.com"}
+                </p>
                 <div className="flex items-center gap-4 text-slate-500 text-sm font-bold">
                   <span className="flex items-center gap-1 font-bold text-yellow-500 bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
                     <Star size={16} fill="currentColor" />{" "}
@@ -180,6 +185,16 @@ function PatientDoctorDetailPage() {
                 </p>
               </div>
             </div>
+          </section>
+
+          <section className="bg-white rounded-[2.5rem] p-6 md:p-10 border border-slate-200 shadow-sm">
+            <h3 className="text-2xl font-bold text-slate-900 mb-4">
+              About Doctor
+            </h3>
+
+            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line break-words max-h-[220px] overflow-y-auto pr-2">
+              {doctor?.about || "No information provided."}
+            </p>
           </section>
 
           {/* REVIEWS LIST */}

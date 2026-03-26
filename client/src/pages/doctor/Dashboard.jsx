@@ -1,5 +1,5 @@
 import {
-  DollarSign,
+  IndianRupee,
   FileSpreadsheet,
   NotebookTabs,
   Users,
@@ -169,14 +169,14 @@ function DoctorDashboardPage() {
           tone="violet"
         />
         <StatCard
-          icon={DollarSign}
+          icon={IndianRupee}
           title="Net Income"
           value={formatMoney(dashboard?.totalEarnings || 0)}
           note="After Comm."
           tone="amber"
         />
         <StatCard
-          icon={DollarSign}
+          icon={IndianRupee}
           title="Platform Fee"
           value={formatMoney(dashboard?.totalAdminCommission || 0)}
           note="Commission"

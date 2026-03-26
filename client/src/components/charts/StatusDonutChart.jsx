@@ -5,6 +5,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 function StatusDonutChart({ completed = 0, pending = 0, cancelled = 0 }) {
   const total = completed + pending + cancelled;
+  console.log(total);
 
   const data = {
     labels: ["Completed", "Pending", "Cancelled"],
@@ -52,39 +53,32 @@ function StatusDonutChart({ completed = 0, pending = 0, cancelled = 0 }) {
     },
   };
 
-  // Custom plugin to show text in the center
   const centerTextPlugin = {
     id: "centerText",
     beforeDraw: (chart) => {
-      const { ctx, width, height } = chart;
-      ctx.restore();
-      const fontSize = (height / 160).toFixed(2);
-      ctx.font = `bold ${fontSize}em Inter`;
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#1e3a8a"; // Deep Blue
+      const { ctx } = chart;
+      const { top, bottom, left, right } = chart.chartArea;
 
-      const text = total.toString();
-      const textX = Math.round(
-        (chart.chartArea.left + chart.chartArea.right) / 2 -
-          ctx.measureText(text).width / 2,
-      );
-      const textY = Math.round(
-        (chart.chartArea.top + chart.chartArea.bottom) / 2,
-      );
-
-      ctx.fillText(text, textX, textY);
-
-      // Subtext "Total"
-      ctx.font = `500 ${(height / 350).toFixed(2)}em Inter`;
-      ctx.fillStyle = "#94a3b8";
-      const subText = "TOTAL";
-      const subX = Math.round(
-        (chart.chartArea.left + chart.chartArea.right) / 2 -
-          ctx.measureText(subText).width / 2,
-      );
-      ctx.fillText(subText, subX, textY + 20);
+      const centerX = (left + right) / 2;
+      const centerY = (top + bottom) / 2;
 
       ctx.save();
+
+      const fontSize = Math.min((bottom - top) / 5, 40);
+      ctx.font = `bold ${fontSize}px Inter`;
+      ctx.fillStyle = "#1e3a8a";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      ctx.font = "bold 16px Inter";
+      ctx.fillStyle = "#1e3a8a";
+      ctx.fillText(total.toString(), centerX, centerY - 10);
+
+      ctx.font = `500 12px Inter`;
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText("TOTAL", centerX, centerY + 10);
+
+      ctx.restore();
     },
   };
 

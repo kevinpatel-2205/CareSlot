@@ -4,7 +4,7 @@ import {
   Stethoscope,
   UserLock,
   Star,
-  DollarSign,
+  IndianRupee,
   MapPin,
 } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";

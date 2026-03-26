@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   ShieldCheck,
   Users,
-  DollarSign,
+  IndianRupee,
   FileSpreadsheet,
   ChevronDown,
   Download,
@@ -147,7 +147,7 @@ function Dashboard() {
           tone="mint"
         />
         <StatCard
-          icon={DollarSign}
+          icon={IndianRupee}
           title="Net Revenue"
           value={formatMoney(dashboard?.totalCommission || 0)}
           note="Platform Commission"

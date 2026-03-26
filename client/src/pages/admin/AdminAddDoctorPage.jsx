@@ -7,7 +7,7 @@ import {
   Mail,
   Phone,
   Award,
-  DollarSign,
+  IndianRupee,
   Info,
   Calendar,
   Plus,
@@ -230,7 +230,7 @@ function AdminAddDoctorPage() {
                 Consultation Fee
               </label>
               <div className="relative group">
-                <DollarSign
+                <IndianRupee
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500"
                   size={18}
                 />
