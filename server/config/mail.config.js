@@ -31,7 +31,7 @@ import { BREVO_USER, BREVO_PASS } from "../utils/env.js";
 export const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
   port: 2525,
-  secure: true,
+  secure: false,
   auth: {
     user: BREVO_USER,
     pass: BREVO_PASS,
