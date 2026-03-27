@@ -25,9 +25,8 @@
 
 // export const resend = new Resend(RESEND_API_KEY);
 
-
 import nodemailer from "nodemailer";
-import { EMAIL_USER, EMAIL_PASS, BREVO_USER } from "../utils/env.js";
+import { BREVO_USER, BREVO_PASS } from "../utils/env.js";
 
 export const transporter = nodemailer.createTransport({
   host: "smtp-reply.brevo.com",
