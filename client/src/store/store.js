@@ -3,6 +3,7 @@ import authReducer from "./auth";
 import adminReducer from "./admin";
 import doctorReducer from "./doctor";
 import patientReducer from "./patient";
+import aiReducer from "./ai";
 
 const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ const store = configureStore({
     admin: adminReducer,
     doctor: doctorReducer,
     patient: patientReducer,
+    ai: aiReducer,
   },
 });
 

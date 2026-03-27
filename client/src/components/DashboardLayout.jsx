@@ -7,7 +7,6 @@ import {
   LogOut,
   Menu,
   ShieldPlus,
-  Search,
   Settings,
   Stethoscope,
   Users,
@@ -15,11 +14,13 @@ import {
   UserRoundCog,
   MessageSquareText,
   User,
+  Sparkles,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../store/auth";
+import AIChatAssistant from "../components/AIChatAssistant";
 
 // Icon mapping for navigation items
 const iconMap = {
@@ -37,10 +38,6 @@ const iconMap = {
 
 // --- MOBILE BOTTOM NAVIGATION COMPONENT ---
 function MobileBottomNav({ navItems, isAdmin, isDoctor }) {
-  /**
-   * For Admin: We prioritize core management links so they fit on screen.
-   * For Others: We show the first 4 items from their specific nav config.
-   */
   const bottomItems = isAdmin
     ? navItems.filter((item) =>
         ["dashboard", "doctors", "appointments", "reviews"].includes(item.key),
@@ -64,7 +61,9 @@ function MobileBottomNav({ navItems, isAdmin, isDoctor }) {
             {({ isActive }) => (
               <>
                 <div
-                  className={`p-1 rounded-lg transition-colors ${isActive ? "bg-blue-50" : ""}`}
+                  className={`p-1 rounded-lg transition-colors ${
+                    isActive ? "bg-blue-50" : ""
+                  }`}
                 >
                   <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                 </div>
@@ -77,7 +76,6 @@ function MobileBottomNav({ navItems, isAdmin, isDoctor }) {
         );
       })}
 
-      {/* Profile/Me Link */}
       <NavLink
         to={
           isAdmin
@@ -95,7 +93,9 @@ function MobileBottomNav({ navItems, isAdmin, isDoctor }) {
         {({ isActive }) => (
           <>
             <div
-              className={`p-1 rounded-lg transition-colors ${isActive ? "bg-blue-50" : ""}`}
+              className={`p-1 rounded-lg transition-colors ${
+                isActive ? "bg-blue-50" : ""
+              }`}
             >
               <User size={20} strokeWidth={isActive ? 2.5 : 2} />
             </div>
@@ -109,7 +109,7 @@ function MobileBottomNav({ navItems, isAdmin, isDoctor }) {
   );
 }
 
-// --- SIDEBAR LINK COMPONENT (DESKTOP) ---
+// --- SIDEBAR LINK COMPONENT ---
 function MenuLink({ item, onClick }) {
   const Icon = iconMap[item.key] || LayoutDashboard;
 
@@ -190,6 +190,7 @@ function DashboardLayout({ navItems, roleLabel }) {
 
   const [openMenu, setOpenMenu] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false); // NEW: AI State
   const menuRef = useRef(null);
   const location = useLocation();
 
@@ -286,7 +287,21 @@ function DashboardLayout({ navItems, roleLabel }) {
                 </h2>
               </div>
 
-              <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
+                {/* --- AI ASSISTANT HEADER BUTTON --- */}
+                <button
+                  onClick={() => setAiOpen(true)}
+                  className="group relative grid h-10 w-10 place-items-center rounded-full bg-blue-100 text-[#2e7df2] transition-all hover:scale-110 hover:bg-blue-150 active:scale-95 shadow-sm"
+                  title="AI Assistant"
+                >
+                  <Sparkles size={18} className="group-hover:animate-pulse" />
+                  <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-blue-500 border-2 border-white"></span>
+                  </span>
+                </button>
+
+                {/* SETTINGS MENU */}
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setOpenMenu(!openMenu)}
@@ -314,6 +329,8 @@ function DashboardLayout({ navItems, roleLabel }) {
                     </div>
                   )}
                 </div>
+
+                {/* USER PROFILE PIC */}
                 <div className="h-10 w-10 p-0.5 rounded-full bg-gradient-to-tr from-blue-600 to-blue-300 shadow-md">
                   <img
                     src={
@@ -355,6 +372,8 @@ function DashboardLayout({ navItems, roleLabel }) {
         isAdmin={isAdmin}
         isDoctor={isDoctor}
       />
+
+      <AIChatAssistant open={aiOpen} setOpen={setAiOpen} />
     </div>
   );
 }
