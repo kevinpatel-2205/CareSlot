@@ -22,8 +22,18 @@ export const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
 export const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
 export const GROQ_API_KEY = process.env.GROQ_API_KEY;
+export const GROQ_MODEL = process.env.GROQ_MODEL;
+
+export const QDRANT_URL = process.env.QDRANT_URL;
+export const QDRANT_COLLECTION = process.env.QDRANT_COLLECTION;
+
+export const AI_TEMPERATURE = parseFloat(process.env.AI_TEMPERATURE) || 0.3;
+export const AI_MAX_TOKENS = parseInt(process.env.AI_MAX_TOKENS) || 2000;
 
 export const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+export const BREVO_USER = process.env.BREVO_USER;
+export const BREVO_PASS = process.env.BREVO_PASS;
 
 export const REDIS_HOST = process.env.REDIS_HOST;
 export const REDIS_PORT = process.env.REDIS_PORT;

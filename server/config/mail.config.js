@@ -20,7 +20,31 @@
 //   }
 // });
 
-import { Resend } from "resend";
-import { RESEND_API_KEY } from "../utils/env.js";
+// import { Resend } from "resend";
+// import { RESEND_API_KEY } from "../utils/env.js";
 
-export const resend = new Resend(RESEND_API_KEY);
+// export const resend = new Resend(RESEND_API_KEY);
+
+
+import nodemailer from "nodemailer";
+import { EMAIL_USER, EMAIL_PASS, BREVO_USER } from "../utils/env.js";
+
+export const transporter = nodemailer.createTransport({
+  host: "smtp-reply.brevo.com",
+  port: 2525,
+  secure: true,
+  auth: {
+    user: BREVO_USER,
+    pass: BREVO_PASS,
+  },
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+});
+
+transporter.verify((err, success) => {
+  if (err) {
+    console.error("❌ SMTP ERROR:", err);
+  } else {
+    console.log("✅ SMTP READY");
+  }
+});
