@@ -108,7 +108,7 @@ export const loginUser = async (req, res, next) => {
 
     if (user.isDeleted) {
       res.status(403);
-      throw new Error("Account is Deleted");
+      throw new Error("Account is no  longer available.");
     }
 
     const isMatch = await user.comparePassword(password);
@@ -175,11 +175,10 @@ export const getMe = async (req, res, next) => {
 
 export const logoutUser = async (req, res, next) => {
   try {
-    res.cookie("token", "", {
+    res.clearCookie("token", {
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: NODE_ENV === "production" ? "none" : "strict",
       secure: NODE_ENV === "production",
-      expires: new Date(0),
     });
 
     res.status(200).json({
