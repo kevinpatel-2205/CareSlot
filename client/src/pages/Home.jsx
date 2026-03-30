@@ -11,10 +11,12 @@ import {
   Activity,
   Quote,
   User,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axiosInstance from "../lib/axios.js";
+import AIChatAssistant from "../components/AIChatAssistant.jsx";
 
 const departmentsData = [
   { id: 1, name: "Cardiologist", icon: "❤️", color: "bg-red-50 text-red-600" },
@@ -59,6 +61,7 @@ const Home = () => {
   });
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const [aiOpen, setAiOpen] = useState(false); // NEW: AI State
 
   useEffect(() => {
     const fetchHome = async () => {
@@ -116,7 +119,19 @@ const Home = () => {
               CareSlot
             </h1>
           </div>
+
           <nav className="flex items-center gap-8 text-sm font-semibold text-slate-600">
+            <button
+              onClick={() => setAiOpen(true)}
+              className="group relative grid h-10 w-10 place-items-center rounded-full bg-blue-100 text-[#2e7df2] transition-all hover:scale-110 hover:bg-blue-150 active:scale-95 shadow-sm"
+              title="AI Assistant"
+            >
+              <Sparkles size={18} className="group-hover:animate-pulse" />
+              <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-blue-500 border-2 border-white"></span>
+              </span>
+            </button>
             {["Departments", "Doctors", "Reviews"].map((item) => (
               <button
                 key={item}
@@ -318,11 +333,22 @@ const Home = () => {
             <Layers size={20} />{" "}
             <span className="text-[10px] font-bold uppercase">Depts</span>
           </button>
-          <button
+          {/* <button
             onClick={() => handleProtectedAction("/patient/dashboard")}
             className="flex flex-col items-center -mt-8 bg-blue-600 p-4 rounded-full text-white shadow-xl shadow-blue-200"
           >
             <Stethoscope size={24} />
+          </button> */}
+          <button
+            onClick={() => setAiOpen(true)}
+            className="group relative grid -mt-8  p-4 h-18 w-18 place-items-center rounded-full bg-blue-100 text-[#2e7df2] transition-all hover:scale-110 hover:bg-blue-150 active:scale-95 shadow-sm"
+            title="AI Assistant rounded-full shadow-xl shadow-blue-200"
+          >
+            <Sparkles size={28} className="group-hover:animate-pulse" />
+            <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-blue-500 border-2 border-white"></span>
+            </span>
           </button>
           <button
             onClick={() => scrollToSection("reviews")}
@@ -340,6 +366,7 @@ const Home = () => {
           </button>
         </div>
       </div>
+      <AIChatAssistant open={aiOpen} setOpen={setAiOpen} />
     </div>
   );
 };

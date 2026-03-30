@@ -12,6 +12,7 @@ import { authorizeRoles } from "./middleware/role.middleware.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import { CLIENT_URL, PORT } from "./utils/env.js";
 import { getHomeData } from "./controllers/home.controller.js";
+import aiRoutes from "./routes/ai.routes.js";
 
 connectDB();
 
@@ -38,6 +39,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/patient", protect, authorizeRoles("patient"), patientRoutes);
 app.use("/api/doctor", protect, authorizeRoles("doctor"), doctorRoutes);
 app.use("/api/admin", protect, authorizeRoles("admin"), adminRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Error Middleware
 app.use(errorMiddleware);
