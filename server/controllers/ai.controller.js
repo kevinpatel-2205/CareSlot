@@ -1,6 +1,6 @@
 import { generateGuestResponse } from "../utils/aiModeration.js";
 import { getDoctors } from "../services/ai.services.js";
-import redisClient from "../config/redis.js";
+// import redisClient from "../config/redis.js";
 
 export const chatWithAI = async (req, res) => {
   try {
@@ -9,14 +9,14 @@ export const chatWithAI = async (req, res) => {
     switch (req.user.role) {
       case "guest":
         const cacheKey = "homePage";
-        const cachedData = await redisClient.get(cacheKey);
-        let data;
-        if (cachedData) {
-          data = JSON.parse(cachedData);
-        } else {
+        // const cachedData = await redisClient.get(cacheKey);
+        // let data;
+        // if (cachedData) {
+        //   data = JSON.parse(cachedData);
+        // } else {
           data = await getDoctors();
-          await redisClient.setex(cacheKey, 3600 * 24, JSON.stringify(data));
-        }
+        //   await redisClient.setex(cacheKey, 3600 * 24, JSON.stringify(data));
+        // }
         const reply = await generateGuestResponse(message, data);
         return res.status(200).json({
           success: true,
