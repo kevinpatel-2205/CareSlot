@@ -12,12 +12,12 @@ export const chatWithAI = async (req, res) => {
         // const cachedData = await redisClient.get(cacheKey);
         let data;
         // if (cachedData) {
-        //   data = JSON.parse(cachedData);
+          // data = JSON.parse(cachedData);
         // } else {
           data = await getDoctors();
-          await redisClient.setex(cacheKey, 3600 * 24, JSON.stringify(data));
+          // await redisClient.setex(cacheKey, 3600 * 24, JSON.stringify(data));
         // }
-        // const reply = await generateGuestResponse(message, data);
+        const reply = await generateGuestResponse(message, data);
         return res.status(200).json({
           success: true,
           reply: reply,
