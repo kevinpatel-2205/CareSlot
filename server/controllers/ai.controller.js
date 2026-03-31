@@ -8,16 +8,16 @@ export const chatWithAI = async (req, res) => {
 
     switch (req.user.role) {
       case "guest":
-        const cacheKey = "homePage";
+        // const cacheKey = "homePage";
         // const cachedData = await redisClient.get(cacheKey);
-        // let data;
+        let data;
         // if (cachedData) {
         //   data = JSON.parse(cachedData);
         // } else {
           data = await getDoctors();
-        //   await redisClient.setex(cacheKey, 3600 * 24, JSON.stringify(data));
+          await redisClient.setex(cacheKey, 3600 * 24, JSON.stringify(data));
         // }
-        const reply = await generateGuestResponse(message, data);
+        // const reply = await generateGuestResponse(message, data);
         return res.status(200).json({
           success: true,
           reply: reply,
