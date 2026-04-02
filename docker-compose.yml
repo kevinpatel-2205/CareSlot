@@ -29,12 +29,10 @@ services:
     depends_on:
       - redis
 
-  server:
+  server1:
     build: ./server
-    container_name: careslot-server
+    container_name: careslot-server-1
     restart: always
-    ports:
-      - "5000:5000"
     depends_on:
       - mongodb
       - redis
@@ -42,8 +40,30 @@ services:
       - ./server/.env
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/careslot
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+
+  server2:
+    build: ./server
+    container_name: careslot-server-2
+    restart: always
+    depends_on:
+      - mongodb
+      - redis
+    env_file:
+      - ./server/.env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/careslot
+
+  server3:
+    build: ./server
+    container_name: careslot-server-3
+    restart: always
+    depends_on:
+      - mongodb
+      - redis
+    env_file:
+      - ./server/.env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/careslot
 
   nginx:
     build: ./client
@@ -52,7 +72,9 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - server
+      - server1
+      - server2
+      - server3
 
 volumes:
   mongo-data:

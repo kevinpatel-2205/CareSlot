@@ -304,9 +304,9 @@ const Home = () => {
                   <div>
                     <h4 className="font-bold text-xs">{rev.patientName}</h4>
                     <div className="flex text-yellow-400">
-                      <Star size={10} fill="currentColor" />{" "}
-                      <Star size={10} fill="currentColor" />{" "}
-                      <Star size={10} fill="currentColor" />
+                      {Array.from({ length: rev.rating }).map((_, i) => (
+                        <Star key={i} size={10} fill="currentColor" />
+                      ))}
                     </div>
                   </div>
                 </div>

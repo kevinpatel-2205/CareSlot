@@ -3,8 +3,17 @@ import { Bot, Send, X, MessageSquare, Sparkles } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { sendMessageToAI } from "../store/ai";
 
-// This component now only renders the WINDOW.
-// The button is handled in your DashboardLayout header.
+function renderMarkdown(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/\n\n/g, "</p><p>")
+    .replace(/\n/g, "<br/>")
+    .split(/(?=\d+\.\s)/)
+    .join("")
+    .trim();
+}
+
 function AIChatAssistant({ open, setOpen }) {
   const [input, setInput] = useState("");
   const scrollRef = useRef(null);
@@ -63,7 +72,7 @@ function AIChatAssistant({ open, setOpen }) {
         {/* MESSAGES */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#f8fafc]"
+          className="flex-1 overflow-y-auto overflow-x-hidden p-5 space-y-4 bg-[#f8fafc]"
         >
           {messages.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-center px-6">
@@ -86,14 +95,21 @@ function AIChatAssistant({ open, setOpen }) {
             >
               <div
                 className={`max-w-[85%] px-4 py-3 text-sm shadow-sm leading-relaxed
-                ${
-                  msg.role === "user"
-                    ? "bg-[#2e7df2] text-white rounded-2xl rounded-tr-none"
-                    : "bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-tl-none"
-                }`}
-              >
-                {msg.text}
-              </div>
+    ${
+      msg.role === "user"
+        ? "bg-[#2e7df2] text-white rounded-2xl rounded-tr-none"
+        : "bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-tl-none"
+    }`}
+                style={{
+                  overflowWrap: "break-word",
+                  wordBreak: "break-word",
+                  minWidth: 0,
+                  maxWidth: "85%",
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: renderMarkdown(msg.text),
+                }}
+              />
             </div>
           ))}
 
