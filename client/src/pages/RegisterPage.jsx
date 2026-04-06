@@ -7,6 +7,7 @@ import {
   Phone,
   Home as HomeIcon,
   LogIn,
+  X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -45,7 +46,13 @@ function RegisterPage() {
       <div className="absolute top-[-10%] left-[-10%] w-72 h-72 bg-blue-400/10 blur-[100px] rounded-full"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full"></div>
 
-      <div className="z-10 w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl shadow-blue-100 border border-white p-8 md:p-10 transition-all">
+      <div className="z-10 relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl shadow-blue-100 border border-white p-8 md:p-10 transition-all">
+        <button
+          onClick={() => navigate("/")}
+          className="absolute top-5 right-5 text-slate-400 hover:text-red-500 transition-all"
+        >
+          <X size={24} />
+        </button>
         <div className="flex flex-col items-center mb-8">
           <div className="bg-blue-600 p-3 rounded-2xl shadow-lg shadow-blue-200 mb-4">
             <Stethoscope className="text-white" size={28} />
