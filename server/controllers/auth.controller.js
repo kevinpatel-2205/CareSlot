@@ -2,7 +2,7 @@ import User from "../models/user.model.js";
 import Patient from "../models/patient.model.js";
 import Doctor from "../models/doctor.model.js";
 import generateToken from "../utils/generateToken.js";
-import cloudinary from "../utils/cloudinary.js";
+import cloudinary from "../config/cloudinary.js";
 import { NODE_ENV } from "../utils/env.js";
 
 export const registerUser = async (req, res, next) => {
@@ -70,7 +70,7 @@ export const registerUser = async (req, res, next) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "none",
+      sameSite: NODE_ENV === "production" ? "none" : "strict",
       secure: NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
     });

@@ -52,6 +52,24 @@ const doctorSchema = new mongoose.Schema(
       default: false,
     },
 
+    geolocation: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+        default: [0, 0],
+      },
+      address: {
+        type: String,
+        maxlength: 500,
+        default: "",
+      },
+    },
+
     averageRating: {
       type: Number,
       default: 0,
@@ -88,5 +106,7 @@ const doctorSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+doctorSchema.index({ geolocation: "2dsphere" });
 
 export default mongoose.model("Doctor", doctorSchema);

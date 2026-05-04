@@ -36,7 +36,7 @@ function RegisterPage() {
 
   useEffect(() => {
     if (user) {
-      navigate("/redirect", { replace: true });
+      navigate("/login", { replace: true });
     }
   }, [user, navigate]);
 

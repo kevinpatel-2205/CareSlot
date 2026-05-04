@@ -32,16 +32,18 @@ export const getHomeData = async (req, res) => {
         .limit(5)
         .populate({
           path: "patientId",
+          select: "userId",
           populate: {
             path: "userId",
-            select: "name image",
+            select: "name email image",
           },
         })
         .populate({
           path: "doctorId",
+          select: "userId",
           populate: {
             path: "userId",
-            select: "name",
+            select: "name email image",
           },
         }),
 
@@ -67,8 +69,11 @@ export const getHomeData = async (req, res) => {
       rating: rev.rating,
       comment: rev.comment,
       patientName: rev.patientId?.userId?.name,
+      patientEmail: rev.patientId?.userId?.email,
       patientImage: rev.patientId?.userId?.image,
       doctorName: rev.doctorId?.userId?.name,
+      doctorEmail: rev.doctorId?.userId?.email,
+      doctorImage: rev.doctorId?.userId?.image,
       createdAt: rev.createdAt,
     }));
 

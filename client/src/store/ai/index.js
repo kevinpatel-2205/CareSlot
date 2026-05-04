@@ -14,7 +14,10 @@ export const sendMessageToAI = createAsyncThunk(
       const res = await axiosInstance.post("/ai/chat", { message });
       return {
         userMessage: message,
-        aiMessage: res.data.reply,
+        aiMessage: {
+          type: res.data.reply.type,
+          message: res.data.reply.message,
+        },
       };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "AI Error");
@@ -43,12 +46,14 @@ const aiSlice = createSlice({
 
         state.messages.push({
           role: "ai",
-          text: action.payload.aiMessage,
+          type: action.payload.aiMessage.type,
+          text: action.payload.aiMessage.message,
         });
       })
 
       .addCase(sendMessageToAI.rejected, (state, action) => {
         state.loading = false;
+        state.messages.pop();
         toast.error(action.payload);
       });
   },

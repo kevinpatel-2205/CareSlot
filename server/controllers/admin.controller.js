@@ -8,23 +8,23 @@ import Prescription from "../models/prescription.model.js";
 import { sendDoctorEmail } from "../utils/sendEmail.js";
 import ExcelJS from "exceljs";
 import PDFDocument from "pdfkit";
-import { generatePDFReport } from "../utils/generatePDFReport .js";
+import { generatePDFReport } from "../utils/generatePDFReport.js";
 import { generateExcelReport } from "../utils/generateExcelReport.js";
-// import redisClient, { deleteByPattern } from "../config/redis.js";
+import redisClient, { deleteByPattern } from "../config/redis.js";
 
 export const getAdminDashboard = async (req, res, next) => {
   try {
     const cacheKey = "admin:dashboard";
 
-    // const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await redisClient.get(cacheKey);
 
-    // if (cachedData) {
-    //   return res.status(200).json({
-    //     success: true,
-    //     data: JSON.parse(cachedData),
-    //     source: "redis",
-    //   });
-    // }
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        data: JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
 
     const [
       totalDoctors,
@@ -169,9 +169,9 @@ export const getAdminDashboard = async (req, res, next) => {
       totalCommission,
     };
 
-    // await redisClient.set(cacheKey, JSON.stringify(dashboardData), {
-    //   EX: 300,
-    // });
+    await redisClient.set(cacheKey, JSON.stringify(dashboardData), {
+      EX: 300,
+    });
 
     res.status(200).json({
       success: true,
@@ -375,10 +375,8 @@ export const createDoctor = async (req, res, next) => {
         password,
       });
 
-      // await deleteByPattern("admin:doctors:page:*");
-      // await redisClient.del("admin:dashboard");
-
-      // await redisClient.del("admin:dashboard");
+      await deleteByPattern("admin:doctors:page:*");
+      await redisClient.del("admin:dashboard");
 
       res.status(201).json({
         success: true,
@@ -409,14 +407,14 @@ export const getAllDoctors = async (req, res, next) => {
 
     const cacheKey = `admin:doctors:page:${page}:limit:${limit}`;
 
-    // const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await redisClient.get(cacheKey);
 
-    // if (cachedData) {
-    //   return res.status(200).json({
-    //     ...JSON.parse(cachedData),
-    //     source: "redis",
-    //   });
-    // }
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
 
     const doctors = await Doctor.find({ isDeleted: false })
       .skip(skip)
@@ -474,9 +472,9 @@ export const getAllDoctors = async (req, res, next) => {
       total: totalDoctors,
     };
 
-    // await redisClient.set(cacheKey, JSON.stringify(responseData), {
-    //   EX: 300,
-    // });
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
+    });
 
     res.status(200).json(responseData);
   } catch (error) {
@@ -509,8 +507,8 @@ export const toggleDoctorStatus = async (req, res, next) => {
     user.isActive = isActive;
     await user.save();
 
-    // await deleteByPattern("admin:doctors:page:*");
-    // await redisClient.del("admin:dashboard");
+    await deleteByPattern("admin:doctors:page:*");
+    await redisClient.del("admin:dashboard");
 
     res.status(200).json({
       success: true,
@@ -537,8 +535,7 @@ export const deleteDoctor = async (req, res, next) => {
       throw new Error("Doctor not found");
     }
 
-    doctor.isDeleted = true;
-    await doctor.save();
+    await Doctor.updateOne({ _id: doctorId }, { $set: { isDeleted: true } });
 
     await User.findByIdAndUpdate(doctor.userId, {
       isDeleted: true,
@@ -558,11 +555,11 @@ export const deleteDoctor = async (req, res, next) => {
       { isDeleted: true },
     );
 
-    // await deleteByPattern("admin:doctors:page:*");
-    // await deleteByPattern("admin:appointments:page:*");
-    // await deleteByPattern("admin:patients:page:*");
+    await deleteByPattern("admin:doctors:page:*");
+    await deleteByPattern("admin:appointments:page:*");
+    await deleteByPattern("admin:patients:page:*");
 
-    // await redisClient.del("admin:dashboard");
+    await redisClient.del("admin:dashboard");
 
     res.status(200).json({
       success: true,
@@ -581,14 +578,14 @@ export const getAllPatients = async (req, res, next) => {
 
     const cacheKey = `admin:patients:page:${page}:limit:${limit}`;
 
-    // const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await redisClient.get(cacheKey);
 
-    // if (cachedData) {
-    //   return res.status(200).json({
-    //     ...JSON.parse(cachedData),
-    //     source: "redis",
-    //   });
-    // }
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
 
     const totalPatients = await Patient.countDocuments({
       isDeleted: false,
@@ -641,9 +638,9 @@ export const getAllPatients = async (req, res, next) => {
       total: totalPatients,
     };
 
-    // await redisClient.set(cacheKey, JSON.stringify(responseData), {
-    //   EX: 300,
-    // });
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
+    });
 
     res.status(200).json(responseData);
   } catch (error) {
@@ -696,10 +693,10 @@ export const deletePatient = async (req, res, next) => {
       { isDeleted: true },
     );
 
-    // await deleteByPattern("admin:patients:page:*");
-    // await deleteByPattern("admin:appointments:page:*");
+    await deleteByPattern("admin:patients:page:*");
+    await deleteByPattern("admin:appointments:page:*");
 
-    // await redisClient.del("admin:dashboard");
+    await redisClient.del("admin:dashboard");
 
     res.status(200).json({
       success: true,
@@ -719,14 +716,14 @@ export const getAllAppointments = async (req, res, next) => {
 
     const cacheKey = `admin:appointments:page:${page}:limit:${limit}:status:${status}`;
 
-    // const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await redisClient.get(cacheKey);
 
-    // if (cachedData) {
-    //   return res.status(200).json({
-    //     ...JSON.parse(cachedData),
-    //     source: "redis",
-    //   });
-    // }
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
 
     const skip = (page - 1) * limit;
     const filter = { isDeleted: false };
@@ -783,9 +780,9 @@ export const getAllAppointments = async (req, res, next) => {
       totalPages: Math.ceil(totalAppointments / limit),
     };
 
-    // await redisClient.set(cacheKey, JSON.stringify(responseData), {
-    //   EX: 300,
-    // });
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
+    });
 
     res.status(200).json(responseData);
   } catch (error) {
@@ -1293,33 +1290,56 @@ export const updateDoctorCommission = async (req, res, next) => {
 
     const percent = Number(commission);
 
+    if (isNaN(percent)) {
+      res.status(400);
+      throw new Error("Commission must be a number");
+    }
+
     if (percent < 5 || percent > 35) {
       res.status(400);
       throw new Error("Commission must be between 5% and 35%");
     }
 
-    const doctor = await Doctor.findOne({
-      _id: doctorId,
-      isDeleted: false,
-    });
+    const updatedDoctor = await Doctor.findOneAndUpdate(
+      {
+        _id: doctorId,
+        isDeleted: false,
+        aCommission: { $ne: percent },
+      },
+      {
+        $set: { aCommission: percent },
+        $push: {
+          commissionHistory: {
+            commission: percent,
+            changedAt: new Date(),
+          },
+        },
+      },
+      { new: true },
+    );
 
-    if (!doctor) {
-      res.status(404);
-      throw new Error("Doctor not found");
-    }
-
-    if (doctor.aCommission !== percent) {
-      doctor.aCommission = percent;
-
-      doctor.commissionHistory.push({
-        commission: percent,
-        changedAt: new Date(),
+    if (!updatedDoctor) {
+      const exists = await Doctor.exists({
+        _id: doctorId,
+        isDeleted: false,
       });
 
-      await doctor.save();
+      if (!exists) {
+        res.status(404);
+        throw new Error("Doctor not found");
+      }
+
+      // Commission already same
+      return res.status(200).json({
+        success: true,
+        message: "Commission already up to date",
+        doctorId,
+        commission: percent,
+      });
     }
-    // await deleteByPattern("admin:doctors:page:*");
-    // await redisClient.del("admin:dashboard");
+
+    await deleteByPattern("admin:doctors:page:*");
+    await redisClient.del("admin:dashboard");
 
     res.status(200).json({
       success: true,
@@ -1453,11 +1473,14 @@ export const exportAdminDataToPDF = async (req, res, next) => {
     let index = 1;
     const doctorRows = [];
 
+    const allAppointments = await Appointment.find({
+      isDeleted: false,
+    }).lean();
+
     for (const d of doctors) {
-      const appointments = await Appointment.find({
-        doctorId: d._id,
-        isDeleted: false,
-      });
+      const appointments = allAppointments.filter(
+        (a) => a.doctorId.toString() === d._id.toString(),
+      );
 
       const completed = appointments.filter((a) =>
         ["confirmed", "completed"].includes(a.status),

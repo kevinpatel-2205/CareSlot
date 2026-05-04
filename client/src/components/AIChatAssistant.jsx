@@ -2,16 +2,47 @@ import { useState, useEffect, useRef } from "react";
 import { Bot, Send, X, MessageSquare, Sparkles } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { sendMessageToAI } from "../store/ai";
+import BookingFormCard from "./BookingFormCard";
 
 function renderMarkdown(text) {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.*?)\*/g, "<em>$1</em>")
-    .replace(/\n\n/g, "</p><p>")
-    .replace(/\n/g, "<br/>")
-    .split(/(?=\d+\.\s)/)
-    .join("")
-    .trim();
+  if (!text) return "";
+
+  if (typeof text !== "string") text = JSON.stringify(text);
+
+  const lines = text.split("\n");
+  let html = "";
+  let inList = false;
+
+  for (let line of lines) {
+    line = line
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+    const isListItem = /^\d+\.\s/.test(line);
+
+    if (isListItem) {
+      if (!inList) {
+        html +=
+          "<ol style='margin:6px 0 6px 16px;padding:0;display:flex;flex-direction:column;gap:4px;'>";
+        inList = true;
+      }
+      html += `<li style='line-height:1.5'>${line.replace(/^\d+\.\s/, "")}</li>`;
+    } else {
+      if (inList) {
+        html += "</ol>";
+        inList = false;
+      }
+      if (line.trim() === "") {
+        html += "<br/>";
+      } else {
+        html += `<p style='margin:2px 0'>${line}</p>`;
+      }
+    }
+  }
+
+  if (inList) html += "</ol>";
+
+  return html;
 }
 
 function AIChatAssistant({ open, setOpen }) {
@@ -24,7 +55,10 @@ function AIChatAssistant({ open, setOpen }) {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
   }, [messages, loading]);
 
@@ -93,23 +127,32 @@ function AIChatAssistant({ open, setOpen }) {
               key={i}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              <div
-                className={`max-w-[85%] px-4 py-3 text-sm shadow-sm leading-relaxed
-    ${
-      msg.role === "user"
-        ? "bg-[#2e7df2] text-white rounded-2xl rounded-tr-none"
-        : "bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-tl-none"
-    }`}
-                style={{
-                  overflowWrap: "break-word",
-                  wordBreak: "break-word",
-                  minWidth: 0,
-                  maxWidth: "85%",
-                }}
-                dangerouslySetInnerHTML={{
-                  __html: renderMarkdown(msg.text),
-                }}
-              />
+              {msg.role === "user" && (
+                <div className="max-w-[85%] px-4 py-3 text-sm shadow-sm bg-[#2e7df2] text-white rounded-2xl rounded-tr-none">
+                  {msg.text}
+                </div>
+              )}
+
+              {msg.role === "ai" && (
+                <>
+                  {(!msg.type || msg.type === "TEXT") && (
+                    <div
+                      className="max-w-[85%] px-4 py-3 text-sm shadow-sm bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-tl-none"
+                      dangerouslySetInnerHTML={{
+                        __html: renderMarkdown(
+                          msg.text ?? msg.aiMessage?.message ?? "",
+                        ),
+                      }}
+                    />
+                  )}
+
+                  {msg.type === "BOOK_APPOINTMENT" && (
+                    <div className="max-w-[85%]">
+                      <BookingFormCard />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           ))}
 

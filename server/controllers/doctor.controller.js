@@ -7,13 +7,26 @@ import ExcelJS from "exceljs";
 import Review from "../models/review.model.js";
 import Prescription from "../models/prescription.model.js";
 import PDFDocument from "pdfkit";
-import { generatePDFReport } from "../utils/generatePDFReport .js";
+import { generatePDFReport } from "../utils/generatePDFReport.js";
 import { generateExcelReport } from "../utils/generateExcelReport.js";
+import redisClient, { deleteByPattern } from "../config/redis.js";
 
 export const getDoctorDashboard = async (req, res, next) => {
   try {
     const doctor = await Doctor.findOne({ userId: req.user._id });
     const doctorId = doctor._id;
+
+    const cacheKey = `doctor:${doctorId}:dashboard`;
+
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        data: JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
 
     const statusCounts = await Appointment.aggregate([
       {
@@ -173,6 +186,17 @@ export const getDoctorDashboard = async (req, res, next) => {
       razorpay: monthlyData.map((m) => m.razorpay),
     };
 
+    const data = {
+      totalEarnings,
+      appointmentCounts: formattedStatus,
+      monthlyEarnings: formattedMonthly,
+      totalAdminCommission,
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(data), {
+      EX: 300,
+    });
+
     res.status(200).json({
       success: true,
       data: {
@@ -198,6 +222,18 @@ export const getUpcomingAppointments = async (req, res, next) => {
       });
     }
 
+    const cacheKey = `doctor:${doctor._id}:upcoming_appointments`;
+
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        data: JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
+
     const doctorId = doctor._id;
 
     const appointments = await Appointment.find({
@@ -217,6 +253,10 @@ export const getUpcomingAppointments = async (req, res, next) => {
       })
       .sort({ appointmentDate: 1, timeSlot: 1 })
       .lean();
+
+    await redisClient.set(cacheKey, JSON.stringify(appointments), {
+      EX: 300,
+    });
 
     res.status(200).json({
       success: true,
@@ -243,6 +283,17 @@ export const getAllAppointments = async (req, res, next) => {
       filter.status = status;
     }
 
+    const cacheKey = `doctor:${doctorId}:appointments:page:${page}:limit:${limit}:status:${status}`;
+
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
+
     const appointments = await Appointment.find(filter)
       .select(
         "appointmentDate timeSlot paymentMethod patientId status prescriptionAdded",
@@ -262,12 +313,18 @@ export const getAllAppointments = async (req, res, next) => {
 
     const total = await Appointment.countDocuments(filter);
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       data: appointments,
       currentPage: Number(page),
       totalPages: Math.ceil(total / limit),
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
     });
+
+    res.status(200).json(responseData);
   } catch (error) {
     next(error);
   }
@@ -322,6 +379,16 @@ export const changeAppointmentStatus = async (req, res, next) => {
 
     await appointment.save();
 
+    await redisClient.del(`doctor:${doctorId}:dashboard`);
+    await redisClient.del(`doctor:${doctorId}:upcoming_appointments`);
+
+    await deleteByPattern(`doctor:${doctorId}:appointments:*`);
+    await deleteByPattern(`doctor:${doctorId}:patients:*`);
+    await deleteByPattern(`doctor:${doctorId}:patient:*`);
+
+    await redisClient.del(`admin:dashboard`);
+    await deleteByPattern(`admin:appointments:*`);
+
     res.status(200).json({
       success: true,
       message: `Appointment status updated to ${appointment.status}`,
@@ -365,6 +432,13 @@ export const cancelAppointment = async (req, res, next) => {
       });
     }
 
+    if (appointment.status === "confirmed") {
+      return res.status(400).json({
+        success: false,
+        message: "confirmed appointment cannot be cancelled",
+      });
+    }
+
     appointment.status = "cancelled";
     await appointment.save();
 
@@ -389,6 +463,16 @@ export const cancelAppointment = async (req, res, next) => {
       await payment.save();
     }
 
+    await redisClient.del(`doctor:${doctorId}:dashboard`);
+    await redisClient.del(`doctor:${doctorId}:upcoming_appointments`);
+
+    await deleteByPattern(`doctor:${doctorId}:appointments:*`);
+    await deleteByPattern(`doctor:${doctorId}:patients:*`);
+    await deleteByPattern(`doctor:${doctorId}:patient:*`);
+
+    await redisClient.del(`admin:dashboard`);
+    await deleteByPattern(`admin:appointments:*`);
+
     res.status(200).json({
       success: true,
       appointmentId,
@@ -406,6 +490,16 @@ export const getDoctorPatients = async (req, res, next) => {
 
     const doctor = await Doctor.findOne({ userId: req.user._id });
     const doctorId = doctor._id;
+
+    const cacheKey = `doctor:${doctorId}:patients:page:${page}:limit:${limit}`;
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
 
     const patients = await Appointment.aggregate([
       {
@@ -471,12 +565,18 @@ export const getDoctorPatients = async (req, res, next) => {
 
     const totalPages = Math.ceil(totalPatients.length / limit);
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       data: patients,
       currentPage: Number(page),
       totalPages,
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
     });
+
+    res.status(200).json(responseData);
   } catch (error) {
     next(error);
   }
@@ -499,6 +599,16 @@ export const getDoctorPatientDetails = async (req, res, next) => {
       throw new Error("Patient not found");
     }
 
+    const cacheKey = `doctor:${doctorId}:patient:${patientId}:details`;
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
+
     let age = null;
     if (patient.dateOfBirth) {
       const diff = Date.now() - new Date(patient.dateOfBirth).getTime();
@@ -516,7 +626,7 @@ export const getDoctorPatientDetails = async (req, res, next) => {
       .sort({ appointmentDate: -1 })
       .lean();
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       data: {
         patientDetails: {
@@ -532,7 +642,13 @@ export const getDoctorPatientDetails = async (req, res, next) => {
         },
         appointments,
       },
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
     });
+
+    res.status(200).json(responseData);
   } catch (error) {
     next(error);
   }
@@ -550,6 +666,16 @@ export const getAvailableSlots = async (req, res, next) => {
     if (!doctor) {
       res.status(404);
       throw new Error("Doctor not found");
+    }
+
+    const cacheKey = `doctor:${doctor._id}:availableSlots:page:${page}:limit:${limit}`;
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
     }
 
     let slots = doctor.availableSlots || [];
@@ -576,12 +702,18 @@ export const getAvailableSlots = async (req, res, next) => {
 
     const paginatedSlots = slots.slice(start, end);
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       data: paginatedSlots,
       currentPage: Number(page),
       totalPages: Math.ceil(slots.length / limit),
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
     });
+
+    res.status(200).json(responseData);
   } catch (error) {
     next(error);
   }
@@ -651,6 +783,8 @@ export const addAvailableSlots = async (req, res, next) => {
 
     await doctor.save();
 
+    await deleteByPattern(`doctor:${doctor._id}:availableSlots:*`);
+
     res.status(200).json({
       success: true,
       message: "Available slots added successfully",
@@ -670,7 +804,6 @@ export const addBulkAvailableSlots = async (req, res, next) => {
       throw new Error("Start date, end date and interval are required");
     }
 
-    // Default Times
     startTime = startTime || "10:00 AM";
     endTime = endTime || "05:00 PM";
 
@@ -690,7 +823,6 @@ export const addBulkAvailableSlots = async (req, res, next) => {
       throw new Error("End date must be greater than start date");
     }
 
-    // 1 Month limit
     const maxEnd = new Date(start);
     maxEnd.setMonth(maxEnd.getMonth() + 1);
 
@@ -776,6 +908,7 @@ export const addBulkAvailableSlots = async (req, res, next) => {
     }
 
     await doctor.save();
+    await deleteByPattern(`doctor:${doctor._id}:availableSlots:*`);
 
     res.status(200).json({
       success: true,
@@ -803,13 +936,15 @@ export const getDoctorProfile = async (req, res, next) => {
       userId: user._id,
       isDeleted: false,
     }).select(
-      "specialization experience about consultationFee isApproved aCommission commissionHistory",
+      "specialization experience about consultationFee isApproved geolocation aCommission commissionHistory",
     );
 
     if (!doctor) {
       res.status(404);
       throw new Error("Doctor profile not found");
     }
+
+    const geo = doctor.geolocation;
 
     res.status(200).json({
       success: true,
@@ -821,6 +956,13 @@ export const getDoctorProfile = async (req, res, next) => {
         role: user.role,
         image: user.image,
         isActive: user.isActive,
+        geolocation: geo
+          ? {
+              latitude: geo.coordinates?.[1],
+              longitude: geo.coordinates?.[0],
+              address: geo.address,
+            }
+          : null,
         specialization: doctor.specialization,
         experience: doctor.experience,
         about: doctor.about,
@@ -845,6 +987,7 @@ export const updateDoctorProfile = async (req, res, next) => {
       about,
       consultationFee,
       isActive,
+      geolocation,
     } = req.body;
 
     const user = await User.findOne({
@@ -949,6 +1092,21 @@ export const updateDoctorProfile = async (req, res, next) => {
       doctor.consultationFee = consultationFee;
     }
 
+    if (geolocation !== undefined) {
+      const { latitude, longitude, address } = geolocation;
+
+      if (!latitude || !longitude) {
+        res.status(400);
+        throw new Error("Invalid geolocation data");
+      }
+
+      doctor.geolocation = {
+        type: "Point",
+        coordinates: [longitude, latitude],
+        address: address || "",
+      };
+    }
+
     await doctor.save();
 
     res.status(200).json({
@@ -992,6 +1150,8 @@ export const deleteAvailableSlot = async (req, res, next) => {
     );
 
     await doctor.save();
+
+    await deleteByPattern(`doctor:${doctor._id}:availableSlots:*`);
 
     res.status(200).json({
       success: true,
@@ -1280,6 +1440,16 @@ export const getDoctorReviews = async (req, res, next) => {
       throw new Error("Doctor not found");
     }
 
+    const cacheKey = `doctor:${doctor._id}:reviews:page:${page}:limit:${limit}`;
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
+
     const reviews = await Review.find({
       doctorId: doctor._id,
       isApprove: true,
@@ -1314,7 +1484,7 @@ export const getDoctorReviews = async (req, res, next) => {
       isDeleted: false,
     });
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       data: {
         totalReviews: doctor.totalReviews,
@@ -1323,7 +1493,13 @@ export const getDoctorReviews = async (req, res, next) => {
       },
       currentPage: Number(page),
       totalPages: Math.ceil(totalReviewsCount / limit),
+    };
+
+    await redisClient.set(cacheKey, JSON.stringify(responseData), {
+      EX: 300,
     });
+
+    res.status(200).json(responseData);
   } catch (error) {
     next(error);
   }

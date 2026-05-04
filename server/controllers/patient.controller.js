@@ -4,14 +4,15 @@ import Doctor from "../models/doctor.model.js";
 import User from "../models/user.model.js";
 import Payment from "../models/payment.model.js";
 import Review from "../models/review.model.js";
-import razorpayInstance from "../utils/RazorPay.js";
+import razorpayInstance from "../config/RazorPay.js";
 import { CURRENCY, RAZORPAY_KEY_SECRET } from "../utils/env.js";
 import crypto from "crypto";
 import { sendAppointmentBookedEmailToDoctor } from "../utils/sendEmail.js";
 import { checkReviewWithAI } from "../utils/aiModeration.js";
 import mongoose from "mongoose";
-import { generatePDFReport } from "../utils/generatePDFReport .js";
+import { generatePDFReport } from "../utils/generatePDFReport.js";
 import { generateExcelReport } from "../utils/generateExcelReport.js";
+import redisClient, { deleteByPattern } from "../config/redis.js";
 
 export const getPatientDashboard = async (req, res, next) => {
   try {
@@ -32,6 +33,15 @@ export const getPatientDashboard = async (req, res, next) => {
           completedBookings: 0,
           upcomingAppointments: [],
         },
+      });
+    }
+
+    const cacheKey = `patient:${patient._id}:dashboard`;
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
       });
     }
 
@@ -87,6 +97,23 @@ export const getPatientDashboard = async (req, res, next) => {
       status: apt.status,
     }));
 
+    await redisClient.set(
+      cacheKey,
+      JSON.stringify({
+        success: true,
+        data: {
+          totalBookings,
+          upcomingBookings,
+          cancelledBookings,
+          completedBookings,
+          upcomingAppointments: formattedAppointments,
+        },
+      }),
+      {
+        EX: 300,
+      },
+    );
+
     res.status(200).json({
       success: true,
       data: {
@@ -117,6 +144,21 @@ export const getAllDoctors = async (req, res, next) => {
       };
     }
 
+    const patient = await Patient.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    const cacheKey = `patient:${patient._id}:doctors:search:${search || ""}:specialization:${specialization || ""}`;
+
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
+
     const doctors = await Doctor.find(doctorFilter)
       .populate({
         path: "userId",
@@ -127,7 +169,7 @@ export const getAllDoctors = async (req, res, next) => {
             name: { $regex: search, $options: "i" },
           }),
         },
-        select: "name email isActive",
+        select: "name email isActive image",
       })
       .lean();
 
@@ -138,7 +180,10 @@ export const getAllDoctors = async (req, res, next) => {
       name: doc.userId.name,
       email: doc.userId.email,
       isActive: doc.userId.isActive,
+      image: doc.userId.image,
       specialization: doc.specialization,
+      consultationFee: doc.consultationFee,
+      availableSlots: doc.availableSlots,
       availabilityStatus:
         doc.availableSlots && doc.availableSlots.length > 0
           ? "Available"
@@ -146,6 +191,18 @@ export const getAllDoctors = async (req, res, next) => {
       averageRating: doc.averageRating || 0,
       totalReviews: doc.totalReviews || 0,
     }));
+
+    await redisClient.set(
+      cacheKey,
+      JSON.stringify({
+        success: true,
+        count: formattedDoctors.length,
+        data: formattedDoctors,
+      }),
+      {
+        EX: 300,
+      },
+    );
 
     res.status(200).json({
       success: true,
@@ -160,6 +217,20 @@ export const getAllDoctors = async (req, res, next) => {
 export const getDoctorDetails = async (req, res, next) => {
   try {
     const { doctorId } = req.params;
+
+    const patient = await Patient.findOne({
+      userId: req.user._id,
+      isDeleted: false,
+    });
+
+    const cacheKey = `patient:${patient._id}:doctor:${doctorId}:details`;
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
 
     const doctor = await Doctor.findOne({
       _id: doctorId,
@@ -176,6 +247,37 @@ export const getDoctorDetails = async (req, res, next) => {
       res.status(404);
       throw new Error("Doctor not found");
     }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const now = new Date();
+    const validSlots = (doctor.availableSlots || []).filter((slot) => {
+      const slotDate = new Date(slot.date);
+      slotDate.setHours(0, 0, 0, 0);
+      if (slotDate > today) return true;
+
+      if (slotDate.getTime() === today.getTime()) {
+        slot.times = (slot.times || []).filter((t) => {
+          const [hours, minutes] = t.split(":").map(Number);
+          const slotTime = new Date();
+          slotTime.setHours(hours, minutes, 0, 0);
+          return slotTime > now;
+        });
+        return slot.times.length > 0;
+      }
+
+      return false;
+    });
+
+    const originalCount = (doctor.availableSlots || []).length;
+    if (validSlots.length !== originalCount) {
+      await Doctor.findByIdAndUpdate(doctor._id, {
+        $set: { availableSlots: validSlots },
+      });
+    }
+
+    doctor.availableSlots = validSlots;
 
     const reviews = await Review.find({
       doctorId: doctor._id,
@@ -201,6 +303,31 @@ export const getDoctorDetails = async (req, res, next) => {
       patientName: review.patientId?.userId?.name || null,
       patientImage: review.patientId?.userId?.image || null,
     }));
+
+    await redisClient.set(
+      cacheKey,
+      JSON.stringify({
+        success: true,
+        data: {
+          doctorId: doctor._id,
+          name: doctor.userId.name,
+          email: doctor.userId.email,
+          image: doctor.userId.image,
+          isActive: doctor.userId.isActive,
+          specialization: doctor.specialization,
+          experience: doctor.experience,
+          about: doctor.about,
+          consultationFee: doctor.consultationFee,
+          availableSlots: doctor.availableSlots,
+          averageRating: doctor.averageRating,
+          totalReviews: doctor.totalReviews,
+          reviews: formattedReviews,
+        },
+      }),
+      {
+        EX: 300,
+      },
+    );
 
     res.status(200).json({
       success: true,
@@ -261,11 +388,6 @@ export const bookAppointment = async (req, res, next) => {
       );
     }
 
-    if (notes !== undefined && notes === "") {
-      res.status(400);
-      throw new Error("Notes cannot be empty");
-    }
-
     const patient = await Patient.findOne({
       userId: req.user._id,
       isDeleted: false,
@@ -305,6 +427,21 @@ export const bookAppointment = async (req, res, next) => {
     if (!slot || !slot.times.includes(timeSlot)) {
       res.status(400);
       throw new Error("Selected slot is not available");
+    }
+
+    const conflictingAppointment = await Appointment.findOne({
+      patientId: patient._id,
+      appointmentDate: selectedDate,
+      timeSlot: timeSlot,
+      status: { $nin: ["cancelled"] },
+      isDeleted: false,
+    });
+
+    if (conflictingAppointment) {
+      res.status(409);
+      throw new Error(
+        "You already have an appointment scheduled at this date and time",
+      );
     }
 
     const appointment = await Appointment.create({
@@ -351,6 +488,15 @@ export const bookAppointment = async (req, res, next) => {
 
     await doctor.save();
 
+    await redisClient.del(`patient:${patient._id}:dashboard`);
+    await deleteByPattern(`patient:${patient._id}:appointments:*`);
+    await deleteByPattern(`patient:${patient._id}:doctors:*`);
+    await deleteByPattern(`patient:${patient._id}:doctor:*`);
+
+    await redisClient.del(`doctor:${doctor._id}:dashboard`);
+    await deleteByPattern(`doctor:${doctor._id}:appointments:*`);
+    await deleteByPattern(`doctor:${doctor._id}:availableSlots:*`);
+
     res.status(201).json({
       success: true,
       message: "Appointment created successfully",
@@ -378,6 +524,15 @@ export const getAppointments = async (req, res, next) => {
       throw new Error("Patient profile not found");
     }
 
+    const cacheKey = `patient:${patient._id}:appointments:page:${currentPage}:limit:${perPage}:status:${status || "all"}`;
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        ...JSON.parse(cachedData),
+        source: "redis",
+      });
+    }
+
     const filter = {
       patientId: patient._id,
       isDeleted: false,
@@ -403,6 +558,77 @@ export const getAppointments = async (req, res, next) => {
       .limit(perPage)
       .lean();
 
+    const now = new Date();
+
+    const expiredAppointments = appointments.filter((apt) => {
+      const [time, modifier] = apt.timeSlot.split(" ");
+      let [hours, minutes] = time.split(":").map(Number);
+
+      if (modifier.toUpperCase() === "PM" && hours !== 12) hours += 12;
+      if (modifier.toUpperCase() === "AM" && hours === 12) hours = 0;
+
+      const appointmentDateTime = new Date(apt.appointmentDate);
+      appointmentDateTime.setHours(hours, minutes, 0, 0);
+
+      return (
+        appointmentDateTime < now &&
+        (apt.status === "pending" || apt.status === "confirmed")
+      );
+    });
+
+    if (expiredAppointments.length > 0) {
+      const pendingIds = expiredAppointments
+        .filter((apt) => apt.status === "pending")
+        .map((apt) => apt._id);
+
+      const confirmedExpired = expiredAppointments.filter(
+        (apt) => apt.status === "confirmed",
+      );
+
+      if (pendingIds.length > 0) {
+        await Appointment.updateMany(
+          { _id: { $in: pendingIds } },
+          { $set: { status: "cancelled" } },
+        );
+      }
+
+      for (const apt of confirmedExpired) {
+        const doctor = await Doctor.findById(apt.doctorId);
+
+        const fee = apt.consultationFee;
+        const adminCommission = doctor ? (fee * doctor.aCommission) / 100 : 0;
+
+        await Appointment.findByIdAndUpdate(apt._id, {
+          $set: {
+            status: "completed",
+            paymentStatus: "paid",
+            adminCommission,
+          },
+        });
+
+        await Payment.findOneAndUpdate(
+          { appointmentId: apt._id },
+          { status: "success" },
+        );
+      }
+
+      const confirmedIds = confirmedExpired.map((apt) => apt._id);
+
+      // Update local appointment objects to reflect new status
+      appointments.forEach((apt) => {
+        if (pendingIds.some((id) => id.equals(apt._id))) {
+          apt.status = "cancelled";
+        }
+        if (confirmedIds.some((id) => id.equals(apt._id))) {
+          apt.status = "completed";
+          apt.paymentStatus = "paid";
+        }
+      });
+
+      // Invalidate cache since statuses changed
+      await deleteByPattern(`patient:${patient._id}:appointments:*`);
+    }
+
     const formattedAppointments = appointments.map((apt) => ({
       appointmentId: apt._id,
       doctorName: apt.doctorId?.userId?.name,
@@ -416,6 +642,20 @@ export const getAppointments = async (req, res, next) => {
       consultationFee: apt.consultationFee,
       prescriptionAdded: apt.prescriptionAdded,
     }));
+
+    await redisClient.set(
+      cacheKey,
+      JSON.stringify({
+        success: true,
+        data: formattedAppointments,
+        currentPage,
+        totalPages: Math.ceil(total / perPage),
+        totalItems: total,
+      }),
+      {
+        EX: 300,
+      },
+    );
 
     res.status(200).json({
       success: true,
@@ -444,7 +684,9 @@ export const getProfile = async (req, res, next) => {
     const patient = await Patient.findOne({
       userId: user._id,
       isDeleted: false,
-    }).select("dateOfBirth gender address medicalHistory");
+    }).select("dateOfBirth gender geolocation medicalHistory");
+
+    const geo = patient?.geolocation;
 
     res.status(200).json({
       success: true,
@@ -457,7 +699,13 @@ export const getProfile = async (req, res, next) => {
         image: user.image,
         dateOfBirth: patient?.dateOfBirth || null,
         gender: patient?.gender || null,
-        address: patient?.address || null,
+        geolocation: geo
+          ? {
+              latitude: geo.coordinates?.[1],
+              longitude: geo.coordinates?.[0],
+              address: geo.address,
+            }
+          : null,
         medicalHistory: patient?.medicalHistory || null,
       },
     });
@@ -468,12 +716,11 @@ export const getProfile = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
   try {
-    let { name, phone, dateOfBirth, gender, address, medicalHistory } =
+    let { name, phone, dateOfBirth, gender, medicalHistory, geolocation } =
       req.body;
 
     name = name?.trim();
     phone = phone?.trim();
-    address = address?.trim();
     medicalHistory = medicalHistory?.trim();
 
     const user = await User.findOne({
@@ -546,15 +793,6 @@ export const updateProfile = async (req, res, next) => {
         patient.gender = gender.toLowerCase();
       }
 
-      if (address) {
-        if (address.length < 5) {
-          res.status(400);
-          throw new Error("Address must be at least 5 characters long");
-        }
-
-        patient.address = address;
-      }
-
       if (medicalHistory !== undefined) {
         if (medicalHistory === "") {
           res.status(400);
@@ -562,6 +800,21 @@ export const updateProfile = async (req, res, next) => {
         }
 
         patient.medicalHistory = medicalHistory;
+      }
+
+      if (geolocation !== undefined) {
+        const { latitude, longitude, address } = geolocation;
+
+        if (!latitude || !longitude) {
+          res.status(400);
+          throw new Error("Invalid geolocation data");
+        }
+
+        patient.geolocation = {
+          type: "Point",
+          coordinates: [longitude, latitude],
+          address: address || "",
+        };
       }
 
       await patient.save();
@@ -690,6 +943,12 @@ export const verifyRazorpay = async (req, res, next) => {
     appointment.adminCommission = (fee * commissionPercent) / 100;
 
     await appointment.save();
+
+    await deleteByPattern(`patient:${appointment.patientId}:appointments:*`);
+    await redisClient.del(`patient:${appointment.patientId}:dashboard`);
+
+    await deleteByPattern(`doctor:${appointment.doctorId}:appointments:*`);
+    await redisClient.del(`doctor:${appointment.doctorId}:dashboard`);
 
     res.json({
       success: true,
@@ -838,6 +1097,10 @@ export const createReview = async (req, res, next) => {
         totalReviews,
       });
     }
+
+    await redisClient.del(`patient:${patient._id}:doctor:${doctorId}:details`);
+    await deleteByPattern(`patient:${patient._id}:doctors:*`);
+    await deleteByPattern(`doctor:${doctorId}:reviews:*`);
 
     res.status(201).json({
       success: true,

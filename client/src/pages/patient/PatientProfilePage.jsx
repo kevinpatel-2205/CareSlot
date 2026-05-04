@@ -31,7 +31,52 @@ function PatientProfilePage() {
     gender: "",
     address: "",
     medicalHistory: "",
+    geolocation: null,
   });
+
+  const [locationLoading, setLocationLoading] = useState(false);
+
+  const getLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setLocationLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+          );
+          const data = await res.json();
+
+          const readableAddress =
+            data.display_name || `${latitude}, ${longitude}`;
+
+          setForm((prev) => ({
+            ...prev,
+            geolocation: { latitude, longitude, address: readableAddress },
+          }));
+        } catch {
+          toast.error("Could not fetch address. Try again.");
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      (error) => {
+        setLocationLoading(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          toast.error("Location permission denied");
+        } else {
+          toast.error("Unable to retrieve location");
+        }
+      },
+    );
+  };
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -52,8 +97,8 @@ function PatientProfilePage() {
           ? new Date(profile.dateOfBirth).toISOString().slice(0, 10)
           : "",
         gender: profile?.gender || "",
-        address: profile?.address || "",
         medicalHistory: profile?.medicalHistory || "",
+        geolocation: profile?.geolocation || null,
       });
     }
   }, [profile]);
@@ -70,7 +115,12 @@ function PatientProfilePage() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    dispatch(updatePatientProfile(form));
+    dispatch(
+      updatePatientProfile({
+        ...form,
+        geolocation: form.geolocation ?? undefined,
+      }),
+    );
   };
 
   const handlePasswordChange = (key, value) =>
@@ -122,7 +172,7 @@ function PatientProfilePage() {
           <section className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
             <div className="bg-gradient-to-r from-blue-600 to-blue-400 h-24 w-full"></div>
             <div className="px-8 pb-10">
-              <div className="flex flex-col md:flex-row items-end gap-6 -mt-12 mb-8">
+              <div className="flex flex-col md:flex-row items-end gap-6 -mt-8 mb-8">
                 <div className="relative group">
                   <img
                     src={
@@ -148,8 +198,14 @@ function PatientProfilePage() {
                     {profile?.name || "Patient User"}
                   </h3>
                   <div className="flex items-center gap-2 text-blue-600 font-bold text-sm uppercase tracking-wider">
-                    <CheckCircle2 size={16} /> {profile?.role || user?.role}{" "}
+                    <CheckCircle2 size={16} /> {profile?.role || "Patient"}{" "}
                     Account
+                  </div>
+                  <div className="flex flex-wrap gap-4 mt-3 text-slate-400 font-bold text-sm">
+                    <p className="flex items-center gap-1.5">
+                      <Mail size={16} className="text-blue-400" />{" "}
+                      {profile?.email}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -233,19 +289,48 @@ function PatientProfilePage() {
                   {/* Address */}
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                      Residential Address
+                      Current Address
                     </label>
-                    <div className="relative group">
-                      <MapPin
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
-                        size={18}
-                      />
-                      <input
-                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
-                        value={form.address}
-                        onChange={(e) => onChange("address", e.target.value)}
-                      />
+
+                    <div className="flex gap-3">
+                      {/* Address Input — read only when location is fetched */}
+                      <div className="relative group flex-1">
+                        <MapPin
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                          size={18}
+                        />
+                        <input
+                          className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold text-slate-700"
+                          value={form?.geolocation?.address || ""}
+                          readOnly
+                          onChange={(e) => onChange("address", e.target.value)}
+                          placeholder="Click Get Location"
+                        />
+                      </div>
+
+                      {/* Get Location Button */}
+                      <button
+                        type="button"
+                        onClick={getLocation}
+                        disabled={locationLoading}
+                        className="flex items-center gap-2 px-4 py-4 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap shadow-lg shadow-blue-100"
+                      >
+                        <MapPin size={18} />
+                        <span className="hidden sm:inline">
+                          {locationLoading ? "Detecting..." : "Get Location"}
+                        </span>
+                      </button>
                     </div>
+
+                    {/* Show coordinates badge if location fetched */}
+                    {form.geolocation && (
+                      <p className="text-xs text-green-600 font-bold ml-2 flex items-center gap-1">
+                        <CheckCircle2 size={13} />
+                        GPS: {Number(form.geolocation.latitude)?.toFixed(
+                          4,
+                        )}, {Number(form.geolocation.longitude)?.toFixed(4)}
+                      </p>
+                    )}
                   </div>
 
                   {/* Medical History */}

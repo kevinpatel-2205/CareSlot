@@ -19,9 +19,22 @@ const patientSchema = new mongoose.Schema(
       enum: ["male", "female", "other"],
     },
 
-    address: {
-      type: String,
-      maxlength: 500,
+    geolocation: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+        default: [0, 0],
+      },
+      address: {
+        type: String,
+        maxlength: 500,
+        default: "",
+      },
     },
 
     medicalHistory: {
@@ -34,7 +47,9 @@ const patientSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
+
+patientSchema.index({ geolocation: "2dsphere" });
 
 export default mongoose.model("Patient", patientSchema);
